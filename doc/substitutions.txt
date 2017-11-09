@@ -1,0 +1,7 @@
+.. Some useful unicode substitutions for units
+
+.. |AA| unicode:: U+212B
+.. |mu| unicode:: U+03BC
+.. |sigma| unicode:: U+03C3
+.. |alpha| unicode:: U+03B1
+.. |beta| unicode:: U+03B2
