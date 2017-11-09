@@ -8,7 +8,7 @@ setup (
        packages=find_packages(),
 
        # Declare your packages' dependencies here, for eg:
-       install_requires=[],
+       install_requires=['astropy', 'numpy'],
 
        # Fill in these to make your Egg ready for upload to
        # PyPI
