@@ -5,25 +5,27 @@
 Reference sample file format
 ============================
 
-Due to the big size of the reference SED data and PDZs a custom binary format is
-designed. Having in mind that the amount of data will not fit in the RAM memory,
-the design is trying to optimize the random SED access during the execution and
-to facilitate appending new templates.
+Due to the big size of the reference sample SED and PDZ data, a custom binary
+format is designed. Having in mind that the amount of data will not fit in the
+RAM memory, the design is trying to optimize the random access of the reference
+sample objects during the execution and to facilitate appending new templates
+and PDZs.
 
 Reference sample files organization
 -----------------------------------
 
 To facilitate access and appending, the reference sample information is stored
-in four different files. The first stores the SED template data, the second
-stores the PDZ data, the third the photometries via the reference set of filters
-and the last one acts as an index for accessing all the previous ones. The files
-are grouped inside a directory.
+in different files. The first file stores the SED template data, the second
+stores the PDZ data and the third one acts as an index for accessing the
+previous ones. For eac reference set of filters, there is a separate photometry
+file. All these files are grouped inside a directory.
 
 SED template data file
 ----------------------
 
-The SED template data are stored in a binary file following a custom format. The
-data of each template are stored sequentially in the following way:
+The SED template data of the reference sample are stored in a binary file
+following a custom format. The file is named `sed_data.bin`. The data of each
+template are stored sequentially in the following way:
 
 .. image:: images/SED_data_file_format.png
 
@@ -50,10 +52,10 @@ PDZ data file
 -------------
 
 The PDZ data file stores the PDZs of the reference sample, which are produced
-using higher quality photometry. Like the SED data file, it follows a custom
-binary format. One big difference between the two formats is that all the PDZs
-in the file share the same redshift bins. The file is organized the following
-way:
+using higher quality photometry. The file is named `pdz_data.bin`. Like the SED
+data file, it follows a custom binary format. One big difference between the two
+formats is that all the PDZs in the file share the same redshift bins. The file
+is organized the following way:
 
 .. image:: images/PDZ_file_format.png
 
@@ -68,60 +70,62 @@ way:
 - The ID is followed by n single precision decimal values (4 bytes each),
   representing the PDZ value for each redshift bin.
 
-Photometry file
----------------
-
-The photometry file contains the photometries of the SED templates as seen
-through a reference set of filters. It is a FITS table, where the first column
-represents the ID of the corresponding template (long integer type of 8 bytes),
-followed by as many columns as the reference filters, which keep the flux
-density of each filter, expressed in |mu|\Jansky. All flux columns are double
-precision floating point (8 bytes).
-
 Index file
 ----------
 
-The index file contains information to easily retrieve the template and PDZ
-data. It is a FITS table containing a row for each template, with the following
-columns:
+The index file contains information to easily retrieve the SED template and PDZ
+data. It is a FITS table containing a row for each reference sample object, with
+the following columns:
 
 - **ID:** 
-  The identifier of the template (long integer of 8 bytes)
+  The identifier of the object (long integer of 8 bytes)
 - **SED_POS:** 
   The position of the template in the SED template data file, from the beginning
   of the file
 - **PDZ_POS:** 
   The position of the PDZ data in the PDZ file from the beginning of the file
 
-If the PDZ data file does not yet contain data for a given template (for example
-if the SED file is created first and the PDZ file in a second run) the
-corresponding column contain the value -1. Because of the appending rules of the
-data binary files, if the index file contains a position different than -1, all
-previous positions must also be different than -1. Similarly, if a position is
-marked as -1, all the consecutive positions must be -1.
+If the PDZ or SED data file does not yet contain data for a given template (for
+example if the SED file is created first and the PDZ file in a second run or
+vice versa), the corresponding column contain the value -1. Because of the
+appending rules of the data binary files, if the index file contains a position
+different than -1, all previous positions must also be different than -1.
+Similarly, if a position is marked as -1, all the consecutive positions must be
+-1.
 
-Note that the SED_POS column cannot contain -1 entries. This forces to provide
-the SED data for creating a new row in the index file.
+Photometry files
+----------------
+
+The photometry files contain the photometry values of the reference sample, as
+seen through different sets of filters. For each set of filters, there is a FITS
+file containing a binary table. These files are recognized by the name of the
+table HDU (`EXTNAME` keyword), which which must be set to`NNPZ_PHOTOMETRY`. The
+first column of the table represents the ID of the corresponding template (long
+integer type of 8 bytes) and has the name `ID`. It is followed by as many
+columns as the reference filters, which keep the flux density of each filter,
+expressed in |mu|\Jansky. All flux columns are single precision floating point
+values (4 bytes). The names of the columns represent the name of the filters.
 
 File validation rules
 ---------------------
 
-To guarantee the consistency of the four files at any moment the following must
-be true:
+To guarantee the consistency of the files at any moment, the following must be
+true:
 
+- All rows after the first one with SED_POS set to -1 must also have SED_POS set
+  to -1
 - All the values in the SED_POS column of the index file must be smaller than
   the size of the SED template data file
-- For each row of the index file, reading a long integer from this position of
-  the SED template data file must return the value of the ID column
+- For each row of the index file with SED_POS not -1, reading a long integer
+  from this position of the SED template data file must return the value of the
+  ID column
+- All rows after the first one with PDZ_POS set to -1 must also have SED_POS set
+  to -1
 - All the values in the PHZ_POS column of the index file must be smaller than
   the size of the PDZ data file
 - For each row of the index file with PDZ_POS not -1, reading a long integer
   from this position of the PHZ data file must return the value of the ID column
-- The rows of the photometry and index files with the same index must have the
-  same ID values
-
-Before a reference sample is used for the NNPZ, the following requirements must
-also be met:
-
-- The PHZ_POS column of the index file does not contain any -1 entries
-- The index and photometry tables must contain the same number of rows
+- The number of rows in any photometry file must be smaller or equal to the
+  number of rows in the index file
+- The rows of all photometry and index files must have the same ID values, with
+  the same order
