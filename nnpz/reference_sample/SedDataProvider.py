@@ -20,40 +20,34 @@ class SedDataProvider(object):
         self.__filename = filename
     
     
-    def readSed(self, sed_id, pos):
+    def readSed(self, pos):
         """Reads the data of an SED.
         
         Args:
-            sed_id: The ID of the SED to read
             pos: The possition of the SED in the file
         
-        Returns: The data of the SED as a two dimensional numpy array of single
-            precission floats. The first dimension has size same as the number
-            of the knots and the second dimension has always size equal to two,
-            with the first element representing the wavelength and the second
-            the energy value.
-            
-        Raises:
-            IdMismatchException: If the given ID does not match the one stored
-                in the file at the given possition
+        Returns: A tuple with the following:
+            - The ID of the SED
+            - The data of the SED as a two dimensional numpy array of single
+                precission floats. The first dimension has size same as the
+                number of the knots and the second dimension has always size
+                equal to two, with the first element representing the wavelength
+                and the second the energy value.
         """
         
         with open(self.__filename, 'rb') as f:
             # Move where the SED is
             f.seek(pos)
             
-            # Check that the ID is correct
-            file_id = np.fromfile(f, count=1, dtype='int64')[0]
-            if file_id != sed_id:
-                raise IdMismatchException('Incosistent SED data file. Expected ID ' +
-                    str(sed_id) + ' but found ' + str(file_id))
+            # Read he ID
+            sed_id = np.fromfile(f, count=1, dtype='int64')[0]
             
             # Read the data
             length = np.fromfile(f, count=1, dtype='uint32')[0]
             data = np.fromfile(f, count=2*length, dtype='float32')
             data = data.reshape((length, 2))
             
-            return data
+            return sed_id, data
     
     
     def appendSed(self, sed_id, data):

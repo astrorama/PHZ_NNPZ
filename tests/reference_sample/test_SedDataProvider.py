@@ -24,34 +24,22 @@ def test_readSed_success(sed_data_file_fixture, sed_list_fixture):
     provider = SedDataProvider(sed_data_file_fixture)
     
     pos = 0
-    for sed_id, expected in sed_list_fixture:
+    for expected_id, expected_data in sed_list_fixture:
         
         # When
-        found = provider.readSed(sed_id, pos)
+        found_id, found_data = provider.readSed(pos)
         
         # Then
-        assert len(found.shape) == 2
-        assert found.shape[0] == len(expected)
-        assert found.shape[1] == 2
-        for i, (x, y) in enumerate(expected):
-            assert found[i][0] == x
-            assert found[i][1] == y
+        assert found_id == expected_id
+        assert len(found_data.shape) == 2
+        assert found_data.shape[0] == len(expected_data)
+        assert found_data.shape[1] == 2
+        for i, (x, y) in enumerate(expected_data):
+            assert found_data[i][0] == x
+            assert found_data[i][1] == y
         
         # Increase the position for the ID, the length and the SED data
-        pos = pos + 8 + 4 + (4 * 2 * len(expected))
-    
-###############################################################################
-
-def test_readSed_idMismatch(sed_data_file_fixture, sed_list_fixture):
-    """Tests that readSed() throws an IdMismatchException if the ID is wrong"""
-    
-    # Given
-    provider = SedDataProvider(sed_data_file_fixture)
-    wrong_id = sed_list_fixture[0][0] + 1
-    
-    # Then
-    with pytest.raises(IdMismatchException):
-        provider.readSed(wrong_id, 0)
+        pos = pos + 8 + 4 + (4 * 2 * len(expected_data))
     
 ###############################################################################
 
