@@ -124,7 +124,7 @@ def test_appendSed_nonIncreasingWavelength(sed_data_file_fixture):
 ###############################################################################
 
 def test_validate_diffInputSize(sed_data_file_fixture):
-    """Test that the validateIds() raises an exception if the id and pos lists have different size"""
+    """Test that the validate() raises an exception if the id and pos lists have different size"""
     
     # Given
     id_list = [1, 2, 3]
@@ -140,7 +140,7 @@ def test_validate_diffInputSize(sed_data_file_fixture):
 ###############################################################################
 
 def test_validate_consistentFile(sed_data_file_fixture, sed_list_fixture):
-    """Test that when the file is consistent with the given lists it returns True"""
+    """Test that when the file is consistent with the given lists it returns None"""
     
     # Given
     id_list = [x for x,_ in sed_list_fixture]

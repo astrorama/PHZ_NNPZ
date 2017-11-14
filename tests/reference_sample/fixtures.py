@@ -57,3 +57,47 @@ def sed_data_file_fixture(temp_dir_fixture, sed_list_fixture):
     return filename
     
 ##############################################################################
+
+@pytest.fixture()
+def redshift_bins_fixture():
+    """Returns an array with the redsift bins of the PDZs to be used for testing"""
+    return np.asarray([1,2,5,6,8,9], dtype=np.float32)
+    
+##############################################################################
+
+@pytest.fixture()
+def pdz_list_fixture():
+    """Returns a list of PDZs to be used for testing."""
+    return [
+        [1, np.asarray([1,2,3,4,5,6], dtype=np.float32)],
+        [3, np.asarray([2,3,4,5,6,7], dtype=np.float32)],
+        [12, np.asarray([3,4,5,6,7,8], dtype=np.float32)],
+        [7, np.asarray([4,5,6,7,8,9], dtype=np.float32)]
+    ]
+    
+##############################################################################
+
+@pytest.fixture()
+def pdz_data_file_fixture(temp_dir_fixture, redshift_bins_fixture, pdz_list_fixture):
+    """Creates a PDZ data file to be used for testing.
+    
+    Returns: The path to the newly created file.
+    
+    The created file contains the PDZs of the pdz_list_fixture and the redshift
+    bins of the redshift_bins_fixture.
+    """
+    
+    filename = os.path.join(temp_dir_fixture, 'pdz_data.bin')
+    with open(filename, 'wb') as out:
+        # Write the length of each PDZ
+        np.asarray([len(redshift_bins_fixture)], dtype=np.uint32).tofile(out)
+        # Write the redshift bins
+        np.asarray(redshift_bins_fixture, dtype=np.float32).tofile(out)
+        #Write all the PDZs
+        for i, data in pdz_list_fixture:
+            np.asarray([i], dtype=np.int64).tofile(out)
+            np.asarray(data, dtype=np.float32).tofile(out)
+            
+    return filename
+    
+##############################################################################

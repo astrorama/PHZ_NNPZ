@@ -20,3 +20,11 @@ class InvalidDimensionsException(Exception):
 
 class InvalidAxisException(Exception):
     pass
+
+
+class AlreadySetException(Exception):
+    pass
+
+
+class UninitializedException(Exception):
+    pass
