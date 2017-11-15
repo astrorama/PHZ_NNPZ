@@ -6,25 +6,41 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 
-class DuplicateIdException(Exception):
+class NnpzException(Exception):
     pass
 
 
-class IdMismatchException(Exception):
+class DuplicateIdException(NnpzException):
     pass
 
 
-class InvalidDimensionsException(Exception):
+class IdMismatchException(NnpzException):
     pass
 
 
-class InvalidAxisException(Exception):
+class InvalidDimensionsException(NnpzException):
     pass
 
 
-class AlreadySetException(Exception):
+class InvalidAxisException(NnpzException):
     pass
 
 
-class UninitializedException(Exception):
+class AlreadySetException(NnpzException):
+    pass
+
+
+class UninitializedException(NnpzException):
+    pass
+
+
+class FileNotFoundException(NnpzException):
+    pass
+
+
+class UnknownNameException(NnpzException):
+    pass
+
+
+class AmbiguityException(NnpzException):
     pass
