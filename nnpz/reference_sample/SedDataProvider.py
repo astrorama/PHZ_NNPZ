@@ -108,7 +108,8 @@ class SedDataProvider(object):
         
         Args:
             id_list: A list with the IDs of the reference sample objects
-            pos_list: A list with the possitions of the SEDs in the file
+            pos_list: A list with the possitions of the SEDs in the file. All
+                values after the first possition with value -1 are ignored.
         
         Returns: None if the file is consistent with the given IDs and
             possitions, or a string message describing the first incossistency.
@@ -129,10 +130,21 @@ class SedDataProvider(object):
         - Exceeding filesize
             The length of an SED exceeds the file size
             Message: Data length bigger than file for ID=_USER_ID_
+        - Extra SEDs in file
+            The file contains SEDs which are not in the given list
+            Message: File contains extra SEDs
         """
         
         if len(id_list) != len(pos_list):
             raise InvalidDimensionsException('id_list and pos_list must have same length')
+        
+        # Trim the lists to the first -1 position
+        try:
+            i = pos_list.index(-1)
+            id_list = id_list[:i]
+            pos_list = pos_list[:i]
+        except ValueError:
+            pass # If there is no -1 in pos list do nothing
         
         file_size = os.path.getsize(self.__filename)
         with open(self.__filename, 'rb') as f:
@@ -159,5 +171,8 @@ class SedDataProvider(object):
                 # Check it is less than the file size
                 if expected_pos > file_size:
                     return 'Data length bigger than file for ID=' + str(sed_id)
+        
+        if expected_pos != file_size:
+            return 'File contains extra SEDs'
         
         return None

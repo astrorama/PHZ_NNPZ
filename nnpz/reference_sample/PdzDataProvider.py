@@ -130,7 +130,8 @@ class PdzDataProvider(object):
         
         Args:
             id_list: A list with the IDs of the reference sample objects
-            pos_list: A list with the possitions of the PDZs in the file
+            pos_list: A list with the possitions of the PDZs in the file. All
+                values after the first possition with value -1 are ignored.
             
         Returns: None if the file is consistent with the given IDs and positions,
             or a string message describing the first incossistency.
@@ -152,6 +153,9 @@ class PdzDataProvider(object):
         - Exceeding filesize
             The expected length of the PDZs exceeds the file size
             Message: Expected data length bigger than file
+        - Extra PDZs in file
+            The file contains PDZs which are not in the given list
+            Message: File contains extra PDZs
         """
         
         if self.__redshift_bins is None:
@@ -159,6 +163,14 @@ class PdzDataProvider(object):
         
         if len(id_list) != len(pos_list):
             raise InvalidDimensionsException('id_list and pos_list must have same length')
+        
+        # Trim the lists to the first -1 position
+        try:
+            i = pos_list.index(-1)
+            id_list = id_list[:i]
+            pos_list = pos_list[:i]
+        except ValueError:
+            pass # If there is no -1 in pos list do nothing
         
         expected_pos = 4 + 4 * len(self.__redshift_bins)
         pos_shift = 8 + 4 * len(self.__redshift_bins)
@@ -184,3 +196,8 @@ class PdzDataProvider(object):
                 
                 # Update the expected_pos
                 expected_pos = pos + pos_shift
+        
+        if expected_pos != file_size:
+            return 'File contains extra PDZs'
+        
+        return None

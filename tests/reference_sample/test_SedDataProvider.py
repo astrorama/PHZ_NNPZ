@@ -206,3 +206,67 @@ def test_validate_incosistentSedLength(sed_data_file_fixture, sed_list_fixture):
 
 ###############################################################################
 
+def test_validate_extraSedsInFile(sed_data_file_fixture, sed_list_fixture):
+    """Test the case where the file contains extra SEDs"""
+    
+    # Given
+    id_list = [x for x,_ in sed_list_fixture]
+    pos_list = [0]
+    for i in range(1, len(id_list)):
+        pos_list.append(pos_list[i-1] + 8 + 4 + (4 * 2 * len(sed_list_fixture[i-1][1])))
+    provider = SedDataProvider(sed_data_file_fixture)
+    
+    id_list = id_list[:-1]
+    pos_list = pos_list[:-1]
+    
+    # When
+    message = provider.validate(id_list, pos_list)
+    
+    # Then
+    assert message == 'File contains extra SEDs'
+
+###############################################################################
+
+def test_validate_minusPositionConsistent(sed_data_file_fixture, sed_list_fixture):
+    """Test the case where the file is consistent and the pos_list contains -1"""
+    
+    # Given
+    id_list = [x for x,_ in sed_list_fixture]
+    pos_list = [0]
+    for i in range(1, len(id_list)):
+        pos_list.append(pos_list[i-1] + 8 + 4 + (4 * 2 * len(sed_list_fixture[i-1][1])))
+    provider = SedDataProvider(sed_data_file_fixture)
+    
+    id_list.append(100)
+    pos_list.append(-1)
+    id_list.append(101)
+    pos_list.append(0)
+    
+    # When
+    message = provider.validate(id_list, pos_list)
+    
+    # Then
+    assert message is None
+
+###############################################################################
+
+def test_validate_extraSedsInFile(sed_data_file_fixture, sed_list_fixture):
+    """Test the case where the file contains extra SEDs and the pos_list contains -1"""
+    
+    # Given
+    id_list = [x for x,_ in sed_list_fixture]
+    pos_list = [0]
+    for i in range(1, len(id_list)):
+        pos_list.append(pos_list[i-1] + 8 + 4 + (4 * 2 * len(sed_list_fixture[i-1][1])))
+    provider = SedDataProvider(sed_data_file_fixture)
+    
+    pos_list[-2] = -1
+    
+    # When
+    message = provider.validate(id_list, pos_list)
+    
+    # Then
+    assert message == 'File contains extra SEDs'
+
+###############################################################################
+

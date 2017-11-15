@@ -343,3 +343,68 @@ def test_validate_uninitialized(temp_dir_fixture, pdz_list_fixture):
         
 
 ###############################################################################
+
+def test_validate_extraPdzsInFile(pdz_data_file_fixture, pdz_list_fixture):
+    """Test the case where the file contains extra PDZs"""
+    
+    # Given
+    id_list = [x for x,_ in pdz_list_fixture]
+    pos_offset = 4 + 4 * len(pdz_list_fixture[0][1])
+    pos_shift = 8 + 4 * len(pdz_list_fixture[0][1])
+    pos_list = [pos_offset + i * pos_shift for i in range(len(pdz_list_fixture))]
+    
+    id_list = id_list[:-1]
+    pos_list = pos_list[:-1]
+    
+    
+    # When
+    provider = PdzDataProvider(pdz_data_file_fixture)
+    message = provider.validate(id_list, pos_list)
+    
+    # Then
+    assert message == "File contains extra PDZs"
+
+###############################################################################
+
+def test_validate_minusPositionConsistent(pdz_data_file_fixture, pdz_list_fixture):
+    """Test the case when the file is consistent and the pos_list contains -1"""
+    
+    # Given
+    id_list = [x for x,_ in pdz_list_fixture]
+    pos_offset = 4 + 4 * len(pdz_list_fixture[0][1])
+    pos_shift = 8 + 4 * len(pdz_list_fixture[0][1])
+    pos_list = [pos_offset + i * pos_shift for i in range(len(pdz_list_fixture))]
+    
+    id_list.append(100)
+    pos_list.append(-1)
+    id_list.append(101)
+    pos_list.append(0)
+    
+    # When
+    provider = PdzDataProvider(pdz_data_file_fixture)
+    message = provider.validate(id_list, pos_list)
+    
+    # Then
+    assert message is None
+
+###############################################################################
+
+def test_validate_minusPositionNotConsistent(pdz_data_file_fixture, pdz_list_fixture):
+    """Test he case when the file has more PDZs and the pos_list contains -1"""
+    
+    # Given
+    id_list = [x for x,_ in pdz_list_fixture]
+    pos_offset = 4 + 4 * len(pdz_list_fixture[0][1])
+    pos_shift = 8 + 4 * len(pdz_list_fixture[0][1])
+    pos_list = [pos_offset + i * pos_shift for i in range(len(pdz_list_fixture))]
+    
+    pos_list[-2] = -1
+    
+    # When
+    provider = PdzDataProvider(pdz_data_file_fixture)
+    message = provider.validate(id_list, pos_list)
+    
+    # Then
+    assert message == 'File contains extra PDZs'
+
+###############################################################################
