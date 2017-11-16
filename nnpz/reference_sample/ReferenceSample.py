@@ -6,16 +6,13 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import os
-from astropy.table import Table
-import astropy.io.fits as fits
-import numpy as np
 
 from nnpz.utils import Logging
 
 
 logger = Logging.getLogger('ReferenceSample')
 
-_index_filename = 'index.fits'
+_index_filename = 'index.bin'
 _sed_data_filename = 'sed_data.bin'
 _pdz_daa_filename = 'pdz_data.bin'
 
@@ -34,8 +31,8 @@ class ReferenceSample(object):
         Returns:
             An instance of the RefernceSample class representing the new sample
 
-        The newly created reference sample directory will conain an index file
-        table with no rows, an empty SED data file and an empty PDZ data file.
+        The newly created reference sample directory will conain an empty index
+        file, an empty SED data file and an empty PDZ data file.
         """
         
         logger.debug('Creating reference sample directory ' + path + '...')
@@ -43,11 +40,8 @@ class ReferenceSample(object):
         # Create the directory
         os.makedirs(path)
         
-        # Create an empty index file
-        index = Table(dtype=[('ID', 'int64'), ('SED_POS', 'int64'), ('PDZ_POS', 'int64')])
-        index.write(os.path.join(path, _index_filename), format='fits')
-        
-        # Create  empty sed and pdz data files
+        # Create  empty index, sed and pdz data files
+        open(os.path.join(path, _index_filename), 'wb').close()
         open(os.path.join(path, _sed_data_filename), 'wb').close()
         open(os.path.join(path, _pdz_daa_filename), 'wb').close()
     

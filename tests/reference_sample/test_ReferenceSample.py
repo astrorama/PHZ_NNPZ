@@ -43,17 +43,10 @@ def test_createNew_success(temp_dir_fixture):
     # Check the directory was creted correctly
     assert os.path.isdir(dir_name)
     
-    # Check that the index file is created and that it contains the ID, SED_POS
-    # and PDZ_POS columns with the correct types
-    index_file = os.path.join(dir_name, 'index.fits')
+    # Check that the empty index file is created
+    index_file = os.path.join(dir_name, 'index.bin')
     assert os.path.exists(index_file)
-    table = Table.read(index_file)
-    assert 'ID' in table.colnames
-    assert table.dtype['ID'].type == np.int64
-    assert 'SED_POS' in table.colnames
-    assert table.dtype['SED_POS'].type == np.int64
-    assert 'PDZ_POS' in table.colnames
-    assert table.dtype['SED_POS'].type == np.int64
+    assert os.path.getsize(index_file) == 0
     
     # Check that the empty SED file is created
     sed_file = os.path.join(dir_name, 'sed_data.bin')

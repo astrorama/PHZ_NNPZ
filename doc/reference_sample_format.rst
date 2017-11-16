@@ -74,16 +74,17 @@ Index file
 ----------
 
 The index file contains information to easily retrieve the SED template and PDZ
-data. It is a FITS table containing a row for each reference sample object, with
-the following columns:
+data. The file is named `index.bin` and it also follows a custom binary format.
+The information of each reference sample object is stored sequentially in the
+following way:
 
-- **ID:** 
-  The identifier of the object (long integer of 8 bytes)
-- **SED_POS:** 
-  The position of the template in the SED template data file, from the beginning
-  of the file
-- **PDZ_POS:** 
-  The position of the PDZ data in the PDZ file from the beginning of the file
+.. image:: images/Index_file_format.png
+
+- The first 8 bytes contain the object identifier as a long signed integer
+- The next 8 bytes contain the position of the SED of the object in the SED data
+  file, as a long signed integer
+- The last 8 bytes contain the position of the PDZ of the object in the PDZ data
+  file, as a long signed integer
 
 If the PDZ or SED data file does not yet contain data for a given template (for
 example if the SED file is created first and the PDZ file in a second run or
