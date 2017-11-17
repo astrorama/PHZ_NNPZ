@@ -17,8 +17,15 @@ class PdzDataProvider(object):
     
     def __init__(self, filename):
         """Creates a new instance for handling the given file.
+        
+        Raises:
+            FileNotFoundException: If the file does not exist
         """
         self.__filename = filename
+        
+        if not os.path.exists(filename):
+            raise FileNotFoundException(filename)
+        
         # Read from the file the redshift beans, if the header is there
         self.__redshift_bins = None
         if os.path.getsize(self.__filename) > 0:

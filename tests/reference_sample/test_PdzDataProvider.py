@@ -17,6 +17,18 @@ from .fixtures import redshift_bins_fixture, pdz_list_fixture, pdz_data_file_fix
 
 ###############################################################################
 
+def test_constructor_missingFile(temp_dir_fixture):
+    """Tests the case that the file does not exist"""
+    
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'missing')
+    
+    # Then
+    with pytest.raises(FileNotFoundException):
+        PdzDataProvider(filename)
+
+###############################################################################
+
 def test_setRedshiftBins_notSetBefore(temp_dir_fixture):
     """Tests that if the file has no header the setRedshftBins() populates it correctly"""
     
