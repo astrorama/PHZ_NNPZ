@@ -16,8 +16,15 @@ class SedDataProvider(object):
     
     
     def __init__(self, filename):
-        """Creates a new instance for handling the given file"""
+        """Creates a new instance for handling the given file.
+        
+        Raises:
+            FileNotFoundException: If the file does not exist
+        """
         self.__filename = filename
+        
+        if not os.path.exists(filename):
+            raise FileNotFoundException(filename)
     
     
     def readSed(self, pos):

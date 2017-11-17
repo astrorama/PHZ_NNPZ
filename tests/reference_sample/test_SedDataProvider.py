@@ -17,6 +17,18 @@ from .fixtures import sed_data_file_fixture, sed_list_fixture
 
 ###############################################################################
 
+def test_constructor_missingFile(temp_dir_fixture):
+    """Tests the case that the file does not exist"""
+    
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'missing')
+    
+    # Then
+    with pytest.raises(FileNotFoundException):
+        SedDataProvider(filename)
+
+###############################################################################
+
 def test_readSed_success(sed_data_file_fixture, sed_list_fixture):
     """Tests successful call of readSed()"""
     

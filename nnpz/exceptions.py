@@ -44,3 +44,11 @@ class UnknownNameException(NnpzException):
 
 class AmbiguityException(NnpzException):
     pass
+
+
+class CorruptedFileException(NnpzException):
+    pass
+
+
+class InvalidPositionException(NnpzException):
+    pass
