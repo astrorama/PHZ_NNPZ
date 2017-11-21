@@ -498,3 +498,108 @@ def test_setPdzPosition_success(temp_dir_fixture):
         
 ###############################################################################
 
+def test_size(temp_dir_fixture):
+    """Test calling the size() method"""
+    
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'index.bin')
+    with open(filename, 'wb') as f:
+        np.asarray([1,5,10,
+                    2,15,20,
+                    3,25,30,
+                    4,-1,-1,
+                    5,-1,-1], dtype=np.int64).tofile(f)
+                    
+    # When
+    provider = IndexProvider(filename)
+    s = provider.size()
+    
+    # Then
+    assert s == 5
+        
+###############################################################################
+
+def test_firstIdMissingSedData(temp_dir_fixture):
+    """Test calling the firstIdMissingSedData() method"""
+    
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'index.bin')
+    with open(filename, 'wb') as f:
+        np.asarray([1,5,10,
+                    2,15,20,
+                    3,25,30,
+                    4,-1,-1,
+                    5,-1,-1], dtype=np.int64).tofile(f)
+                    
+    # When
+    provider = IndexProvider(filename)
+    missing_id = provider.firstIdMissingSedData()
+    
+    # Then
+    assert missing_id == 4
+    
+    # When
+    provider.setSedPosition(4, 35)
+    missing_id = provider.firstIdMissingSedData()
+    
+    # Then
+    assert missing_id == 5
+    
+    # When
+    provider.setSedPosition(5, 45)
+    missing_id = provider.firstIdMissingSedData()
+    
+    # Then
+    assert missing_id is None
+    
+    # When
+    provider.appendId(10)
+    missing_id = provider.firstIdMissingSedData()
+    
+    # Then
+    assert missing_id == 10
+        
+###############################################################################
+
+def test_firstIdMissingPdzData(temp_dir_fixture):
+    """Test calling the firstIdMissingPdzData() method"""
+    
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'index.bin')
+    with open(filename, 'wb') as f:
+        np.asarray([1,5,10,
+                    2,15,20,
+                    3,25,30,
+                    4,-1,-1,
+                    5,-1,-1], dtype=np.int64).tofile(f)
+                    
+    # When
+    provider = IndexProvider(filename)
+    missing_id = provider.firstIdMissingPdzData()
+    
+    # Then
+    assert missing_id == 4
+    
+    # When
+    provider.setPdzPosition(4, 35)
+    missing_id = provider.firstIdMissingPdzData()
+    
+    # Then
+    assert missing_id == 5
+    
+    # When
+    provider.setPdzPosition(5, 45)
+    missing_id = provider.firstIdMissingPdzData()
+    
+    # Then
+    assert missing_id is None
+    
+    # When
+    provider.appendId(10)
+    missing_id = provider.firstIdMissingPdzData()
+    
+    # Then
+    assert missing_id == 10
+        
+###############################################################################
+

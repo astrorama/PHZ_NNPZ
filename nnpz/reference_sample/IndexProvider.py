@@ -76,6 +76,23 @@ class IndexProvider(object):
             if obj_id in self.__index_map:
                 raise IdMismatchException('Duplicate ID ' + str(obj_id))
             self.__index_map[obj_id] = [i, sed_pos, pdz_pos]
+            
+        # Keep track of the position of the first objects with SED and PDZ data set to -1
+        self.__first_missing_sed_index = None
+        for i, pos in enumerate(self.__sed_pos_list):
+            if pos == -1:
+                self.__first_missing_sed_index = i
+                break
+        self.__first_missing_pdz_index = None
+        for i, pos in enumerate(self.__pdz_pos_list):
+            if pos == -1:
+                self.__first_missing_pdz_index = i
+                break
+            
+            
+    def size(self):
+        """Returns the number of objects in the index"""
+        return self.__id_list.shape[0]
     
     
     def getIdList(self):
@@ -135,6 +152,12 @@ class IndexProvider(object):
         self.__sed_pos_list = np.append(self.__sed_pos_list, -1)
         self.__pdz_pos_list = np.append(self.__pdz_pos_list, -1)
         self.__index_map[new_id] = [len(self.__id_list)-1, -1, -1]
+        
+        # Check if the newly created entry is the first with data set to -1
+        if self.__first_missing_sed_index is None:
+            self.__first_missing_sed_index = len(self.__id_list) - 1
+        if self.__first_missing_pdz_index is None:
+            self.__first_missing_pdz_index = len(self.__id_list) - 1
     
     
     def setSedPosition(self, obj_id, new_pos):
@@ -176,6 +199,12 @@ class IndexProvider(object):
         #Update the list and the map
         self.__sed_pos_list[i] = new_pos
         self.__index_map[obj_id][1] = new_pos
+        
+        # Update the index of the first missing SED object
+        if i + 1 < len(self.__id_list):
+            self.__first_missing_sed_index = i + 1
+        else:
+            self.__first_missing_sed_index = None
     
     
     def setPdzPosition(self, obj_id, new_pos):
@@ -217,3 +246,27 @@ class IndexProvider(object):
         #Update the list and the map
         self.__pdz_pos_list[i] = new_pos
         self.__index_map[obj_id][2] = new_pos
+        
+        # Update the index of the first missing PDZ object
+        if i + 1 < len(self.__id_list):
+            self.__first_missing_pdz_index = i + 1
+        else:
+            self.__first_missing_pdz_index = None
+        
+        
+    def firstIdMissingSedData(self):
+        """Returns the ID of the first reference sample object which does not
+        have SED data already set, or None if all SEDs are set"""
+        if not self.__first_missing_sed_index is None:
+            return self.__id_list[self.__first_missing_sed_index]
+        else:
+            return None
+        
+        
+    def firstIdMissingPdzData(self):
+        """Returns the ID of the first reference sample object which does not
+        have PDZ data already set, or None if all PDZs are set"""
+        if not self.__first_missing_pdz_index is None:
+            return self.__id_list[self.__first_missing_pdz_index]
+        else:
+            return None
