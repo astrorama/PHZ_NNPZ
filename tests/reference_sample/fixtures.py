@@ -160,3 +160,30 @@ def photometry_dir_fixture(temp_dir_fixture, photometry_data_fixture):
     return temp_dir_fixture
     
 ##############################################################################
+    
+@pytest.fixture()
+def reference_sample_dir_fixture(temp_dir_fixture, sed_data_file_fixture,
+                                 pdz_data_file_fixture, photometry_dir_fixture,
+                                 sed_list_fixture, redshift_bins_fixture):
+    """Returns a directory which contains a reference sample"""
+    
+    # Create the index file
+    pdz_length = len(redshift_bins_fixture)
+    pdz_offset = 4 + 4 * pdz_length
+    with open(os.path.join(temp_dir_fixture, 'index.bin'), 'wb') as f:
+        
+        # Add all the entries for the objects with data
+        sed_pos = 0
+        pdz_pos = pdz_offset
+        for obj_id, sed_data in sed_list_fixture:
+            np.asarray([obj_id, sed_pos, pdz_pos], dtype=np.int64).tofile(f)
+            sed_pos += 8 + 4 + 4 * sed_data.size
+            pdz_pos += 8 + 4 * pdz_length
+        
+        # Add two more objects without data
+        np.asarray([100, -1, -1], dtype=np.int64).tofile(f)
+        np.asarray([101, -1, -1], dtype=np.int64).tofile(f)
+    
+    return temp_dir_fixture
+    
+##############################################################################
