@@ -17,6 +17,9 @@ class IndexProvider(object):
     
     def __checkPositionValidity(self, pos_list, name):
         
+        # Create a numpy array for easier handling
+        pos_list = np.asarray(pos_list, dtype=np.int64)
+        
         # Check if any value is less than -1
         if np.any(pos_list < -1):
             raise InvalidPositionException('Negative ' + name + ' position values')
@@ -60,9 +63,9 @@ class IndexProvider(object):
         # Read the data from the file. They are continuous values of (ID, SED_POS, PDZ_POS)
         all_data = np.fromfile(filename, dtype=np.int64)
         all_data = all_data.reshape((3, len(all_data) // 3), order='F')
-        self.__id_list = all_data[0,:]
-        self.__sed_pos_list = all_data[1,:]
-        self.__pdz_pos_list = all_data[2,:]
+        self.__id_list = list(all_data[0,:])
+        self.__sed_pos_list = list(all_data[1,:])
+        self.__pdz_pos_list = list(all_data[2,:])
         
         # Check if the positions are valid
         self.__checkPositionValidity(self.__sed_pos_list, 'SED')
@@ -92,7 +95,7 @@ class IndexProvider(object):
             
     def size(self):
         """Returns the number of objects in the index"""
-        return self.__id_list.shape[0]
+        return len(self.__id_list)
     
     
     def getIdList(self):
@@ -148,9 +151,9 @@ class IndexProvider(object):
             np.asarray([new_id, -1, -1], dtype=np.int64).tofile(f)
         
         # Update the lists and the map
-        self.__id_list = np.append(self.__id_list, new_id)
-        self.__sed_pos_list = np.append(self.__sed_pos_list, -1)
-        self.__pdz_pos_list = np.append(self.__pdz_pos_list, -1)
+        self.__id_list.append(new_id)
+        self.__sed_pos_list.append(-1)
+        self.__pdz_pos_list.append(-1)
         self.__index_map[new_id] = [len(self.__id_list)-1, -1, -1]
         
         # Check if the newly created entry is the first with data set to -1
@@ -158,8 +161,8 @@ class IndexProvider(object):
             self.__first_missing_sed_index = len(self.__id_list) - 1
         if self.__first_missing_pdz_index is None:
             self.__first_missing_pdz_index = len(self.__id_list) - 1
-    
-    
+            
+            
     def setSedPosition(self, obj_id, new_pos):
         """Sets the SED data file position for the given object.
         
