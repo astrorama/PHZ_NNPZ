@@ -74,8 +74,7 @@ class SedDataProvider(object):
         Raises:
             InvalidDimensionsException: If the dimensions of the given data
                 object are incorrect.
-            InvalidAxisException: If the wavelength values of the SED are not strictly
-                increasing.
+            InvalidAxisException: If there are decreasing wavelength values
         """
         
         # First convert the data in a numpy array for easier handling
@@ -89,9 +88,9 @@ class SedDataProvider(object):
             raise InvalidDimensionsException('data second dimension must be of size' +
                 ' 2 but was ' + str(data_arr.shape[1]))
                 
-        # Check that the wavelength axis is striictly increasing
-        if not np.all(data_arr[:-1,0] < data_arr[1:,0]):
-            raise InvalidAxisException('Wavelength axis must be strictly increasing')
+        # Check that the wavelength axis does not have decreasing values
+        if not np.all(data_arr[:-1,0] <= data_arr[1:,0]):
+            raise InvalidAxisException('Wavelength axis must no have decreasing values')
         
         # The position of the new data will be the current size of the file
         sed_pos = os.path.getsize(self.__filename)

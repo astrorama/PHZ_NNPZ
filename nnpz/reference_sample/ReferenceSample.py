@@ -217,7 +217,7 @@ class ReferenceSample(object):
             AlreadySetException: If the SED data are aready set for the given ID
             InvalidPositionException: If the SED of the previous object is not yet set
             InvalidDimensionsException: If the given data dimensions are wrong
-            InvalidAxisException: If the wavelength values are not strictly increasing
+            InvalidAxisException: If there are decreasing wavelength values
         """
         
         sed_pos, _ = self.__index.getPositions(obj_id)
