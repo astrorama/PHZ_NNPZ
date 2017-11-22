@@ -148,7 +148,7 @@ class ReferenceSample(object):
             obj_id: The ID of the object to retrieve the PDZ for
         
         Returns:
-            None if the DZ is not set for the given object, otherwise the data
+            None if the PDZ is not set for the given object, otherwise the data
             of the PDZ as a two dimensional numpy array of single precission
             floats. The first dimension has size same as the number of the knots
             and the second dimension has always size equal to two, with the
@@ -288,3 +288,37 @@ class ReferenceSample(object):
         return self.__index.firstIdMissingPdzData()
     
     
+    def iterate(self):
+        """Returns an iterable object over the reference sample objects.
+        
+        The objects iterated provide the following members:
+        - id: The ID of the object
+        - sed: None if the SED is not set for the given object, otherwise the
+            data of the SED as a two dimensional numpy array of single
+            precission floats. The first dimension has size same as the number
+            of the knots and the second dimension has always size equal to two,
+            with the first element representing the wavelength and the second
+            the energy value.
+        - pdz: None if the PDZ is not set for the given object, otherwise the
+            data of the PDZ as a two dimensional numpy array of single
+            precission floats. The first dimension has size same as the number
+            of the knots and the second dimension has always size equal to two,
+            with the first element representing the wavelength and the second
+            the probability value.
+        """
+        
+        class Element(object):
+            
+            def __init__(self, obj_id, ref_sample):
+                self.id = obj_id
+                self.__ref_sample = ref_sample
+                
+            @property
+            def sed(self):
+                return self.__ref_sample.getSedData(self.id)
+                
+            @property
+            def pdz(self):
+                return self.__ref_sample.getPdzData(self.id)
+        
+        return (Element(i, self) for i in self.getIds())
