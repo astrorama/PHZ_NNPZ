@@ -650,4 +650,58 @@ def test_firstIdMissingPdzData(reference_sample_dir_fixture):
     assert missing_id == 200
         
 ###############################################################################
+        
+def test_iterate_ids(reference_sample_dir_fixture, sed_list_fixture):
+    """Test iteration of the sample for the ID values"""
+    
+    # Given
+    id_list = [i for i,_ in sed_list_fixture] + [100, 101]
+    
+    # When
+    provider = ReferenceSample(reference_sample_dir_fixture)
+    
+    # Then
+    for obj, expected in zip(provider.iterate(), id_list):
+        assert hasattr(obj, 'id')
+        assert obj.id == expected
+        
+###############################################################################
+    
+def test_iterate_seds(reference_sample_dir_fixture, sed_list_fixture):
+    """Test iteration of the sample for the SED values"""
+    
+    # Given
+    sed_list = [s for _,s in sed_list_fixture] + [None, None]
+    
+    # When
+    provider = ReferenceSample(reference_sample_dir_fixture)
+    
+    # Then
+    for obj, expected in zip(provider.iterate(), sed_list):
+        assert hasattr(obj, 'sed')
+        if obj.sed is None:
+            assert expected == None
+        else:
+            assert np.all(obj.sed == expected)
+        
+###############################################################################
+    
+def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_list_fixture):
+    """Test iteration of the sample for the PDZ values"""
+    
+    # Given
+    pdz_list = [np.stack((redshift_bins_fixture,p), axis=-1) for _,p in pdz_list_fixture] + [None, None]
+    
+    # When
+    provider = ReferenceSample(reference_sample_dir_fixture)
+    
+    # Then
+    for obj, expected in zip(provider.iterate(), pdz_list):
+        assert hasattr(obj, 'pdz')
+        if obj.pdz is None:
+            assert expected == None
+        else:
+            assert np.all(obj.pdz == expected)
+        
+###############################################################################
     
