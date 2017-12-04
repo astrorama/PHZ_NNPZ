@@ -52,3 +52,7 @@ class CorruptedFileException(NnpzException):
 
 class InvalidPositionException(NnpzException):
     pass
+
+
+class InvalidPathException(NnpzException):
+    pass
