@@ -102,3 +102,6 @@ ENV/
 
 # Netbeans related files
 nb-configuration.xml
+
+# PyCharm related files
+.idea
