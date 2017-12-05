@@ -10,7 +10,7 @@ import numpy as np
 
 from nnpz.utils import Logging
 from nnpz.exceptions import *
-from nnpz.reference_sample import IndexProvider, PdzDataProvider, PhotometryProvider, SedDataProvider
+from nnpz.reference_sample import IndexProvider, PdzDataProvider, SedDataProvider
 
 
 logger = Logging.getLogger('ReferenceSample')
@@ -91,7 +91,6 @@ class ReferenceSample(object):
         self.__index = IndexProvider(self.__index_path)
         self.__sed = SedDataProvider(self.__sed_path)
         self.__pdz = PdzDataProvider(self.__pdz_path)
-        self.__photometry = PhotometryProvider(self.__root_path)
         
         
     def size(self):

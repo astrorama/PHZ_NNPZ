@@ -7,6 +7,8 @@ from __future__ import division, print_function
 
 import os
 import pytest
+import numpy as np
+from astropy.table import Table, Column
 
 from tests.util_fixtures import temp_dir_fixture
 
@@ -43,5 +45,63 @@ def filter_dir_fixture(temp_dir_fixture, filters_fixture):
                     f.write(str(x) + '\t' + str(y) + '\n')
 
     return filter_dir
+
+##############################################################################
+
+@pytest.fixture()
+def photometry_data_fixture():
+    """Returns data for two photometry files.
+
+    The data are the following:
+
+    File photo1.fits:
+    ID A1 A2 A3 A4
+    -- -- -- -- --
+     1  1  5  9 13
+     3  2  6 10 14
+    12  3  7 11 15
+     7  4  8 12 16
+
+    File photo2.fits:
+    ID B1 B2 B3 A4
+    -- -- -- -- --
+     1 17 21 25 29
+     3 18 22 26 30
+    12 19 23 27 31
+     7 20 24 28 32
+    """
+    return {
+        'photo1.fits': {
+            'ID': [1,3,12,7],
+            'A1': [1,2,3,4],
+            'A2': [5,6,7,8],
+            'A3': [9,10,11,12],
+            'A4': [13,14,15,16]
+        },
+        'photo2.fits': {
+            'ID': [1,3,12,7],
+            'B1': [17,18,19,20],
+            'B2': [21,22,23,24],
+            'B3': [25,26,27,28],
+            'A4': [29,30,31,32]
+        }
+    }
+
+##############################################################################
+
+@pytest.fixture()
+def photometry_dir_fixture(temp_dir_fixture, photometry_data_fixture):
+    """Returns a directory which contains FITS files with photometry data"""
+    for f in photometry_data_fixture:
+        columns = photometry_data_fixture[f]
+        t = Table()
+        t.meta['EXTNAME'] = 'NNPZ_PHOTOMETRY'
+        t['ID'] = Column(np.asarray(columns['ID'], dtype=np.int64))
+        for name in columns:
+            data = columns[name]
+            if name != 'ID':
+                t[name] = Column(np.asarray(data, dtype=np.float32))
+        t.write(os.path.join(temp_dir_fixture, f), format='fits')
+    return temp_dir_fixture
 
 ##############################################################################

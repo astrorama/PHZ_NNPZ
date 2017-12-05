@@ -3,3 +3,4 @@ from .DirectoryFilterProvider import DirectoryFilterProvider
 from .SedPreprocessingInterface import SedPreprocessingInterface
 from .DefaultSedPreprocessing import DefaultSedPreprocessing
 from .PhotonSedPreprocessing import PhotonSedPreprocessing
+from .PhotometryProvider import PhotometryProvider

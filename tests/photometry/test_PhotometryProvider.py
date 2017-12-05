@@ -11,7 +11,7 @@ from astropy.table import Table
 import numpy as np
 
 from nnpz.exceptions import *
-from nnpz.reference_sample.PhotometryProvider import PhotometryProvider
+from nnpz.photometry import PhotometryProvider
 
 from tests.util_fixtures import temp_dir_fixture
 from .fixtures import photometry_data_fixture, photometry_dir_fixture

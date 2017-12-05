@@ -31,7 +31,7 @@ def test_type():
     """Test the type() returns correctly"""
 
     # Given
-    expected = "FLUX_ENERGY"
+    expected = "ENERGY_FLUX"
 
     # When
     processor = DefaultSedPreprocessing()

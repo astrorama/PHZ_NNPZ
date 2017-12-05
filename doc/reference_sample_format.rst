@@ -17,8 +17,7 @@ Reference sample files organization
 To facilitate access and appending, the reference sample information is stored
 in different files. The first file stores the SED template data, the second
 stores the PDZ data and the third one acts as an index for accessing the
-previous ones. For eac reference set of filters, there is a separate photometry
-file. All these files are grouped inside a directory.
+previous ones. All these files are grouped inside a directory.
 
 SED template data file
 ----------------------
@@ -94,19 +93,6 @@ different than -1, all previous positions must also be different than -1.
 Similarly, if a position is marked as -1, all the consecutive positions must be
 -1.
 
-Photometry files
-----------------
-
-The photometry files contain the photometry values of the reference sample, as
-seen through different sets of filters. For each set of filters, there is a FITS
-file containing a binary table. These files are recognized by the name of the
-table HDU (`EXTNAME` keyword), which which must be set to`NNPZ_PHOTOMETRY`. The
-first column of the table represents the ID of the corresponding template (long
-integer type of 8 bytes) and has the name `ID`. It is followed by as many
-columns as the reference filters, which keep the flux density of each filter,
-expressed in |mu|\Jansky. All flux columns are single precision floating point
-values (4 bytes). The names of the columns represent the name of the filters.
-
 File validation rules
 ---------------------
 
@@ -126,7 +112,3 @@ true:
   the size of the PDZ data file
 - For each row of the index file with PDZ_POS not -1, reading a long integer
   from this position of the PHZ data file must return the value of the ID column
-- The number of rows in any photometry file must be smaller or equal to the
-  number of rows in the index file
-- The rows of all photometry and index files must have the same ID values, with
-  the same order
