@@ -5,8 +5,6 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from math import exp
-
 import pytest
 import os
 import numpy as np
