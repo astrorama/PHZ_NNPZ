@@ -1,23 +1,20 @@
-.. include:: substitutions.txt
-
-.. _reference_sample_format:
-
 Reference sample file format
 ============================
 
-Due to the big size of the reference sample SED and PDZ data, a custom binary
-format is designed. Having in mind that the amount of data will not fit in the
-RAM memory, the design is trying to optimize the random access of the reference
-sample objects during the execution and to facilitate appending new templates
-and PDZs.
+Due to the big size of the reference sample SED and PDZ data, NNPZ uses a custom
+binary format for storing the reference sample. Having in mind that the amount
+of data will not fit in the RAM memory, the design is trying to optimize the
+random access of the reference sample objects during the execution and to
+facilitate appending new templates and PDZs.
 
 Reference sample files organization
 -----------------------------------
 
 To facilitate access and appending, the reference sample information is stored
-in different files. The first file stores the SED template data, the second
-stores the PDZ data and the third one acts as an index for accessing the
-previous ones. All these files are grouped inside a directory.
+in three different files. The first file stores the SED template data, the
+second stores the PDZ data and the third one acts as an index for accessing the
+previous ones. All these files are grouped inside a directory, which represents
+the reference sample.
 
 SED template data file
 ----------------------
@@ -26,7 +23,7 @@ The SED template data of the reference sample are stored in a binary file
 following a custom format. The file is named `sed_data.bin`. The data of each
 template are stored sequentially in the following way:
 
-.. image:: images/SED_data_file_format.png
+![](images/SED_data_file_format.png)
 
 - The first 8 bytes of the template is its identifier (a long signed integer)
 - The next 4 bytes contain the number of points (n) the template consists of (as
@@ -37,8 +34,8 @@ template are stored sequentially in the following way:
 
 This format allows to perform a fast read of any template knowing its initial
 position in the file. Note that units are not supported by the format and they
-are assumed to be |AA| for the wavelength and erg/s/cm\ :sup:`2`/|AA| for the
-flux density.
+are assumed to be &#x212B; for the wavelength and
+erg/s/cm<sup>`2`</sup>/&#x212B; for the flux density.
 
 When a new template is added to the file, it is always added at the end. This
 way the location of the templates is persistent for the lifetime of the file.
@@ -56,7 +53,7 @@ data file, it follows a custom binary format. One big difference between the two
 formats is that all the PDZs in the file share the same redshift bins. The file
 is organized the following way:
 
-.. image:: images/PDZ_file_format.png
+![](images/PDZ_file_format.png)
 
 - The first 4 bytes contain the number of points (n) that each PDZ consists of
   (as an unsigned integer)
@@ -77,7 +74,7 @@ data. The file is named `index.bin` and it also follows a custom binary format.
 The information of each reference sample object is stored sequentially in the
 following way:
 
-.. image:: images/Index_file_format.png
+![](images/Index_file_format.png)
 
 - The first 8 bytes contain the object identifier as a long signed integer
 - The next 8 bytes contain the position of the SED of the object in the SED data
@@ -112,3 +109,4 @@ true:
   the size of the PDZ data file
 - For each row of the index file with PDZ_POS not -1, reading a long integer
   from this position of the PHZ data file must return the value of the ID column
+
