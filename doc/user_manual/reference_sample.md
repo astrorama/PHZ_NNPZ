@@ -3,6 +3,7 @@ Reference Sample
 
 - [Accessing an existing reference sample](#accessing-an-existing-reference-sample)
 - [Creating a new reference sample](#creating-a-new-reference-sample)
+- [Adding data to a reference sample](#adding-data-to-a-reference-sample)
 
 The NNPZ uses a custom binary format for storing the reference sample data. A
 detailed description of the format can be found
@@ -27,8 +28,20 @@ need to create a new `ReferenceSample` instance:
 sample = ReferenceSample('/path/to/your/reference/sample/dir')
 ```
 
+You can check how many objects contains the reference sample by calling the
+`size()` method. You can get a list with all the object ids by calling the
+`getIds()` method:
+
+```python
+# Print all object IDs if they are not too many
+if sample.size() < 10:
+    print(sample.getIds())
+else:
+    print('Too many objects to print their IDs!')
+```
+
 To visit all the objects of the reference sample, you can call the `iterate()`
-method, which returns an iterable:
+method, which returns an iterable which you can directly use in a python loop:
 
 ```python
 # This will print the IDs of all the objects in the reference sample
@@ -52,7 +65,8 @@ and is always set, but the reference sample might not contain the SED template
 or the PDZ of an object. In this case, the members `sed` and `pdz` will be set
 to `None` accordingly. Note that because of the sequential way the data are
 stored in the file, after meeting the first missing SED or PDZ, it is guaranteed
-that all following will also be missing.
+that all following will also be missing. The order of the iteration is guaranteed
+to be the same as the order of the IDs returned by the `getIds()` method.
 
 The second way to access the reference sample data is by using an objects ID as
 shown at the following example:
@@ -75,18 +89,6 @@ import matplotlib.pyplot as plt
 plt.plot(sed[:,0], sed[:,1])
 ```
 
-If you do not know the ID of the reference sample object you are interested
-with, a list with all object IDs can be retrieved by using the `getIds()`
-method:
-
-```python
-# Get the IDs of all objects in the reference sample
-ids = sample.getIds()
-```
-
-The order of the returned IDs is guaranteed to be the same as the order the
-objects are being iterated wen calling the `iterate()` method.
-
 
 Creating a new reference sample
 -------------------------------
@@ -104,3 +106,63 @@ defined by the NNPZ reference sample format. When first created the reference
 sample will contain no objects. For convenience, the factory method returns a
 `ReferenceSample` instance, which can be used to populate the reference sample
 with objects, as described in the next secions.
+
+
+Adding data to a reference sample
+---------------------------------
+
+Adding a new object to the reference sample is done by calling the
+`createObject()` method, which gets as parameter the ID of the new object:
+
+```python
+# Add ten new objects in the sample
+for obj_id in range(10):
+    sample.createObject(obj_id)
+```
+
+The given ID must be a (64 bit signed) integer. Note that the new objects are
+always added at the end of the reference sample and they will be the last ones
+accessed during an iteration.
+ 
+The newly created objects are not associated yet with any SED or PDZ data.
+Accessing these data for the newly added IDs will return `None`. Adding SED data
+of an object is done by using the `addSedData()` method:
+
+```python
+# Add the SED data for the object with ID 1
+sample.addSedData(1, [(1,1), (2,2), (3,3)])
+```
+
+The first argument of the method is the ID of the object to add the SED for and
+the second is the daa of the SED as a two dimensional array-like object which
+can be converted to a numpy array (in the example a list of tuples is used).
+
+Even though the ID is passed as an argument to the `addSedData()` method, due to
+the sequential way the data are stored in the binary files, the SED data cannot
+be set in a random order, but sequentially (the ID argument is only used to
+avoid corruption of the reference sample by wrong calls). The ID of the first
+object which does not have the SED set (and is the next to call the
+`addSedData()` for) can be retrieved with the following call:
+
+```python
+# Get the ID of the first object not having the SED set yet
+obj_id = sample.firstIdMissingSedData()
+```
+
+If the SEDs of all the objects in the reference sample are already set, the
+method returns `None`.
+
+The method to add the PDZs of the objects is identical with adding the SEDs, but
+it uses the `addPdzData()` and `firstIdMissingPdzData()` methods instead:
+
+```python
+# Add the PDZ data for the next object
+obj_id = sample.firstIdMissingPdzData()
+sample.addPdzData(1, [(1,1), (2,2), (3,3)])
+```
+
+The only difference is that the PDZs of all the objects of the reference sample
+must have the same X axis, which is defined the the X axis of the first PDZ
+added. Note that the X axis still needs to be passed to the `addPdzData()`
+method for ALL the objects. This is done to avoid corrupting by mistake the
+reference sample with PDZs with X axis of correct length but wrong values.
