@@ -4,3 +4,5 @@ from .SedPreprocessingInterface import SedPreprocessingInterface
 from .DefaultSedPreprocessing import DefaultSedPreprocessing
 from .PhotonSedPreprocessing import PhotonSedPreprocessing
 from .PhotometryProvider import PhotometryProvider
+from .PhotometryCalculator import PhotometryCalculator
+from .PhotometryPrePostProcessorInterface import PhotometryPrePostProcessorInterface
