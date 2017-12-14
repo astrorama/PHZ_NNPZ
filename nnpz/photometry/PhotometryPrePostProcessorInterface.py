@@ -31,7 +31,7 @@ class PhotometryPrePostProcessorInterface(object):
 
 
     @abc.abstractmethod
-    def postProcess(self, intesity, filter_name, filter_trans):
+    def postProcess(self, intensity, filter_name, filter_trans):
         """Post-processes a band intensity.
 
         Args:
