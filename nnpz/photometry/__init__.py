@@ -6,3 +6,4 @@ from .PhotometryPrePostProcessorInterface import PhotometryPrePostProcessorInter
 from .PhotonPrePostProcessor import PhotonPrePostProcessor
 from .FnuPrePostProcessor import FnuPrePostProcessor
 from .FnuuJyPrePostProcessor import FnuuJyPrePostProcessor
+from .MagAbPrePostProcessor import MagAbPrePostProcessor
