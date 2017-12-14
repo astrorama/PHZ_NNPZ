@@ -5,3 +5,4 @@ from .PhotometryCalculator import PhotometryCalculator
 from .PhotometryPrePostProcessorInterface import PhotometryPrePostProcessorInterface
 from .PhotonPrePostProcessor import PhotonPrePostProcessor
 from .FnuPrePostProcessor import FnuPrePostProcessor
+from .FnuuJyPrePostProcessor import FnuuJyPrePostProcessor
