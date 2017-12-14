@@ -10,7 +10,7 @@ from platform import processor
 import pytest
 import numpy as np
 
-from nnpz.photometry import PhotonPrePostProcessor, PhotonPrePostProcessor
+from nnpz.photometry import PhotonPrePostProcessor
 
 
 ###############################################################################

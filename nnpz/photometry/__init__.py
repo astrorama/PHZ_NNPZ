@@ -4,3 +4,4 @@ from .PhotometryProvider import PhotometryProvider
 from .PhotometryCalculator import PhotometryCalculator
 from .PhotometryPrePostProcessorInterface import PhotometryPrePostProcessorInterface
 from .PhotonPrePostProcessor import PhotonPrePostProcessor
+from .FnuPrePostProcessor import FnuPrePostProcessor
