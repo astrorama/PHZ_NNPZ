@@ -7,3 +7,4 @@ from .PhotonPrePostProcessor import PhotonPrePostProcessor
 from .FnuPrePostProcessor import FnuPrePostProcessor
 from .FnuuJyPrePostProcessor import FnuuJyPrePostProcessor
 from .MagAbPrePostProcessor import MagAbPrePostProcessor
+from .ReferenceSamplePhotometryBuilder import ReferenceSamplePhotometryBuilder

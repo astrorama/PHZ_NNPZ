@@ -56,3 +56,7 @@ class InvalidPositionException(NnpzException):
 
 class InvalidPathException(NnpzException):
     pass
+
+
+class WrongTypeException(NnpzException):
+    pass
