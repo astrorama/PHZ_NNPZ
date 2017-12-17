@@ -1,0 +1,141 @@
+#!/usr/bin/env python
+
+"""
+Created on: 17/12/17
+Author: Nikolaos Apostolakos
+"""
+
+from __future__ import division, print_function
+
+import argparse
+import os
+import numpy as np
+from astropy.io import fits
+from astropy import table
+
+from nnpz.photometry import *
+from nnpz import ReferenceSample
+from nnpz.utils import Logging
+
+Logging.enableStdErrLogging('INFO')
+logger = Logging.getLogger('')
+
+# The different photometry types allowed
+type_map = {
+    'Photons' : (PhotonPrePostProcessor, 'Photon count rate in counts/s/cm^2'),
+    'F_nu' : (FnuPrePostProcessor, 'Energy flux density in erg/s/cm^2/Hz'),
+    'F_nu_uJy' : (FnuuJyPrePostProcessor, 'Energy flux density in uJy'),
+    'MAG_AB' : (MagAbPrePostProcessor, 'AB magnitude')
+}
+
+
+# Get the input from the user
+parser = argparse.ArgumentParser()
+parser.add_argument('--sample-dir', dest='sample_dir', type=str, metavar='DIR', required=True,
+                    help='The reference sample directory')
+parser.add_argument('--filter-dir', dest='filter_dir', type=str, metavar='DIR', required=True,
+                    help='The directory containing the filter transmissions')
+parser.add_argument('--type', dest='type', type=str, metavar=' | '.join(type_map), required=True,
+                    help='The type of the photometry to create')
+parser.add_argument('--out', dest='out', type=str, metavar='FILE', required=True,
+                    help='The output FITS file to create the photometry in')
+args = parser.parse_args()
+
+
+# Validate the user inputs
+if not args.type in type_map:
+    logger.error('ERROR: Invalid photometry type. Available types:')
+    for t in type_map:
+        logger.error('   ' + t + ' : ' + type_map[t][1])
+    exit(1)
+
+if os.path.exists(args.out):
+    logger.error('ERROR: File '+ args.out + ' already exists')
+    exit(1)
+os.makedirs(os.path.dirname(os.path.abspath(args.out)))
+
+
+# Open the reference sample for reading
+logger.info('')
+logger.info('Opening reference sample ' + args.sample_dir + '...')
+sample = ReferenceSample(args.sample_dir)
+logger.info('Successfully opened reference sample')
+
+
+# Read the filter transmissions
+logger.info('')
+logger.info('Reading filter transmissions from ' + args.filter_dir + '...')
+filter_provider = DirectoryFilterProvider(args.filter_dir)
+filter_name_list = filter_provider.getFilterNames()
+filter_map = {}
+for filter_name in filter_name_list:
+    logger.info('    ' + filter_name)
+    filter_map[filter_name] = filter_provider.getFilterTransmission(filter_name)
+logger.info('Successfully read filter transmissions')
+
+
+# Create the photometry builder to use for computing the photometry values
+pre_post_processor = type_map[args.type][0]()
+phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor)
+phot_builder.setFilters(filter_name_list)
+
+
+# Compute the photometry values
+logger.info('')
+logger.info('Computing photometry values...')
+logger.info('    Photometry type: ' + args.type)
+
+# The function which logs the progress
+total = sample.size()
+last_report = -1
+def progress_listener(progress):
+    global last_report
+    global total
+    global logger
+    if int(100 * progress / total) != last_report:
+        last_report = int(100 * progress / total)
+        logger.info('    Progress: ' + str(last_report) + '%')
+
+# Use the builder to compute the photometries and check if they were computed
+# for the full sample
+phot_map = phot_builder.buildPhotometry(sample.iterate(), progress_listener)
+if len(phot_map[filter_name_list[0]]) != sample.size():
+    logger.warning('    WARNING: Stopped because of reference sample object with missing SED')
+logger.info('Successfully computed photometry for ' + str(len(phot_map[filter_name_list[0]])) + ' objects')
+
+
+# Create the output
+logger.info('')
+logger.info('Creating output...')
+
+# The HDU list to store in the output file
+hdus = fits.HDUList()
+
+# Build a numpy array with the IDs of the objects for which we have photometry
+ids = np.zeros(len(phot_map[filter_name_list[0]]), dtype=np.int64)
+for obj, i in zip(sample.iterate(), range(len(ids))):
+    ids[i] = obj.id
+
+# Build the photometry table HDU
+phot_col_names = ['ID'] + filter_name_list
+phot_col_data = [table.Column(ids)]
+for f in filter_name_list:
+    phot_col_data.append(table.Column(phot_map[f]))
+phot_table = table.Table(phot_col_data, names=phot_col_names)
+phot_table.meta.update({'EXTNAME':'NNPZ_PHOTOMETRY', 'PHOTYPE':args.type})
+hdus.append(fits.BinTableHDU(phot_table))
+
+# Build the filter transmission HDUs
+for f in filter_name_list:
+    data = filter_map[f]
+    f_col_data = [
+        table.Column(data[:,0]),
+        table.Column(data[:,1])
+    ]
+    f_table = table.Table(f_col_data, names=['Wavelength', 'Transmission'])
+    f_table.meta.update({'EXTNAME':f})
+    hdus.append(fits.BinTableHDU(f_table))
+
+# Write the HDUs in the output file
+hdus.writeto(args.out)
+logger.info('Photometry created in ' + args.out)

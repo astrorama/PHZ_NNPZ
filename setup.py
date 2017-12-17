@@ -3,25 +3,26 @@
 from setuptools import setup, find_packages
 
 setup (
-       name='NNPZ',
-       version='0.1',
-       packages=find_packages(),
 
-       # Declare your packages' dependencies here, for eg:
-       install_requires=['astropy', 'numpy'],
+    name='NNPZ',
+    version='0.1',
+    packages=find_packages(),
 
-       # Fill in these to make your Egg ready for upload to
-       # PyPI
-       author='Nikolaos Apostolakos <nikoapos@gmail.com>',
-       author_email='',
+    # Declare your packages' dependencies here, for eg:
+    install_requires=['astropy', 'numpy'],
 
-       #summary = 'Just another Python package for the cheese shop',
-       url='https://github.com/nikoapos/NNPZ',
-       license='MIT',
-       long_description='Nearest Neighbors Photometric Redshift',
+    # Fill in these to make your Egg ready for upload to
+    # PyPI
+    author='Nikolaos Apostolakos <nikoapos@gmail.com>',
+    author_email='',
 
-       # could also include long_description, download_url, classifiers, etc.
+    #summary = 'Just another Python package for the cheese shop',
+    url='https://github.com/nikoapos/NNPZ',
+    license='MIT',
+    long_description='Nearest Neighbors Photometric Redshift',
 
-  
-       )
+    # Setup the scripts of the project
+    scripts=['bin/NnpzBuildPhotometry'],
+
+)
 

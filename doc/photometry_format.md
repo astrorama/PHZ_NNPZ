@@ -20,7 +20,7 @@ The extension name (`EXTNAME` header keyword) is always set to the string
 `NNPZ_PHOTOMETRY`. This name is used by NNPZ to detect photometry files, so it
 should never be changed.
 
-The header also contains the keyword `PHO_TYPE` which indicates the type of the
+The header also contains the keyword `PHOTYPE` which indicates the type of the
 photometry values stored in the file. The different photometry types are the
 following:
 

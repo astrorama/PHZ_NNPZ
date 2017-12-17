@@ -63,12 +63,15 @@ class ReferenceSamplePhotometryBuilder(object):
             self.__filter_map[f] = self.__filter_provider.getFilterTransmission(f)
 
 
-    def buildPhotometry(self, sample_iter):
+    def buildPhotometry(self, sample_iter, progress_listener=None):
         """Computes the photometry of the SEDs the given iterator traverses.
 
         Args:
             sample_iter: An iterator to reference sample objects (or any type
                 which provides the sed property)
+            progress_listener: A function which is called at each iteration with
+                parameter the current iteration number. It is ignored if None is
+                passed (default).
 
         Returns:
             A dictionary where the keys are the filter names and the values are
@@ -92,7 +95,11 @@ class ReferenceSamplePhotometryBuilder(object):
             photo_list_map[f] = []
 
         # Iterate through all the elements the iterator points to
-        for element in sample_iter:
+        for progress, element in enumerate(sample_iter):
+
+            # Report the progress
+            if not progress_listener is None:
+                progress_listener(progress)
 
             # If we have reached a missing SED stop the iteration
             if element.sed is None:
