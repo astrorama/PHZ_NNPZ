@@ -34,7 +34,7 @@ type_map = {
 parser = argparse.ArgumentParser()
 parser.add_argument('--sample-dir', dest='sample_dir', type=str, metavar='DIR', required=True,
                     help='The reference sample directory')
-parser.add_argument('--filter-dir', dest='filter_dir', type=str, metavar='DIR', required=True,
+parser.add_argument('--filters', dest='filters', type=str, metavar='DIR | LIST_FILE', required=True,
                     help='The directory containing the filter transmissions')
 parser.add_argument('--out-type', dest='type', type=str, metavar=' | '.join(type_map), required=True,
                     help='The type of the photometry to create')
@@ -53,7 +53,9 @@ if not args.type in type_map:
 if os.path.exists(args.out):
     logger.error('ERROR: File '+ args.out + ' already exists')
     exit(1)
-os.makedirs(os.path.dirname(os.path.abspath(args.out)))
+out_dir = os.path.dirname(os.path.abspath(args.out))
+if not os.path.exists(out_dir):
+    os.makedirs(os.path.dirname(os.path.abspath(args.out)))
 
 
 # Open the reference sample for reading
@@ -65,8 +67,11 @@ logger.info('Successfully opened reference sample')
 
 # Read the filter transmissions
 logger.info('')
-logger.info('Reading filter transmissions from ' + args.filter_dir + '...')
-filter_provider = DirectoryFilterProvider(args.filter_dir)
+logger.info('Reading filter transmissions from ' + args.filters + '...')
+if os.path.isdir(args.filters):
+    filter_provider = DirectoryFilterProvider(args.filters)
+else:
+    filter_provider = ListFileFilterProvider(args.filters)
 filter_name_list = filter_provider.getFilterNames()
 filter_map = {}
 for filter_name in filter_name_list:
