@@ -35,9 +35,9 @@ parser.add_argument('--sample-dir', dest='sample_dir', type=str, metavar='DIR', 
                     help='The reference sample directory')
 parser.add_argument('--filter-dir', dest='filter_dir', type=str, metavar='DIR', required=True,
                     help='The directory containing the filter transmissions')
-parser.add_argument('--type', dest='type', type=str, metavar=' | '.join(type_map), required=True,
+parser.add_argument('--out-type', dest='type', type=str, metavar=' | '.join(type_map), required=True,
                     help='The type of the photometry to create')
-parser.add_argument('--out', dest='out', type=str, metavar='FILE', required=True,
+parser.add_argument('--out-file', dest='out', type=str, metavar='FILE', required=True,
                     help='The output FITS file to create the photometry in')
 args = parser.parse_args()
 
