@@ -25,7 +25,8 @@ type_map = {
     'Photons' : (PhotonPrePostProcessor, 'Photon count rate in counts/s/cm^2'),
     'F_nu' : (FnuPrePostProcessor, 'Energy flux density in erg/s/cm^2/Hz'),
     'F_nu_uJy' : (FnuuJyPrePostProcessor, 'Energy flux density in uJy'),
-    'MAG_AB' : (MagAbPrePostProcessor, 'AB magnitude')
+    'MAG_AB' : (MagAbPrePostProcessor, 'AB magnitude'),
+    'F_lambda' : (FlambdaPrePostProcessor, 'Energy flux density in erg/s/cm^2/A')
 }
 
 
