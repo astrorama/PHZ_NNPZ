@@ -82,7 +82,7 @@ def test_getFilterNames_filterListFile_extraFilterFile(filter_dir_fixture, filte
     # Given
     with open(os.path.join(filter_dir_fixture, 'extra.txt'), 'w') as f:
         for i in range(10):
-            f.write(str(i) + '\n' + str(i))
+            f.write(str(i) + '\t' + str(i) + '\n')
     expected_names = [name for name,_ in filters_fixture]
 
     # When
@@ -102,7 +102,6 @@ def test_getFilterNames_filterListFile_undefinedName(filter_dir_fixture, filters
     with open(os.path.join(filter_dir_fixture, 'filter_list.txt')) as f:
         lines = f.readlines()
     lines[1] = lines[1][:lines[1].index(':')] + '\n'
-    print (lines)
     with open(os.path.join(filter_dir_fixture, 'filter_list.txt'), 'w') as f:
         for l in lines:
             f.write(l)

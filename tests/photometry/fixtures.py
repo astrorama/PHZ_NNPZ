@@ -49,6 +49,31 @@ def filter_dir_fixture(temp_dir_fixture, filters_fixture):
 ##############################################################################
 
 @pytest.fixture()
+def filter_list_file_fixture(temp_dir_fixture, filters_fixture):
+    """Returns a file containing a list with filter filenames.
+
+    The list contains the filters from the filters_fixture stored in subdirectories
+    following the order <Name>/<Name>File.txt. All the filters are aliased to their
+    name.
+    """
+
+    filter_dir = os.path.join(temp_dir_fixture, 'filter_dir')
+    os.makedirs(filter_dir)
+    list_file = os.path.join(filter_dir, 'list_file.txt')
+    with open(list_file, 'w') as lf:
+        for name, data in filters_fixture:
+            lf.write(name + '/' + name + 'File.txt : ' + name + '\n')
+            f_dir = os.path.join(filter_dir, name)
+            os.makedirs(f_dir)
+            with open(os.path.join(f_dir, name + 'File.txt'), 'w') as f:
+                for x, y in data:
+                    f.write(str(x) + '\t' + str(y) + '\n')
+
+    return list_file
+
+##############################################################################
+
+@pytest.fixture()
 def photometry_data_fixture():
     """Returns data for two photometry files.
 
