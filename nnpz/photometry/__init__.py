@@ -1,7 +1,6 @@
 from .FilterProviderInterface import FilterProviderInterface
 from .DirectoryFilterProvider import DirectoryFilterProvider
 from .ListFileFilterProvider import ListFileFilterProvider
-from .PhotometryProvider import PhotometryProvider
 from .PhotometryCalculator import PhotometryCalculator
 from .PhotometryPrePostProcessorInterface import PhotometryPrePostProcessorInterface
 from .PhotonPrePostProcessor import PhotonPrePostProcessor
