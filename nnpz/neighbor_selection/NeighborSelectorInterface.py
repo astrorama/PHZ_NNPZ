@@ -85,8 +85,12 @@ class NeighborSelectorInterface(object):
                     the coordinate value and the second the uncertainty
 
         Returns:
-            The indices of the neighbors in the first axis of the ref_data given
-            to the initialize() method, as a numpy array of long integers.
+            A tuple containing the following:
+            - The indices of the neighbors in the first axis of the ref_data
+                given to the initialize() method, as a numpy array of long
+                integers.
+            - A numpy array of single precision floats with the distances of the
+                neighbors.
 
         Implementations are allowed to return any number of neighbors. Note that
         this method is guaranteed to be executed after the _initializeImpl() has
@@ -108,8 +112,12 @@ class NeighborSelectorInterface(object):
                     the coordinate value and the second the uncertainty
 
         Returns:
-            The indices of the neighbors in the first axis of the ref_data given
-            to the initialize() method, as a numpy array of long integers.
+            A tuple containing the following:
+            - The indices of the neighbors in the first axis of the ref_data
+                given to the initialize() method, as a numpy array of long
+                integers.
+            - A numpy array of single precision floats with the distances of the
+                neighbors.
 
         Raises:
             UninitializedException: If the initialize() method is not called yet
