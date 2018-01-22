@@ -116,7 +116,6 @@ class BruteForceSelector(NeighborSelectorInterface):
         obj_errors = coordinate[:, 1]
 
         distances = self.__distance(self.__ref_data_values, self.__ref_data_errors, obj_values, obj_errors)
-        print(distances.shape)
         neighbor_ids = self.__selection(distances)
         neighbor_distances = distances[neighbor_ids]
 
