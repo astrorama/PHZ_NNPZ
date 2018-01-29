@@ -9,3 +9,4 @@ from .FnuuJyPrePostProcessor import FnuuJyPrePostProcessor
 from .MagAbPrePostProcessor import MagAbPrePostProcessor
 from .FlambdaPrePostProcessor import FlambdaPrePostProcessor
 from .ReferenceSamplePhotometryBuilder import ReferenceSamplePhotometryBuilder
+from .PhotometryProvider import PhotometryProvider

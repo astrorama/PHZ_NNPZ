@@ -9,6 +9,7 @@ import os
 import pytest
 import numpy as np
 from astropy.table import Table, Column
+import astropy.io.fits as fits
 
 from tests.util_fixtures import temp_dir_fixture
 
@@ -17,10 +18,10 @@ from tests.util_fixtures import temp_dir_fixture
 @pytest.fixture()
 def filters_fixture():
     """Returns the filters to be used for testing"""
-    return [('First', [(1, 0.1), (2, 0.2), (3, 0.4)]),
-            ('Second', [(4, 0.4), (5, 0.5), (6, 0.6)]),
-            ('Third', [(7, 0.7), (8, 0.8), (9, 0.9)]),
-            ('Fourth', [(1, 0.11), (2, 0.22), (3, 0.44)])
+    return [('First', np.asarray([(1, 0.1), (2, 0.2), (3, 0.4)], dtype=np.float32)),
+            ('Second', np.asarray([(4, 0.4), (5, 0.5), (6, 0.6)], dtype=np.float32)),
+            ('Third', np.asarray([(7, 0.7), (8, 0.8), (9, 0.9)], dtype=np.float32)),
+            ('Fourth', np.asarray([(1, 0.11), (2, 0.22), (3, 0.44)], dtype=np.float32))
     ]
 
 ##############################################################################
@@ -74,59 +75,62 @@ def filter_list_file_fixture(temp_dir_fixture, filters_fixture):
 ##############################################################################
 
 @pytest.fixture()
-def photometry_data_fixture():
-    """Returns data for two photometry files.
-
-    The data are the following:
-
-    File photo1.fits:
-    ID A1 A2 A3 A4
-    -- -- -- -- --
-     1  1  5  9 13
-     3  2  6 10 14
-    12  3  7 11 15
-     7  4  8 12 16
-
-    File photo2.fits:
-    ID B1 B2 B3 A4
-    -- -- -- -- --
-     1 17 21 25 29
-     3 18 22 26 30
-    12 19 23 27 31
-     7 20 24 28 32
-    """
-    return {
-        'photo1.fits': {
-            'ID': [1,3,12,7],
-            'A1': [1,2,3,4],
-            'A2': [5,6,7,8],
-            'A3': [9,10,11,12],
-            'A4': [13,14,15,16]
-        },
-        'photo2.fits': {
-            'ID': [1,3,12,7],
-            'B1': [17,18,19,20],
-            'B2': [21,22,23,24],
-            'B3': [25,26,27,28],
-            'A4': [29,30,31,32]
-        }
-    }
+def photometry_ids_fixure():
+    """Returns the IDs for the photometry file"""
+    return range(1, 100)
 
 ##############################################################################
 
 @pytest.fixture()
-def photometry_dir_fixture(temp_dir_fixture, photometry_data_fixture):
-    """Returns a directory which contains FITS files with photometry data"""
-    for f in photometry_data_fixture:
-        columns = photometry_data_fixture[f]
+def photometry_data_fixture(photometry_ids_fixure, filters_fixture):
+    """Returns the data for the photometry file.
+
+    The data are random numbers for each filter, both for the value and the
+    error. Only for the second filter the errors are zeros, indicating a missing
+    error column.
+    """
+    data = np.random.rand(len(photometry_ids_fixure), len(filters_fixture), 2).astype(np.float32)
+    data[:,1,1] = 0
+    return data
+
+##############################################################################
+
+@pytest.fixture()
+def photometry_file_fixture(temp_dir_fixture, photometry_ids_fixure, filters_fixture, photometry_data_fixture):
+    """Returns the path of a FITS file which contains the photometry.
+
+    All filters contain errors except of the second one. The transmission of the
+    third filter is not stored in the file. The type of the photometry is set to
+    F_nu_uJy.
+    """
+
+    hdus = fits.HDUList()
+
+    t = Table()
+    t.meta['EXTNAME'] = 'NNPZ_PHOTOMETRY'
+    t.meta['PHOTYPE'] = 'F_nu_uJy'
+
+    t['ID'] = Column(np.asarray(photometry_ids_fixure, dtype=np.int64))
+
+    for i, filter in enumerate(filters_fixture):
+        name = filter[0]
+        t[name] = Column(photometry_data_fixture[:, i, 0])
+        if not np.all(photometry_data_fixture[:, i, 1] == 0):
+            t[name+'_ERR'] = Column(photometry_data_fixture[:, i, 1])
+
+    hdus.append(fits.BinTableHDU(t))
+
+    for name, data in filters_fixture:
+        if name == filters_fixture[3][0]:
+            continue
         t = Table()
-        t.meta['EXTNAME'] = 'NNPZ_PHOTOMETRY'
-        t['ID'] = Column(np.asarray(columns['ID'], dtype=np.int64))
-        for name in columns:
-            data = columns[name]
-            if name != 'ID':
-                t[name] = Column(np.asarray(data, dtype=np.float32))
-        t.write(os.path.join(temp_dir_fixture, f), format='fits')
-    return temp_dir_fixture
+        t.meta['EXTNAME'] = name
+        t['Wavelength'] = Column(data[:, 0])
+        t['Transmission'] = Column(data[:, 1])
+        hdus.append(fits.BinTableHDU(t))
+
+    filename = os.path.join(temp_dir_fixture, 'phot.fits')
+    hdus.writeto(filename)
+    return filename
 
 ##############################################################################

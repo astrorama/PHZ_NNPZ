@@ -60,3 +60,11 @@ class InvalidPathException(NnpzException):
 
 class WrongTypeException(NnpzException):
     pass
+
+
+class WrongFormatException(NnpzException):
+    pass
+
+
+class MissingDataException(NnpzException):
+    pass
