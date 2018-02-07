@@ -1,0 +1,136 @@
+#!/usr/bin/env python
+
+"""
+Created on: 01/02/18
+Author: Nikolaos Apostolakos
+"""
+
+from __future__ import division, print_function
+
+import os
+import sys
+import numpy as np
+from astropy.table import Table, Column
+
+
+from nnpz.io import CatalogReader, OutputHandler
+import nnpz.io.catalog_properties as prop
+import nnpz.io.output_column_providers as ocp
+from nnpz.neighbor_selection import *
+import nnpz.neighbor_selection.brute_force_methods as bfm
+from nnpz.framework import *
+
+
+
+# filters = [
+#     ('uObsMag', 'uObsMagErr'),
+#     ('gObsMag', 'gObsMagErr'),
+#     ('rObsMag', 'rObsMagErr'),
+#     ('iObsMag', 'iObsMagErr'),
+#     ('zObsMag', 'zObsMagErr'),
+#     ('visObsMag', 'visObsMagErr'),
+#     ('YObsMag', 'YObsMagErr'),
+#     ('JObsMag', 'JObsMagErr'),
+#     ('HObsMag', 'HObsMagErr')
+# ]
+
+filters = [
+    ('uObs', 'uObsErr'),
+    ('gObs', 'gObsErr'),
+    ('rObs', 'rObsErr'),
+    ('iObs', 'iObsErr'),
+    ('zObs', 'zObsErr'),
+    ('visObs', 'visObsErr'),
+    ('YObs', 'YObsErr'),
+    ('JObs', 'JObsErr'),
+    ('HObs', 'HObsErr')
+]
+
+
+ref_cat = '/disk2/OU-PHZ/DC3/jean/calib_vis_detected.fits'
+val_cat = '/disk2/OU-PHZ/DC3/jean/valid_vis_detected.fits'
+
+
+# neighbor_method = 'KDTree'
+# neighbor_method = 'BruteForce'
+neighbor_method = 'Combined'
+
+batch_size = 2000
+neighbors_no = 30
+
+input_size = 10000
+
+
+
+# Read the data from the files
+ref_reader = CatalogReader(ref_cat)
+ref_ids = ref_reader.get(prop.ID)
+ref_data = ref_reader.get(prop.Photometry(filters))
+ref_z = ref_reader.get(prop.Column('zTrue'))
+
+val_reader = CatalogReader(val_cat)
+val_ids = val_reader.get(prop.ID)
+val_data = val_reader.get(prop.Photometry(filters))
+val_truez = val_reader.get(prop.Column('zTrue'))
+if 'input_size' in locals():
+    val_ids = val_ids[:input_size]
+    val_data = val_data[:input_size]
+    val_truez = val_data[:input_size]
+
+# Construct the neighbor selector
+kdt_selector = KDTreeSelector(neighbors_no).initialize(ref_data)
+
+bf_selector = BruteForceSelector(bfm.Chi2Distance(), bfm.SmallestSelector(neighbors_no)).initialize(ref_data)
+
+comb_selector = EuclideanRegionBruteForceSelector(neighbors_no, batch_size).initialize(ref_data)
+
+if neighbor_method == 'KDTree':
+    selector = kdt_selector
+elif neighbor_method == 'BruteForce':
+    selector = bf_selector
+elif neighbor_method == 'Combined':
+    selector = comb_selector
+
+
+
+# Construct the neighbor finder and build the affected sources map
+finder =  AffectedSourcesFinder(selector)
+affected = finder.findAffected(val_data, ProgressListener(len(val_data), 'Finding neighbors... '))
+
+
+
+# Compute the weights
+weights = {}
+for ref_i in affected:
+    ref_obj = ref_data[ref_i]
+    ref_v = ref_obj[:, 0]
+    ref_e = ref_obj[:, 1]
+
+    val_obj = val_data[affected[ref_i]]
+    val_v = val_obj[:, :, 0]
+    val_e = val_obj[:, :, 1]
+
+    chi2 = np.sum(((val_v - ref_v) * (val_v - ref_v)) / ((val_e * val_e) + (ref_e * ref_e)), axis=1)
+    w = np.exp(-0.5 * chi2)
+    weights[ref_i] = w
+
+
+
+# Create the output handler
+output = OutputHandler()
+output.addColumnProvider(ocp.MeanTrueRedshift(len(val_ids), ref_z))
+output.addColumnProvider(ocp.NeighborList(len(val_ids), ref_ids))
+output.addColumnProvider(ocp.TrueRedshiftPdz(len(val_ids), ref_z, 0, 6, 601))
+
+# Loop through the maps and add the contributions to the output
+progress_listener = ProgressListener(len(affected), 'Adding contributions to output...')
+for progress, ref_i in enumerate(affected):
+    progress_listener(progress)
+    for val_i, w in zip(affected[ref_i], weights[ref_i]):
+        output.addContribution(ref_i, val_i, w)
+
+# Create the output catalog
+out_name = 'out.fits'
+if len(sys.argv) >= 2:
+    out_name = sys.argv[1]
+output.save(out_name)
