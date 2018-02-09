@@ -19,6 +19,7 @@ import nnpz.io.output_column_providers as ocp
 from nnpz.neighbor_selection import *
 import nnpz.neighbor_selection.brute_force_methods as bfm
 from nnpz.framework import *
+from nnpz.weights import *
 
 
 
@@ -95,24 +96,30 @@ elif neighbor_method == 'Combined':
 
 # Construct the neighbor finder and build the affected sources map
 finder =  AffectedSourcesFinder(selector)
-affected = finder.findAffected(val_data, ProgressListener(len(val_data), 'Finding neighbors... '))
+progress_listener = ProgressListener(len(val_data)-1, 'Finding neighbors... ')
+affected = finder.findAffected(val_data, progress_listener)
 
 
 
 # Compute the weights
+weight_phot_provider = ReferenceSamplePhotometry(ref_data)
+weight_calculator = LikelihoodWeight()
+
+progress_listener = ProgressListener(len(affected)-1, 'Computing neighbor weights...')
 weights = {}
-for ref_i in affected:
-    ref_obj = ref_data[ref_i]
-    ref_v = ref_obj[:, 0]
-    ref_e = ref_obj[:, 1]
+for progress, ref_i in enumerate(affected):
+    progress_listener(progress)
 
-    val_obj = val_data[affected[ref_i]]
-    val_v = val_obj[:, :, 0]
-    val_e = val_obj[:, :, 1]
+    val_i_list = affected[ref_i]
+    val_obj = val_data[val_i_list]
 
-    chi2 = np.sum(((val_v - ref_v) * (val_v - ref_v)) / ((val_e * val_e) + (ref_e * ref_e)), axis=1)
-    w = np.exp(-0.5 * chi2)
-    weights[ref_i] = w
+    # Get the reference sample object photometry to use for the weight calculation
+    ref_obj = np.ndarray(val_obj.shape, dtype=np.float32)
+    for i, val_i in enumerate(val_i_list):
+        ref_obj[i, :, :] = weight_phot_provider(ref_i, val_i)
+
+    # Compute the weights
+    weights[ref_i] = [weight_calculator(ref_obj_i, val_obj_i) for ref_obj_i, val_obj_i in zip(ref_obj, val_obj)]
 
 
 
@@ -123,7 +130,7 @@ output.addColumnProvider(ocp.NeighborList(len(val_ids), ref_ids))
 output.addColumnProvider(ocp.TrueRedshiftPdz(len(val_ids), ref_z, 0, 6, 601))
 
 # Loop through the maps and add the contributions to the output
-progress_listener = ProgressListener(len(affected), 'Adding contributions to output...')
+progress_listener = ProgressListener(len(affected)-1, 'Adding contributions to output...')
 for progress, ref_i in enumerate(affected):
     progress_listener(progress)
     for val_i, w in zip(affected[ref_i], weights[ref_i]):
