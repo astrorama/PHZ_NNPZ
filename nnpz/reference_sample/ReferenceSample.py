@@ -307,7 +307,7 @@ class ReferenceSample(object):
         last_pdz_file = max(self.__pdz_map)
         existing_zs = self.__pdz_map[last_pdz_file].getRedshiftBins()
         if existing_zs is None:
-            self.__pdz.setRedshiftBins(data_arr[:,0])
+            self.__pdz_map[last_pdz_file].setRedshiftBins(data_arr[:,0])
         else:
             if not np.array_equal(data_arr[:,0], existing_zs):
                 raise InvalidAxisException('Given wavelengths are different than existing ones')
