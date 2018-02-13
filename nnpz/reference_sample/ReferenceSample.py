@@ -73,7 +73,7 @@ class ReferenceSample(object):
         """
 
         # The file size which triggers the creation of a new data file
-        self.__data_file_limit = 2^30 # 1GB
+        self.__data_file_limit = 2**30 # 1GB
         
         # Construct the paths to all files
         self.__root_path = path
