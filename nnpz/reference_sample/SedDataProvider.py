@@ -110,75 +110,54 @@ class SedDataProvider(object):
     
     
     def validate(self, id_list, pos_list):
-        """Validates that the underlying file is consistent the given IDs and possitions.
+        """Validates that the underlying file is consistent the given IDs and positions.
         
         Args:
             id_list: A list with the IDs of the reference sample objects
-            pos_list: A list with the possitions of the SEDs in the file. All
-                values after the first possition with value -1 are ignored.
+            pos_list: A list with the positions of the SEDs in the file.
         
         Returns: None if the file is consistent with the given IDs and
-            possitions, or a string message describing the first incossistency.
+            positions, or a string message describing the first inconsistency.
         
         Raises:
-            InvalidDimensionsException: If the ID and possision lists have
+            InvalidDimensionsException: If the ID and position lists have
                 different length
                 
         The messages returned are for the following cases:
-        - Incosistent ID
-            The ID stored in the file for the given possition differs from the
+        - Position out of file
+            A given position is bigger than the file size
+            Message: Position (_POS_) out of file for ID=_ID_
+        - Inconsistent ID
+            The ID stored in the file for the given position differs from the
             ID given by the user
-            Message: Incosistent IDs (_USER_ID_, _FILE_ID_)
-        - Incosistent position
-            A position given by the user does not match the sum of the lengths
-            of the previusly stored SEDs
-            Message: Incosistent position for ID=_USER_ID_ (_USER_POS_, _FILE_POS_)
-        - Exceeding filesize
-            The length of an SED exceeds the file size
+            Message: Inconsistent IDs (_USER_ID_, _FILE_ID_)
+        - Exceeding file size
+            The length of a SED exceeds the file size
             Message: Data length bigger than file for ID=_USER_ID_
-        - Extra SEDs in file
-            The file contains SEDs which are not in the given list
-            Message: File contains extra SEDs
         """
         
         if len(id_list) != len(pos_list):
             raise InvalidDimensionsException('id_list and pos_list must have same length')
-        
-        # Trim the lists to the first -1 position
-        try:
-            i = pos_list.index(-1)
-            id_list = id_list[:i]
-            pos_list = pos_list[:i]
-        except ValueError:
-            pass # If there is no -1 in pos list do nothing
-        
+
+        # Check that all the given positions are smaller than the file size
         file_size = os.path.getsize(self.__filename)
+        for id, pos in zip(id_list, pos_list):
+            if pos >= file_size:
+                return 'Position ({}) out of file for ID={}'.format(pos, id)
+
         with open(self.__filename, 'rb') as f:
-            
-            expected_pos = 0
-            for sed_id, pos in zip(id_list, pos_list):
-                
-                # Check that the pos is consistent
-                if pos != expected_pos:
-                    return 'Incosistent position for ID=' + str(sed_id) + ' (' + str(pos) + ', ' + str(expected_pos) + ')'
-                
-                # Check that the ID is cosistent
+            for id, pos in zip(id_list, pos_list):
+
+                # Check that the ID given by the user are consistent with the file one
                 f.seek(pos)
                 file_id = np.fromfile(f, count=1, dtype='int64')[0]
-                if file_id != sed_id:
-                    return 'Incosistent IDs (' + str(sed_id) + ', ' + str(file_id) + ')'
-                
-                # Get the length from the file
-                length = np.fromfile(f, count=1, dtype='uint32')[0]
-                
-                # Update the expected_pos
-                expected_pos = pos + 8 + 4 + (4 * 2 * length)
-                
-                # Check it is less than the file size
-                if expected_pos > file_size:
-                    return 'Data length bigger than file for ID=' + str(sed_id)
-        
-        if expected_pos != file_size:
-            return 'File contains extra SEDs'
+                if file_id != id:
+                    return 'Inconsistent IDs ({}, {})'.format(id, file_id)
+
+                # Check that the length of the SED is not going out of the file
+                length = np.fromfile(f, count=1, dtype=np.uint32)[0]
+                sed_end = pos + 8 + 4 + (4 * 2 * length)
+                if sed_end > file_size:
+                    return 'Data length bigger than file for ID={}'.format(id)
         
         return None

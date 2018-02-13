@@ -11,17 +11,19 @@ Reference sample files organization
 -----------------------------------
 
 To facilitate access and appending, the reference sample information is stored
-in three different files. The first file stores the SED template data, the
-second stores the PDZ data and the third one acts as an index for accessing the
-previous ones. All these files are grouped inside a directory, which represents
-the reference sample.
+in three different types of files. The first type stores the SED template data,
+the second stores the PDZ data and the third one acts as an index for accessing
+the previous ones. All these files are grouped inside a directory, which
+represents the reference sample.
 
-SED template data file
-----------------------
+SED template data files
+-----------------------
 
-The SED template data of the reference sample are stored in a binary file
-following a custom format. The file is named `sed_data.bin`. The data of each
-template are stored sequentially in the following way:
+The SED template data of the reference sample are stored in binary files
+following a custom format. Because of the high volume of the SED template data,
+there are multiple of such files, to limit the size of each file to around 1GB.
+The files are named `sed_data_XX.bin`, where the XX is the number of the file.
+The data of each template are stored sequentially in the following way:
 
 ![](images/SED_data_file_format.png)
 
@@ -44,14 +46,19 @@ has to be created.
 
 Note that the SED templates can have different number of points from each other.
 
-PDZ data file
--------------
+The way that the files are split is to fully write to a file the SED template
+which makes the file exceeding the 1GB size. Then the next template is stored at
+the beginning of the next file.
 
-The PDZ data file stores the PDZs of the reference sample, which are produced
-using higher quality photometry. The file is named `pdz_data.bin`. Like the SED
-data file, it follows a custom binary format. One big difference between the two
-formats is that all the PDZs in the file share the same redshift bins. The file
-is organized the following way:
+PDZ data files
+--------------
+
+The PDZ data files store the PDZs of the reference sample, which are produced
+using higher quality photometry. The files are named `pdz_data_XX.bin` and the
+splitting of the files follows the same rules like the SED template files. The
+files follow a custom binary format, like the SED template data files. One big
+difference between the two formats is that all the PDZs in the file share the
+same redshift bins. The file is organized the following way:
 
 ![](images/PDZ_file_format.png)
 
@@ -60,7 +67,8 @@ is organized the following way:
 - The length is followed by n single precision decimal values (4 bytes each)
   representing the redshift bin values
 - This concludes the header part of the file, which contains information common
-  to all PDZs
+  to all PDZs. Note that this information is duplicated to all of the PDZ data
+  files.
 - After the header, the PDZ data are stored sequentially
 - The first 8 bytes of the PDZ is the SED identifier (a long signed integer)
 - The ID is followed by n single precision decimal values (4 bytes each),
@@ -77,18 +85,21 @@ following way:
 ![](images/Index_file_format.png)
 
 - The first 8 bytes contain the object identifier as a long signed integer
+- The next 2 bytes contain the file index in which the SED is located, as a sort
+  unsigned integer
 - The next 8 bytes contain the position of the SED of the object in the SED data
   file, as a long signed integer
+- The next 2 bytes contain the file index in which the PDZ is located, as a sort
+  unsigned integer
 - The last 8 bytes contain the position of the PDZ of the object in the PDZ data
   file, as a long signed integer
 
 If the PDZ or SED data file does not yet contain data for a given template (for
 example if the SED file is created first and the PDZ file in a second run or
-vice versa), the corresponding column contain the value -1. Because of the
-appending rules of the data binary files, if the index file contains a position
-different than -1, all previous positions must also be different than -1.
-Similarly, if a position is marked as -1, all the consecutive positions must be
--1.
+vice versa), the corresponding file index column contains the value 0 and the
+corresponding location column contains the value -1. Note that the order the
+objects are stored in the SED and PDZ data does not need to match the order in
+the index file. This allows for having intermediate objects with missing data.
 
 File validation rules
 ---------------------
@@ -96,17 +107,18 @@ File validation rules
 To guarantee the consistency of the files at any moment, the following must be
 true:
 
-- All rows after the first one with SED_POS set to -1 must also have SED_POS set
-  to -1
+- All the values in the SED_FILE column of the index file must map to an
+  existing file
 - All the values in the SED_POS column of the index file must be smaller than
-  the size of the SED template data file
+  the size of the corresponding SED template data file
 - For each row of the index file with SED_POS not -1, reading a long integer
-  from this position of the SED template data file must return the value of the
-  ID column
-- All rows after the first one with PDZ_POS set to -1 must also have SED_POS set
-  to -1
-- All the values in the PHZ_POS column of the index file must be smaller than
+  from this position of the corresponding SED template data file must return the
+  value of the ID column
+- All the values in the PDZ_FILE column of the index file must map to an
+  existing file
+- All the values in the PDZ_POS column of the index file must be smaller than
   the size of the PDZ data file
 - For each row of the index file with PDZ_POS not -1, reading a long integer
-  from this position of the PHZ data file must return the value of the ID column
+  from this position of the corresponding PDZ data file must return the value of
+  the ID column
 

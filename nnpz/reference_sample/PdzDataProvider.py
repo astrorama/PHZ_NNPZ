@@ -137,32 +137,27 @@ class PdzDataProvider(object):
         
         Args:
             id_list: A list with the IDs of the reference sample objects
-            pos_list: A list with the possitions of the PDZs in the file. All
-                values after the first possition with value -1 are ignored.
+            pos_list: A list with the positions of the PDZs in the file
             
         Returns: None if the file is consistent with the given IDs and positions,
-            or a string message describing the first incossistency.
+            or a string message describing the first inconsistency.
             
         Raises:
-            InvalidDimensionsException: If the ID and possision lists have
+            InvalidDimensionsException: If the ID and posision lists have
                 different length
             UninitializedException: If the redshift bins are not set
                 
         The messages returned are for the following cases:
-        - Incosistent ID
-            The ID stored in the file for the given possition differs from the
+        - Position out of file
+            A given position is bigger than the file size
+            Message: Position (_POS_) out of file for ID=_ID_
+        - Inconsistent ID
+            The ID stored in the file for the given position differs from the
             ID given by the user
-            Message: Incosistent IDs (_USER_ID_, _FILE_ID_)
-        - Incosistent position
-            A position given by the user does not match the sum of the lengths
-            of the previusly stored PDZs
-            Message: Incosistent position for ID=_USER_ID_ (_USER_POS_, _FILE_POS_)
-        - Exceeding filesize
-            The expected length of the PDZs exceeds the file size
-            Message: Expected data length bigger than file
-        - Extra PDZs in file
-            The file contains PDZs which are not in the given list
-            Message: File contains extra PDZs
+            Message: Inconsistent IDs (_USER_ID_, _FILE_ID_)
+        - Exceeding file size
+            The length of a PDZ exceeds the file size
+            Message: Data length bigger than file for ID=_USER_ID_
         """
         
         if self.__redshift_bins is None:
@@ -170,41 +165,25 @@ class PdzDataProvider(object):
         
         if len(id_list) != len(pos_list):
             raise InvalidDimensionsException('id_list and pos_list must have same length')
-        
-        # Trim the lists to the first -1 position
-        try:
-            i = pos_list.index(-1)
-            id_list = id_list[:i]
-            pos_list = pos_list[:i]
-        except ValueError:
-            pass # If there is no -1 in pos list do nothing
-        
-        expected_pos = 4 + 4 * len(self.__redshift_bins)
-        pos_shift = 8 + 4 * len(self.__redshift_bins)
-        
-        # Check if it exceeds the file size
+
+        # Check that all the given positions are smaller than the file size
         file_size = os.path.getsize(self.__filename)
-        if expected_pos + pos_shift * len(id_list) > file_size:
-            return 'Expected data length bigger than file'
-        
+        for id, pos in zip(id_list, pos_list):
+            if pos >= file_size:
+                return 'Position ({}) out of file for ID={}'.format(pos, id)
+
         with open(self.__filename, 'rb') as f:
-            
-            for pdz_id, pos in zip(id_list, pos_list):
-                
-                # Check that the pos is consistent
-                if pos != expected_pos:
-                    return 'Incosistent position for ID=' + str(pdz_id) + ' (' + str(pos) + ', ' + str(expected_pos) + ')'
-                
-                # Check that the ID is cosistent
+            for id, pos in zip(id_list, pos_list):
+
+                # Check that the ID given by the user are consistent with the file one
                 f.seek(pos)
                 file_id = np.fromfile(f, count=1, dtype='int64')[0]
-                if file_id != pdz_id:
-                    return 'Incosistent IDs (' + str(pdz_id) + ', ' + str(file_id) + ')'
-                
-                # Update the expected_pos
-                expected_pos = pos + pos_shift
-        
-        if expected_pos != file_size:
-            return 'File contains extra PDZs'
-        
+                if file_id != id:
+                    return 'Inconsistent IDs ({}, {})'.format(id, file_id)
+
+                # Check that the length of the PDZ is not going out of the file
+                pdz_end = pos + 8 + 4 * len(self.__redshift_bins)
+                if pdz_end > file_size:
+                    return 'Data length bigger than file for ID={}'.format(id)
+
         return None
