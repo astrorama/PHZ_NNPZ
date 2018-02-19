@@ -22,6 +22,15 @@ from nnpz.framework import *
 from nnpz.weights import *
 
 
+#
+# WARNING:
+# This file is a prototype skeleton for the NNPZ framework. Its purpose is to
+# help with the interfaces identification. This file will be modified/removed in
+# the future in an unpredictable way. You should not consider it as part of the
+# NNPZ project.
+#
+
+
 
 # filters = [
 #     ('uObsMag', 'uObsMagErr'),
