@@ -1,6 +1,6 @@
 """
-Created on: 14/12/17
-Author: Nikolaos Apostolakos
+Created on: 21/02/2018
+Author: Florian Dubath
 """
 
 from __future__ import division, print_function
