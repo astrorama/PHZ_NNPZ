@@ -40,6 +40,8 @@ parser.add_argument('--out-type', dest='type', type=str, metavar=' | '.join(type
                     help='The type of the photometry to create')
 parser.add_argument('--out-file', dest='out', type=str, metavar='FILE', required=True,
                     help='The output FITS file to create the photometry in')
+parser.add_argument('--gal-ebv', dest='gal_ebv', type=float,
+                    help='The E(B-V) value of the galactic absorption to apply to the SEDs')
 args = parser.parse_args()
 
 
@@ -82,6 +84,8 @@ logger.info('Successfully read filter transmissions')
 
 # Create the photometry builder to use for computing the photometry values
 pre_post_processor = type_map[args.type][0]()
+if not args.gal_ebv is None:
+    pre_post_processor = GalacticReddeningPrePostProcessor(pre_post_processor, args.gal_ebv)
 phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor)
 phot_builder.setFilters(filter_name_list)
 
