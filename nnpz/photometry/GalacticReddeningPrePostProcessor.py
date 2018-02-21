@@ -5,9 +5,11 @@ Author: Florian Dubath
 
 from __future__ import division, print_function
 
+import os
 import numpy as np
 
-from nnpz.photometry import PhotometryPrePostProcessorInterface
+from nnpz.photometry import PhotometryPrePostProcessorInterface, ListFileFilterProvider
+from nnpz.utils import Auxiliary
 
 class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
     """Pre/Post processor for including the galactic absorption.
@@ -16,13 +18,14 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
     galactic reddening to the sed beforhand.
     """
 
-    def __init__(self, pre_post_processor, b_filter, r_filter, galactic_reddening_curve, p_14_ebv):
+    def __init__(self, pre_post_processor, p_14_ebv, b_filter=None, r_filter=None, galactic_reddening_curve=None):
         """Initialize a GalacticReddeningPrePostProcessor by decorating the
         provided pre/post processor
 
         Args:
             pre_post_processor: The pre/post processor to be decorated.
                 Must implement the PhotometryPrePostProcessorInterface interface
+            p_14_ebv: The P14 E(B-V) float value along the line of sight
             b_filter: The blue filter used to compute the SED band pass correction.
                 The filter is a 2D numpy arrays, where the first axis
                 represents the knots and the second axis has size 2 with the
@@ -38,13 +41,18 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
                 represents the knots and the second axis has size 2 with the
                 first element being the wavelength (expressed in Angstrom) and
                 the second the rescaled galactic absorption value
-            p_14_ebv: The P14 E(B-V) float value along the line of sight
+
+        Note that the b_filter, r_filter and galactic_reddening_curve parameters
+        are optional. If they are not given, the default behavior is to use the
+        Johnson B and V filters and the F99 extinction curve.
         """
-        self.__processor = pre_post_processor;
-        self.__b_filter = b_filter;
-        self.__r_filter = r_filter;
-        self.__reddening_curve = galactic_reddening_curve
+        self.__processor = pre_post_processor
         self.__p_14_ebv = p_14_ebv
+
+        fp = ListFileFilterProvider(Auxiliary.getAuxiliaryPath('GalacticExtinctionCurves.list'))
+        self.__b_filter = fp.getFilterTransmission('b_filter') if b_filter is None else b_filter
+        self.__r_filter = fp.getFilterTransmission('r_filter') if r_filter is None else r_filter
+        self.__reddening_curve = fp.getFilterTransmission('extinction_curve') if galactic_reddening_curve is None else galactic_reddening_curve
 
     def __truncateSed(self, sed, range):
         """Truncates the given SED at the given range"""

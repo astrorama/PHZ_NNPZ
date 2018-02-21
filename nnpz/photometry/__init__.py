@@ -10,3 +10,4 @@ from .MagAbPrePostProcessor import MagAbPrePostProcessor
 from .FlambdaPrePostProcessor import FlambdaPrePostProcessor
 from .ReferenceSamplePhotometryBuilder import ReferenceSamplePhotometryBuilder
 from .PhotometryProvider import PhotometryProvider
+from .GalacticReddeningPrePostProcessor import GalacticReddeningPrePostProcessor

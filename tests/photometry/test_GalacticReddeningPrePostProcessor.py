@@ -45,7 +45,7 @@ def test_computeBpc():
     expected = -0.0279588
 
     # When
-    processor=GalacticReddeningPrePostProcessor.GalacticReddeningPrePostProcessor( pre_post_processor, b_filter, r_filter, galactic_reddening_curve, 1.0)
+    processor=GalacticReddeningPrePostProcessor(pre_post_processor, 1.0, b_filter, r_filter, galactic_reddening_curve)
     bpc = processor.computeBpc(sed)
 
     # Then
@@ -72,7 +72,7 @@ def test_preProcess():
     def mock_computeBpc(self,sed):
         return 1.0
     # When
-    processor=GalacticReddeningPrePostProcessor.GalacticReddeningPrePostProcessor( pre_post_processor, b_filter, r_filter, galactic_reddening_curve, 2.5/1.018)
+    processor=GalacticReddeningPrePostProcessor(pre_post_processor, 2.5/1.018, b_filter, r_filter, galactic_reddening_curve)
     processor.computeBpc = types.MethodType(mock_computeBpc, processor)
 
     result = processor.preProcess(sed)
@@ -101,7 +101,7 @@ def test_preProcess():
 
 
     # Check the provided E(B-V) dependency
-    processor=GalacticReddeningPrePostProcessor.GalacticReddeningPrePostProcessor( pre_post_processor, b_filter, r_filter, galactic_reddening_curve, 5./1.018)
+    processor=GalacticReddeningPrePostProcessor(pre_post_processor, 5./1.018, b_filter, r_filter, galactic_reddening_curve)
     processor.computeBpc = types.MethodType(mock_computeBpc, processor)
 
     # Changing E(B-V) by a factor 2 should multiply the exponant by 2.
