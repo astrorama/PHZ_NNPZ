@@ -21,11 +21,24 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
         provided pre/post processor
 
         Args:
-            pre_post_processor: The pre/post processor to be decorated
-            b_filter: The blue filter used to compute the SED band pass correction
-            r_filter: The red filter used to compute the SED band pass correction
-            galactic_reddening_curve: The galactic reddening curve
-            p_14_ebv: The P14 E(B-V) value along the line of sight
+            pre_post_processor: The pre/post processor to be decorated.
+                Must implement the PhotometryPrePostProcessorInterface interface
+            b_filter: The blue filter used to compute the SED band pass correction.
+                The filter is a 2D numpy arrays, where the first axis
+                represents the knots and the second axis has size 2 with the
+                first element being the wavelength (expressed in Angstrom) and
+                the second the filter transmission (in the range [0,1])
+            r_filter: The red filter used to compute the SED band pass correction.
+                The filter is a 2D numpy arrays, where the first axis
+                represents the knots and the second axis has size 2 with the
+                first element being the wavelength (expressed in Angstrom) and
+                the second the filter transmission (in the range [0,1])
+            galactic_reddening_curve: The galactic reddening curve.
+                The curve is a 2D numpy arrays, where the first axis
+                represents the knots and the second axis has size 2 with the
+                first element being the wavelength (expressed in Angstrom) and
+                the second the rescaled galactic absorption value
+            p_14_ebv: The P14 E(B-V) float value along the line of sight
         """
         self.__processor = pre_post_processor;
         self.__b_filter = b_filter;
@@ -43,31 +56,39 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
         max_i += 1
         return sed[min_i:max_i+1, :]
 
+    def computeBpc(self,sed):
+        """ COmpute the band Passs Correction for the provided SED"""
+        reddening_factor = np.power(10,-0.04*self.__reddening_curve[:,1])
+        blue_range = (self.__b_filter[0][0], self.__b_filter[-1][0])
+        sed_truncated_blue = self.__truncateSed(sed, blue_range)
+        interp_blue_filter = np.interp(sed_truncated_blue[:,0], self.__b_filter[:,0], self.__b_filter[:,1], left=0, right=0)
+        interp_blue_absorption = np.interp(sed_truncated_blue[:,0], self.__reddening_curve[:,0], reddening_factor, left=0, right=0)
+
+        # Compute b
+        b = np.trapz(sed_truncated_blue[:,1] * interp_blue_filter, x=sed_truncated_blue[:,0])
+        # Compute b_r
+        b_r = np.trapz(sed_truncated_blue[:,1] * interp_blue_filter*interp_blue_absorption, x=sed_truncated_blue[:,0])
+
+        red_range = (self.__r_filter[0][0], self.__r_filter[-1][0])
+        sed_truncated_red = self.__truncateSed(sed, red_range)
+        interp_red_filter = np.interp(sed_truncated_red[:,0], self.__r_filter[:,0], self.__r_filter[:,1], left=0, right=0)
+        interp_red_absorption = np.interp(sed_truncated_red[:,0], self.__reddening_curve[:,0], reddening_factor, left=0, right=0)
+
+        # Compute r
+        r = np.trapz(sed_truncated_red[:,1] * interp_red_filter, x=sed_truncated_red[:,0])
+        # Compute r_r
+        r_r = np.trapz(sed_truncated_red[:,1] * interp_red_filter*interp_red_absorption, x=sed_truncated_red[:,0])
+
+        # Compute the SED bpc
+        bpc_sed = -0.04*np.log10(b_r*r/(b*r_r))
+        return bpc_sed
 
     def preProcess(self, sed):
         """Redden the SED according to the galactic absorption law and the
         E(B-V) parameter then redirects the call to the FnuPrePostProcessor
         """
-        blue_range = (b_filter[0][0], b_filter[-1][0])
-        sed_truncated_blue = self.__truncateSed(sed, blue_range)
-        interp_blue_filter = np.interp(sed_truncated_blue[:,0], self.__b_filter[:,0], self.__b_filter[:,1], left=0, right=0)
-        interp_blue_absorption = np.interp(sed_truncated_blue[:,0], self.__reddening_curve[:,0], self.__reddening_curve[:,1], left=0, right=0)
-        # Compute b
-        b = np.trapz(sed_truncated_blue[:,1] * interp_blue_filter, x=sed_truncated_blue[:,0])
-        # Compute b_r
-        b_r = np.trapz(sed_truncated_blue[:,1] * interp_blue_filter*np.power(10, -0.04*interp_blue_absorption), x=sed_truncated_blue[:,0])
-
-        red_range = (r_filter[0][0], r_filter[-1][0])
-        sed_truncated_red = self.__truncateSed(sed, red_range)
-        interp_red_filter = np.interp(sed_truncated_red[:,0], self.__r_filter[:,0], self.__r_filter[:,1], left=0, right=0)
-        interp_red_absorption = np.interp(sed_truncated_red[:,0], self.__reddening_curve[:,0], self.__reddening_curve[:,1], left=0, right=0)
-        # Compute r
-        r = np.trapz(sed_truncated_red[:,1] * interp_red_filter, x=sed_truncated_red[:,0])
-        # Compute r_r
-        r_r = np.trapz(sed_truncated_red[:,1] * interp_red_filter*np.power(10,-0.04*interp_red_absorption), x=sed_truncated_red[:,0])
-
-        # Compute the SED bpc
-        bpc_sed = -0.04*np.log10(b_r*r/(b*r_r))
+        # Get the bpc
+        bpc_sed = self.computeBpc(sed)
 
         # Compute A_lambda
         interp_absorption = np.interp(sed[:,0], self.__reddening_curve[:,0], self.__reddening_curve[:,1], left=0, right=0)
