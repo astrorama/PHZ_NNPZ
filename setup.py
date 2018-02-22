@@ -24,5 +24,10 @@ setup (
     # Setup the scripts of the project
     scripts=['bin/NnpzBuildPhotometry'],
 
+    # Install the auxiliary data
+    #zip_safe = False,
+    data_files=[('etc/nnpz', ['auxdir/F99_3.1.dat', 'auxdir/GCPD_Johnson.B.dat',
+                              'auxdir/GCPD_Johnson.V.dat', 'auxdir/GalacticExtinctionCurves.list'])]
+
 )
 

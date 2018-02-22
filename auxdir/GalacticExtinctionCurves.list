@@ -1,0 +1,3 @@
+GCPD_Johnson.B.dat : b_filter
+GCPD_Johnson.V.dat : r_filter
+F99_3.1.dat : extinction_curve

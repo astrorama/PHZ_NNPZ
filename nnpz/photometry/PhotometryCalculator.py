@@ -6,7 +6,6 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-from _pytest.assertion import truncate
 
 
 class PhotometryCalculator(object):
