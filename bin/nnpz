@@ -137,6 +137,7 @@ output = OutputHandler()
 output.addColumnProvider(ocp.MeanTrueRedshift(len(val_ids), ref_z))
 output.addColumnProvider(ocp.NeighborList(len(val_ids), ref_ids))
 output.addColumnProvider(ocp.TrueRedshiftPdz(len(val_ids), ref_z, 0, 6, 601))
+output.addColumnProvider(ocp.MeanPhotometry(len(val_ids), [f[0] for f in filters], ref_data))
 
 # Loop through the maps and add the contributions to the output
 progress_listener = ProgressListener(len(affected)-1, 'Adding contributions to output...')
