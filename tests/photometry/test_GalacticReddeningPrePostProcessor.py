@@ -42,7 +42,7 @@ def test_computeBpc():
     #         r=1500
     #         r_r=300
     # so -0.04*log(b_r*r/(b*r_r)) = -0.0279588
-    expected = -0.0279588
+    expected = -17.47425
 
     # When
     processor=GalacticReddeningPrePostProcessor(pre_post_processor, 1.0, b_filter, r_filter, galactic_reddening_curve)

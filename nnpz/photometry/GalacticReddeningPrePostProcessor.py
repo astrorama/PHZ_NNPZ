@@ -88,7 +88,7 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
         r_r = np.trapz(sed_truncated_red[:,1] * interp_red_filter*interp_red_absorption, x=sed_truncated_red[:,0])
 
         # Compute the SED bpc
-        bpc_sed = -0.04*np.log10(b_r*r/(b*r_r))
+        bpc_sed = -25*np.log10(b_r*r/(b*r_r))
         return bpc_sed
 
     def preProcess(self, sed):
