@@ -15,7 +15,7 @@ from astropy import table
 
 from nnpz.photometry import *
 from nnpz import ReferenceSample
-from nnpz.utils import Logging
+from nnpz.utils import Logging, Fits
 
 Logging.enableStdErrLogging('INFO')
 logger = Logging.getLogger('')
@@ -132,8 +132,10 @@ phot_col_data = [table.Column(ids)]
 for f in filter_name_list:
     phot_col_data.append(table.Column(phot_map[f]))
 phot_table = table.Table(phot_col_data, names=phot_col_names)
-phot_table.meta.update({'EXTNAME':'NNPZ_PHOTOMETRY', 'PHOTYPE':args.type})
-hdus.append(fits.BinTableHDU(phot_table))
+phot_hdu = Fits.tableToHdu(phot_table)
+phot_hdu.header.set('EXTNAME', 'NNPZ_PHOTOMETRY')
+phot_hdu.header.set('PHOTYPE', args.type)
+hdus.append(phot_hdu)
 
 # Build the filter transmission HDUs
 for f in filter_name_list:
@@ -143,8 +145,9 @@ for f in filter_name_list:
         table.Column(data[:,1])
     ]
     f_table = table.Table(f_col_data, names=['Wavelength', 'Transmission'])
-    f_table.meta.update({'EXTNAME':f})
-    hdus.append(fits.BinTableHDU(f_table))
+    f_hdu = Fits.tableToHdu(f_table)
+    f_hdu.header.set('EXTNAME', f)
+    hdus.append(f_hdu)
 
 # Write the HDUs in the output file
 hdus.writeto(args.out)
