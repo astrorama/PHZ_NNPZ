@@ -94,3 +94,9 @@ class CatalogReader(object):
             raise WrongTypeException('property must implement the CatalogPropertyInterface')
 
         return property(self.__catalog)
+
+
+    def getAsAstropyTable(self):
+        """Returns the underlying astropy table"""
+
+        return self.__catalog

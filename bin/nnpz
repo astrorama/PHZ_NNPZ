@@ -68,7 +68,7 @@ neighbor_method = 'Combined'
 batch_size = 2000
 neighbors_no = 30
 
-input_size = 10000
+input_size = 1000
 
 
 
@@ -134,6 +134,10 @@ for progress, ref_i in enumerate(affected):
 
 # Create the output handler
 output = OutputHandler()
+cat_to_copy = val_reader.getAsAstropyTable()
+if 'input_size' in locals():
+    cat_to_copy = cat_to_copy[:input_size]
+output.addColumnProvider(ocp.FullCatalogCopy(cat_to_copy))
 output.addColumnProvider(ocp.MeanTrueRedshift(len(val_ids), ref_z))
 output.addColumnProvider(ocp.NeighborList(len(val_ids), ref_ids))
 output.addColumnProvider(ocp.TrueRedshiftPdz(len(val_ids), ref_z, 0, 6, 601))
