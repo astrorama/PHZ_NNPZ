@@ -31,44 +31,11 @@ from nnpz.weights import *
 #
 
 
-
-# filters = [
-#     ('uObsMag', 'uObsMagErr'),
-#     ('gObsMag', 'gObsMagErr'),
-#     ('rObsMag', 'rObsMagErr'),
-#     ('iObsMag', 'iObsMagErr'),
-#     ('zObsMag', 'zObsMagErr'),
-#     ('visObsMag', 'visObsMagErr'),
-#     ('YObsMag', 'YObsMagErr'),
-#     ('JObsMag', 'JObsMagErr'),
-#     ('HObsMag', 'HObsMagErr')
-# ]
-
-filters = [
-    ('uObs', 'uObsErr'),
-    ('gObs', 'gObsErr'),
-    ('rObs', 'rObsErr'),
-    ('iObs', 'iObsErr'),
-    ('zObs', 'zObsErr'),
-    ('visObs', 'visObsErr'),
-    ('YObs', 'YObsErr'),
-    ('JObs', 'JObsErr'),
-    ('HObs', 'HObsErr')
-]
-
-
-ref_cat = '/disk2/OU-PHZ/DC3/jean/calib_vis_detected.fits'
-target_cat = '/disk2/OU-PHZ/DC3/jean/valid_vis_detected.fits'
-
-
-# neighbor_method = 'KDTree'
-# neighbor_method = 'BruteForce'
-neighbor_method = 'Combined'
-
-batch_size = 2000
-neighbors_no = 30
-
-input_size = 1000
+# Read the configuration file
+conf_path = os.path.abspath(os.path.dirname(__file__)) # Remove the filename
+conf_path = os.path.dirname(conf_path) # Remove the bin directory
+conf_path = os.path.join(conf_path, 'config', 'nnpz.conf')
+exec(open(conf_path).read(), globals())
 
 
 
@@ -76,12 +43,12 @@ input_size = 1000
 ref_reader = CatalogReader(ref_cat)
 ref_ids = ref_reader.get(prop.ID)
 ref_data = ref_reader.get(prop.Photometry(filters))
-ref_z = ref_reader.get(prop.Column('zTrue'))
+ref_z = ref_reader.get(prop.Column(z_true_col))
 
 target_reader = CatalogReader(target_cat)
 target_ids = target_reader.get(prop.ID)
 target_data = target_reader.get(prop.Photometry(filters))
-target_truez = target_reader.get(prop.Column('zTrue'))
+target_truez = target_reader.get(prop.Column(z_true_col))
 if 'input_size' in locals():
     target_ids = target_ids[:input_size]
     target_data = target_data[:input_size]
@@ -151,7 +118,5 @@ for progress, ref_i in enumerate(affected):
         output.addContribution(ref_i, target_i, w)
 
 # Create the output catalog
-out_name = 'out.fits'
-if len(sys.argv) >= 2:
-    out_name = sys.argv[1]
-output.save(out_name)
+output.save(output_file)
+print('Created file {}'.format(output_file))
