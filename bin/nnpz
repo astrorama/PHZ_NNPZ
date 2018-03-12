@@ -47,7 +47,7 @@ ref_z = ref_reader.get(prop.Column(z_true_col))
 
 target_reader = CatalogReader(target_cat)
 target_ids = target_reader.get(prop.ID)
-target_data = target_reader.get(prop.Photometry(filters))
+target_data = target_reader.get(prop.Photometry(filters, missing_photometry_flags))
 target_truez = target_reader.get(prop.Column(z_true_col))
 if 'input_size' in locals():
     target_ids = target_ids[:input_size]
