@@ -5,6 +5,8 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+import numpy as np
+
 from nnpz.neighbor_selection import NeighborSelectorInterface, KDTreeSelector, BruteForceSelector
 
 class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
@@ -58,8 +60,14 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         For an explanation of the neighbors returned see the class documentation.
         """
 
-        # First we find the euclidean neighbors to run brute force for
-        batch, _ = self.__kdtree.findNeighbors(coordinate)
+        # If we do not have NaN values in the coordinate we use the KDTree to
+        # reduce the number of euclidean neighbors we run brute force for. If
+        # there are NaN values, we cannot use the KDTree, so we run brute force
+        # for the full reference sample
+        if np.isnan(coordinate).any():
+            batch = np.arange(self.__ref_data.shape[0])
+        else:
+            batch, _ = self.__kdtree.findNeighbors(coordinate)
 
         # Get the slice of the reference data which covers the batch
         batch_data = self.__ref_data[batch,:,:]

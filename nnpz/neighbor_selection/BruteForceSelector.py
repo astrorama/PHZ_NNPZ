@@ -115,7 +115,10 @@ class BruteForceSelector(NeighborSelectorInterface):
         obj_values = coordinate[:, 0]
         obj_errors = coordinate[:, 1]
 
-        distances = self.__distance(self.__ref_data_values, self.__ref_data_errors, obj_values, obj_errors)
+        # We are going to ignore all NaN values from the computation
+        not_nan = np.logical_not(np.isnan(obj_values))
+
+        distances = self.__distance(self.__ref_data_values[:,not_nan], self.__ref_data_errors[:,not_nan], obj_values[not_nan], obj_errors[not_nan])
         neighbor_ids = self.__selection(distances)
         neighbor_distances = distances[neighbor_ids]
 

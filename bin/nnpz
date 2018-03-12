@@ -35,7 +35,7 @@ from nnpz.weights import *
 conf_path = os.path.abspath(os.path.dirname(__file__)) # Remove the filename
 conf_path = os.path.dirname(conf_path) # Remove the bin directory
 conf_path = os.path.join(conf_path, 'config', 'nnpz.conf')
-exec(open(conf_path).read(), globals())
+exec(open(conf_path).read(), locals())
 
 
 
@@ -55,18 +55,12 @@ if 'input_size' in locals():
     target_truez = target_data[:input_size]
 
 # Construct the neighbor selector
-kdt_selector = KDTreeSelector(neighbors_no).initialize(ref_data)
-
-bf_selector = BruteForceSelector(bfm.Chi2Distance(), bfm.SmallestSelector(neighbors_no)).initialize(ref_data)
-
-comb_selector = EuclideanRegionBruteForceSelector(neighbors_no, batch_size).initialize(ref_data)
-
 if neighbor_method == 'KDTree':
-    selector = kdt_selector
+    selector = KDTreeSelector(neighbors_no).initialize(ref_data)
 elif neighbor_method == 'BruteForce':
-    selector = bf_selector
+    selector = BruteForceSelector(bfm.Chi2Distance(), bfm.SmallestSelector(neighbors_no)).initialize(ref_data)
 elif neighbor_method == 'Combined':
-    selector = comb_selector
+    selector = EuclideanRegionBruteForceSelector(neighbors_no, batch_size).initialize(ref_data)
 
 
 
@@ -94,8 +88,9 @@ for progress, ref_i in enumerate(affected):
     for i, target_i in enumerate(target_i_list):
         ref_obj[i, :, :] = weight_phot_provider(ref_i, target_i)
 
-    # Compute the weights
-    weights[ref_i] = [weight_calculator(ref_obj_i, target_obj_i) for ref_obj_i, target_obj_i in zip(ref_obj, target_obj)]
+    # Compute the weights. Note that we mask out the bands which are marked as NaN
+    nan_masks = [np.logical_not(np.isnan(target_obj_i[:,0])) for target_obj_i in target_obj]
+    weights[ref_i] = [weight_calculator(ref_obj_i[mask_i,:], target_obj_i[mask_i,:]) for ref_obj_i, target_obj_i, mask_i in zip(ref_obj, target_obj, nan_masks)]
 
 
 
