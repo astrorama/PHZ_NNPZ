@@ -30,9 +30,10 @@ class MedianTrueRedshift(OutputHandler.OutputColumnProviderInterface):
         for i, (z, w) in enumerate(zip(self.__zs, self.__weights)):
             half = sum(w) / 2.
             c = 0
-            for sort_i in np.argsort(w):
+            for sort_i in np.argsort(z):
                 c += w[sort_i]
                 if c > half:
                     median_z[i] = z[sort_i]
+                    break
         col = Column(median_z, 'MedianTrueZ')
         return [col]
