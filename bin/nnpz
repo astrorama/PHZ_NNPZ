@@ -32,9 +32,12 @@ from nnpz.weights import *
 
 
 # Read the configuration file
-conf_path = os.path.abspath(os.path.dirname(__file__)) # Remove the filename
-conf_path = os.path.dirname(conf_path) # Remove the bin directory
-conf_path = os.path.join(conf_path, 'config', 'nnpz.conf')
+if len(sys.argv) == 1:
+    conf_path = os.path.abspath(os.path.dirname(__file__)) # Remove the filename
+    conf_path = os.path.dirname(conf_path) # Remove the bin directory
+    conf_path = os.path.join(conf_path, 'config', 'nnpz.conf')
+else:
+    conf_path = sys.argv[1]
 exec(open(conf_path).read(), locals())
 
 
