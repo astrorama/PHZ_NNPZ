@@ -45,12 +45,13 @@ exec(open(conf_path).read(), locals())
 # Read the data from the files
 ref_reader = CatalogReader(ref_cat)
 ref_ids = ref_reader.get(prop.ID)
-ref_data = ref_reader.get(prop.Photometry(filters))
+ref_data = ref_reader.get(prop.Photometry(ref_filters))
+out_mean_phot_data = ref_reader.get(prop.Photometry(out_mean_phot_filters))
 ref_z = ref_reader.get(prop.Column(z_true_col))
 
 target_reader = CatalogReader(target_cat)
 target_ids = target_reader.get(prop.ID)
-target_data = target_reader.get(prop.Photometry(filters, missing_photometry_flags))
+target_data = target_reader.get(prop.Photometry(target_filters, missing_photometry_flags))
 target_truez = target_reader.get(prop.Column(z_true_col))
 if 'input_size' in locals():
     target_ids = target_ids[:input_size]
@@ -106,7 +107,7 @@ output.addColumnProvider(ocp.FullCatalogCopy(cat_to_copy))
 output.addColumnProvider(ocp.MeanTrueRedshift(len(target_ids), ref_z))
 output.addColumnProvider(ocp.NeighborList(len(target_ids), ref_ids))
 output.addColumnProvider(ocp.TrueRedshiftPdz(len(target_ids), ref_z, 0, 6, 601))
-output.addColumnProvider(ocp.MeanPhotometry(len(target_ids), [f[0] for f in filters], ref_data))
+output.addColumnProvider(ocp.MeanPhotometry(len(target_ids), [f[0] for f in out_mean_phot_filters], out_mean_phot_data))
 
 # Loop through the maps and add the contributions to the output
 progress_listener = ProgressListener(len(affected)-1, 'Adding contributions to output...')
