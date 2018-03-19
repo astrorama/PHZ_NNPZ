@@ -109,7 +109,7 @@ output.addColumnProvider(ocp.MedianTrueRedshift(len(target_ids), ref_z))
 output.addColumnProvider(ocp.NeighborList(len(target_ids), ref_ids))
 true_z_pdz = ocp.TrueRedshiftPdz(len(target_ids), ref_z, 0, 6, 601)
 output.addColumnProvider(true_z_pdz)
-output.addColumnProvider(ocp.PdfHalfQuantile(true_z_pdz, 'TrueRedshiftPDZMedian'))
+output.addColumnProvider(ocp.PdfSampling(true_z_pdz, 'TrueRedshiftPDZ', quantiles=true_z_pdf_quantiles, mc_samples=true_z_pdf_mc_samples))
 output.addColumnProvider(ocp.MeanPhotometry(len(target_ids), [f[0] for f in out_mean_phot_filters], out_mean_phot_data))
 
 # Loop through the maps and add the contributions to the output
