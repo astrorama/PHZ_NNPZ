@@ -20,15 +20,6 @@ from nnpz.utils import Logging, Fits
 Logging.enableStdErrLogging('INFO')
 logger = Logging.getLogger('')
 
-# The different photometry types allowed
-type_map = {
-    'Photons' : (PhotonPrePostProcessor, 'Photon count rate in counts/s/cm^2'),
-    'F_nu' : (FnuPrePostProcessor, 'Energy flux density in erg/s/cm^2/Hz'),
-    'F_nu_uJy' : (FnuuJyPrePostProcessor, 'Energy flux density in uJy'),
-    'MAG_AB' : (MagAbPrePostProcessor, 'AB magnitude'),
-    'F_lambda' : (FlambdaPrePostProcessor, 'Energy flux density in erg/s/cm^2/A')
-}
-
 
 # Get the input from the user
 parser = argparse.ArgumentParser()
@@ -36,7 +27,7 @@ parser.add_argument('--sample-dir', dest='sample_dir', type=str, metavar='DIR', 
                     help='The reference sample directory')
 parser.add_argument('--filters', dest='filters', type=str, metavar='DIR | LIST_FILE', required=True,
                     help='The directory containing the filter transmissions')
-parser.add_argument('--out-type', dest='type', type=str, metavar=' | '.join(type_map), required=True,
+parser.add_argument('--out-type', dest='type', type=str, metavar=' | '.join(PhotometryTypeMap), required=True,
                     help='The type of the photometry to create')
 parser.add_argument('--out-file', dest='out', type=str, metavar='FILE', required=True,
                     help='The output FITS file to create the photometry in')
@@ -46,10 +37,10 @@ args = parser.parse_args()
 
 
 # Validate the user inputs
-if not args.type in type_map:
+if not args.type in PhotometryTypeMap:
     logger.error('ERROR: Invalid photometry type. Available types:')
-    for t in type_map:
-        logger.error('   ' + t + ' : ' + type_map[t][1])
+    for t in PhotometryTypeMap:
+        logger.error('   ' + t + ' : ' + PhotometryTypeMap[t][1])
     exit(1)
 
 if os.path.exists(args.out):
@@ -83,7 +74,7 @@ logger.info('Successfully read filter transmissions')
 
 
 # Create the photometry builder to use for computing the photometry values
-pre_post_processor = type_map[args.type][0]()
+pre_post_processor = PhotometryTypeMap[args.type][0]()
 if not args.gal_ebv is None:
     pre_post_processor = GalacticReddeningPrePostProcessor(pre_post_processor, args.gal_ebv)
 phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor)
