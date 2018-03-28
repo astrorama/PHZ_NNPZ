@@ -42,11 +42,9 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
             logger.info('Reference sample photometric bands: {}'.format(phot_filters))
             self.__ref_phot_data = ref_phot_prov.getData(*phot_filters)
 
-            if 'out_mean_phot_filters' in args:
-                self.__out_mean_phot_filters = args['out_mean_phot_filters']
+            if 'reference_sample_out_mean_phot_filters' in args:
+                self.__out_mean_phot_filters = args['reference_sample_out_mean_phot_filters']
                 self.__out_mean_phot_data = ref_phot_prov.getData(*self.__out_mean_phot_filters)
-
-
 
 
     def parseArgs(self, args):

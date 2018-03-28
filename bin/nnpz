@@ -10,18 +10,10 @@ from __future__ import division, print_function
 import os
 import sys
 import numpy as np
-from astropy.table import Table, Column
 
-
-from nnpz.io import CatalogReader, OutputHandler
-import nnpz.io.catalog_properties as prop
 import nnpz.io.output_column_providers as ocp
-from nnpz.neighbor_selection import *
-import nnpz.neighbor_selection.brute_force_methods as bfm
 from nnpz.framework import *
 from nnpz.weights import *
-from nnpz import ReferenceSample
-from nnpz.photometry import PhotometryProvider
 from nnpz.config import ConfigManager
 from nnpz.utils import Logging
 
@@ -56,7 +48,6 @@ conf_manager = ConfigManager(args)
 
 
 # Read the reference sample data
-ref_sample = conf_manager.getObject('reference_sample')
 ref_ids = conf_manager.getObject('reference_ids')
 ref_data = conf_manager.getObject('reference_phot_data')
 

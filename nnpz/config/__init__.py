@@ -5,3 +5,5 @@ from .ReferenceSampleConfig import ReferenceSampleConfig
 from .ReferenceSamplePhotometryConfig import ReferenceSamplePhotometryConfig
 from .TargetCatalogConfig import TargetCatalogConfig
 from .CopyInputColumnsConfig import CopyInputColumnsConfig
+from .ReferenceCatalogConfig import ReferenceCatalogConfig
+from .ReferenceUniqueConfig import ReferenceUniqueConfig
