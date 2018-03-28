@@ -61,12 +61,8 @@ ref_ids = conf_manager.getObject('reference_ids')
 ref_data = conf_manager.getObject('reference_phot_data')
 
 # Read the target catalog data
-target_reader = CatalogReader(args['target_cat'])
-target_ids = target_reader.get(prop.ID)
-target_data = target_reader.get(prop.Photometry(args['target_filters'], args['missing_photometry_flags']))
-if 'input_size' in args:
-    target_ids = target_ids[:args['input_size']]
-    target_data = target_data[:args['input_size']]
+target_ids = conf_manager.getObject('target_ids')
+target_data = conf_manager.getObject('target_phot_data')
 
 # Get the neighbor selector and initialize it
 selector = conf_manager.getObject('neighbor_selector').initialize(ref_data)
@@ -76,7 +72,6 @@ selector = conf_manager.getObject('neighbor_selector').initialize(ref_data)
 finder =  AffectedSourcesFinder(selector)
 progress_listener = ProgressListener(len(target_data)-1, 'Finding neighbors... ')
 affected = finder.findAffected(target_data, progress_listener)
-
 
 
 # Compute the weights
@@ -104,7 +99,7 @@ for progress, ref_i in enumerate(affected):
 
 # Create the output handler
 output = conf_manager.getObject('output_handler')
-cat_to_copy = target_reader.getAsAstropyTable()
+cat_to_copy = conf_manager.getObject('target_astropy_table')
 if 'input_size' in args:
     cat_to_copy = cat_to_copy[:args['input_size']]
 output.addColumnProvider(ocp.FullCatalogCopy(cat_to_copy))

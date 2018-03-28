@@ -3,3 +3,4 @@ from .NeighborSelectorConfig import NeighborSelectorConfig
 from .OutputHandlerConfig import OutputHandlerConfig
 from .ReferenceSampleConfig import ReferenceSampleConfig
 from .ReferenceSamplePhotometryConfig import ReferenceSamplePhotometryConfig
+from .TargetCatalogConfig import TargetCatalogConfig
