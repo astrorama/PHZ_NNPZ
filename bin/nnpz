@@ -110,6 +110,7 @@ if 'input_size' in locals():
 output.addColumnProvider(ocp.FullCatalogCopy(cat_to_copy))
 output.addColumnProvider(ocp.NeighborList(len(target_ids), ref_ids))
 output.addColumnProvider(ocp.MeanPhotometry(len(target_ids), out_mean_phot_filters, out_mean_phot_data))
+output.addColumnProvider(ocp.CoaddedPdz(len(target_ids), ref_sample, ref_ids))
 
 # Loop through the maps and add the contributions to the output
 progress_listener = ProgressListener(len(affected)-1, 'Adding contributions to output...')
