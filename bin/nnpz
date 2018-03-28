@@ -22,6 +22,8 @@ from nnpz.framework import *
 from nnpz.weights import *
 from nnpz import ReferenceSample
 from nnpz.photometry import PhotometryProvider
+from nnpz.config import ConfigManager
+from nnpz.utils import Logging
 
 
 #
@@ -33,7 +35,7 @@ from nnpz.photometry import PhotometryProvider
 #
 
 
-# Read the configuration file
+# Read the configuration file and parse the user parameters
 if len(sys.argv) == 1:
     conf_path = os.path.abspath(os.path.dirname(__file__)) # Remove the filename
     conf_path = os.path.dirname(conf_path) # Remove the bin directory
@@ -42,6 +44,15 @@ else:
     conf_path = sys.argv[1]
 args = {}
 exec(open(conf_path).read(), args)
+
+# If the user has set a log level use it. Otherwise use the default.
+if 'log_level' in args:
+    Logging.enableStdErrLogging(args['log_level'])
+else:
+    Logging.enableStdErrLogging()
+
+# Create the object which handles the user parameters
+conf_handler = ConfigManager(args)
 
 
 # Read the reference sample data
@@ -62,14 +73,8 @@ if 'input_size' in args:
     target_ids = target_ids[:args['input_size']]
     target_data = target_data[:args['input_size']]
 
-# Construct the neighbor selector
-if args['neighbor_method'] == 'KDTree':
-    selector = KDTreeSelector(args['neighbors_no']).initialize(ref_data)
-elif args['neighbor_method'] == 'BruteForce':
-    selector = BruteForceSelector(bfm.Chi2Distance(), bfm.SmallestSelector(args['neighbors_no'])).initialize(ref_data)
-elif args['neighbor_method'] == 'Combined':
-    selector = EuclideanRegionBruteForceSelector(args['neighbors_no'], args['batch_size']).initialize(ref_data)
-
+# Get the neighbor selector and initialize it
+selector = conf_handler.getObject('neighbor_selector').initialize(ref_data)
 
 
 # Construct the neighbor finder and build the affected sources map
