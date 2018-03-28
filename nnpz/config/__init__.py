@@ -1,3 +1,5 @@
 from .ConfigManager import ConfigManager
 from .NeighborSelectorConfig import NeighborSelectorConfig
 from .OutputHandlerConfig import OutputHandlerConfig
+from .ReferenceSampleConfig import ReferenceSampleConfig
+from .ReferenceSamplePhotometryConfig import ReferenceSamplePhotometryConfig

@@ -13,7 +13,7 @@ from nnpz.utils import Logging
 logger = Logging.getLogger('Configuration')
 
 
-_handler_list = []
+_handler_map = {}
 
 class ConfigManager(object):
 
@@ -32,14 +32,19 @@ class ConfigManager(object):
 
 
     @staticmethod
-    def addHandler(handler):
-        assert isinstance(handler, ConfigManager.ConfigHandler)
-        _handler_list.append(handler)
+    def addHandler(handler_type):
+        assert issubclass(handler_type, ConfigManager.ConfigHandler)
+        _handler_map[handler_type] = handler_type()
+
+
+    @staticmethod
+    def getHandler(handler_type):
+        return _handler_map.get(handler_type)
 
 
     def __init__(self, args):
         self.__objects = {}
-        for handler in _handler_list:
+        for handler in _handler_map.values():
             self.__objects.update(handler.parseArgs(args))
 
 

@@ -16,7 +16,10 @@ logger = Logging.getLogger('Configuration')
 
 class NeighborSelectorConfig(ConfigManager.ConfigHandler):
 
-    def parseArgs(self, args):
+    def __init__(self):
+        self.__selector = None
+
+    def __createSelector(self, args):
 
         self._checkParameterExists('neighbor_method', args)
         neighbor_method = args['neighbor_method']
@@ -24,17 +27,21 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         neighbors_no = args['neighbors_no']
 
         if neighbor_method == 'KDTree':
-            selector = KDTreeSelector(neighbors_no)
+            self.__selector = KDTreeSelector(neighbors_no)
         elif neighbor_method == 'BruteForce':
-            selector = BruteForceSelector(bfm.Chi2Distance(), bfm.SmallestSelector(neighbors_no))
+            self.__selector = BruteForceSelector(bfm.Chi2Distance(), bfm.SmallestSelector(neighbors_no))
         elif neighbor_method == 'Combined':
             self._checkParameterExists('batch_size', args)
-            selector = EuclideanRegionBruteForceSelector(neighbors_no, args['batch_size'])
+            self.__selector = EuclideanRegionBruteForceSelector(neighbors_no, args['batch_size'])
         else:
             logger.error('Invalid neighbor_method option: {}'.format(neighbor_method))
             exit(-1)
 
-        return {'neighbor_selector' : selector}
+
+    def parseArgs(self, args):
+        if self.__selector is None:
+            self.__createSelector(args)
+        return {'neighbor_selector' : self.__selector}
 
 
-ConfigManager.addHandler(NeighborSelectorConfig())
+ConfigManager.addHandler(NeighborSelectorConfig)

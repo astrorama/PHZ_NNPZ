@@ -52,18 +52,13 @@ else:
     Logging.enableStdErrLogging()
 
 # Create the object which handles the user parameters
-conf_handler = ConfigManager(args)
+conf_manager = ConfigManager(args)
 
 
 # Read the reference sample data
-ref_sample = ReferenceSample(args['reference_sample_dir'])
-ref_ids = ref_sample.getIds()
-ref_phot_prov = PhotometryProvider(args['reference_sample_phot_file'])
-if np.any(ref_phot_prov.getIds() != ref_ids):
-    print('ERROR: Reference sample photometry ID mismatch')
-    exit(-1)
-ref_data = ref_phot_prov.getData(*args['reference_sample_phot_filters'])
-out_mean_phot_data = ref_phot_prov.getData(*args['out_mean_phot_filters'])
+ref_sample = conf_manager.getObject('reference_sample')
+ref_ids = conf_manager.getObject('reference_ids')
+ref_data = conf_manager.getObject('reference_phot_data')
 
 # Read the target catalog data
 target_reader = CatalogReader(args['target_cat'])
@@ -74,7 +69,7 @@ if 'input_size' in args:
     target_data = target_data[:args['input_size']]
 
 # Get the neighbor selector and initialize it
-selector = conf_handler.getObject('neighbor_selector').initialize(ref_data)
+selector = conf_manager.getObject('neighbor_selector').initialize(ref_data)
 
 
 # Construct the neighbor finder and build the affected sources map
@@ -108,13 +103,16 @@ for progress, ref_i in enumerate(affected):
 
 
 # Create the output handler
-output = conf_handler.getObject('output_handler')
+output = conf_manager.getObject('output_handler')
 cat_to_copy = target_reader.getAsAstropyTable()
 if 'input_size' in args:
     cat_to_copy = cat_to_copy[:args['input_size']]
 output.addColumnProvider(ocp.FullCatalogCopy(cat_to_copy))
 output.addColumnProvider(ocp.NeighborList(len(target_ids), ref_ids))
-output.addColumnProvider(ocp.MeanPhotometry(len(target_ids), args['out_mean_phot_filters'], out_mean_phot_data))
+if 'out_mean_phot_filters' in conf_manager.getAvailableObjectList():
+    out_mean_phot_filters = conf_manager.getObject('out_mean_phot_filters')
+    out_mean_phot_data = conf_manager.getObject('out_mean_phot_data')
+    output.addColumnProvider(ocp.MeanPhotometry(len(target_ids), out_mean_phot_filters, out_mean_phot_data))
 
 # Loop through the maps and add the contributions to the output
 progress_listener = ProgressListener(len(affected)-1, 'Adding contributions to output...')
@@ -124,6 +122,6 @@ for progress, ref_i in enumerate(affected):
         output.addContribution(ref_i, target_i, w)
 
 # Create the output catalog
-output_file = conf_handler.getObject('output_file')
+output_file = conf_manager.getObject('output_file')
 output.save(output_file)
 print('Created file {}'.format(output_file))

@@ -22,4 +22,4 @@ class OutputHandlerConfig(ConfigManager.ConfigHandler):
                 'output_file' : args['output_file']}
 
 
-ConfigManager.addHandler(OutputHandlerConfig())
+ConfigManager.addHandler(OutputHandlerConfig)
