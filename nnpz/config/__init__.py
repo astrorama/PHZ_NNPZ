@@ -1,2 +1,3 @@
 from .ConfigManager import ConfigManager
 from .NeighborSelectorConfig import NeighborSelectorConfig
+from .OutputHandlerConfig import OutputHandlerConfig

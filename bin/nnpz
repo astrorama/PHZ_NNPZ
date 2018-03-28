@@ -108,7 +108,7 @@ for progress, ref_i in enumerate(affected):
 
 
 # Create the output handler
-output = OutputHandler()
+output = conf_handler.getObject('output_handler')
 cat_to_copy = target_reader.getAsAstropyTable()
 if 'input_size' in args:
     cat_to_copy = cat_to_copy[:args['input_size']]
@@ -124,5 +124,6 @@ for progress, ref_i in enumerate(affected):
         output.addContribution(ref_i, target_i, w)
 
 # Create the output catalog
-output.save(args['output_file'])
-print('Created file {}'.format(args['output_file']))
+output_file = conf_handler.getObject('output_file')
+output.save(output_file)
+print('Created file {}'.format(output_file))
