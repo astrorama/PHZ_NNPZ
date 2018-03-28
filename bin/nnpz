@@ -97,12 +97,8 @@ for progress, ref_i in enumerate(affected):
 
 
 
-# Create the output handler
+# Get the output handler
 output = conf_manager.getObject('output_handler')
-cat_to_copy = conf_manager.getObject('target_astropy_table')
-if 'input_size' in args:
-    cat_to_copy = cat_to_copy[:args['input_size']]
-output.addColumnProvider(ocp.FullCatalogCopy(cat_to_copy))
 output.addColumnProvider(ocp.NeighborList(len(target_ids), ref_ids))
 if 'out_mean_phot_filters' in conf_manager.getAvailableObjectList():
     out_mean_phot_filters = conf_manager.getObject('out_mean_phot_filters')

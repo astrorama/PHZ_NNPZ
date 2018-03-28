@@ -4,3 +4,4 @@ from .OutputHandlerConfig import OutputHandlerConfig
 from .ReferenceSampleConfig import ReferenceSampleConfig
 from .ReferenceSamplePhotometryConfig import ReferenceSamplePhotometryConfig
 from .TargetCatalogConfig import TargetCatalogConfig
+from .CopyInputColumnsConfig import CopyInputColumnsConfig
