@@ -11,6 +11,15 @@ from nnpz.io import OutputHandler
 
 
 class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
+    """
+    The CoaddedPdz output provider generates a PDZ out of the weighted sum
+    of the neighbors PDZ, and re-normalized (its integral is 1)
+    It generates two columns:
+    - CoaddedPdz, with the PDZ values
+    - CoaddedPdzBins, with the PDZ bins
+    It assumes all reference samples have the same PDZ bins. If not, it will raise
+    an assert error when a mismatch is found.
+    """
 
     def __init__(self, catalog_size, reference_sample, ref_ids):
         super(CoaddedPdz, self).__init__()
