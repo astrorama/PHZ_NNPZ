@@ -90,10 +90,6 @@ for progress, ref_i in enumerate(affected):
 
 # Get the output handler
 output = conf_manager.getObject('output_handler')
-if 'out_mean_phot_filters' in conf_manager.getAvailableObjectList():
-    out_mean_phot_filters = conf_manager.getObject('out_mean_phot_filters')
-    out_mean_phot_data = conf_manager.getObject('out_mean_phot_data')
-    output.addColumnProvider(ocp.MeanPhotometry(len(target_ids), out_mean_phot_filters, out_mean_phot_data))
 
 # Loop through the maps and add the contributions to the output
 progress_listener = ProgressListener(len(affected)-1, 'Adding contributions to output...')

@@ -9,3 +9,4 @@ from .ReferenceCatalogConfig import ReferenceCatalogConfig
 from .ReferenceUniqueConfig import ReferenceUniqueConfig
 from .ReferenceConfig import ReferenceConfig
 from .NeighborListOutputConfig import NeighborListOutputConfig
+from .MeanPhotOutputConfig import MeanPhotOutputConfig
