@@ -24,14 +24,14 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
     def __createData(self, args):
 
-        self._checkParameterExists('target_cat', args)
-        target_cat = args['target_cat']
-        self._checkParameterExists('target_filters', args)
-        target_filters = args['target_filters']
+        self._checkParameterExists('target_catalog', args)
+        target_cat = args['target_catalog']
+        self._checkParameterExists('target_catalog_filters', args)
+        target_filters = args['target_catalog_filters']
         missing_phot_flags = args.get('missing_photometry_flags', [])
 
         logger.info('Reading target catalog: {}'.format(target_cat))
-        target_reader = CatalogReader(args['target_cat'])
+        target_reader = CatalogReader(target_cat)
         self.__target_ids = target_reader.get(prop.ID)
         self.__target_phot_data =target_reader.get(prop.Photometry(target_filters, missing_phot_flags))
         self.__target_astropy_table = target_reader.getAsAstropyTable()
