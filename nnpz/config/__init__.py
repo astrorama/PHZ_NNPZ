@@ -7,3 +7,5 @@ from .TargetCatalogConfig import TargetCatalogConfig
 from .CopyInputColumnsConfig import CopyInputColumnsConfig
 from .ReferenceCatalogConfig import ReferenceCatalogConfig
 from .ReferenceUniqueConfig import ReferenceUniqueConfig
+from .ReferenceConfig import ReferenceConfig
+from .NeighborListOutputConfig import NeighborListOutputConfig
