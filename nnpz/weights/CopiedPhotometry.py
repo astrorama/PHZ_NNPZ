@@ -8,7 +8,7 @@ from __future__ import division, print_function
 from nnpz.weights import WeightPhotometryProvider
 
 
-class ReferenceSamplePhotometry(WeightPhotometryProvider):
+class CopiedPhotometry(WeightPhotometryProvider):
 
     def __init__(self, ref_phot):
         self.__ref_phot = ref_phot
