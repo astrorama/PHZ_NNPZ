@@ -5,6 +5,8 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+import itertools
+
 import numpy as np
 
 from nnpz.weights import WeightPhotometryProvider
@@ -38,14 +40,12 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         self.__current_ref_i = None
         self.__current_ref_sed = None
 
-        self.__filter_shifts = {}
-        for filter_name, transmissions in self.__filter_trans_map.iteritems():
-            transmission_mean = np.mean(transmissions[:, 0])
-            if filter_name in filter_trans_mean_list:
-                self.__filter_shifts[filter_name] = filter_trans_mean_list[filter_name] - transmission_mean
-            else:
-                self.__filter_shifts[filter_name] = None
-
+        self.__filter_shifts = dict(itertools.product(self.__filter_trans_map.keys(), [None]))
+        if filter_trans_mean_list is not None:
+            for filter_name, transmissions in self.__filter_trans_map.iteritems():
+                transmission_mean = np.mean(transmissions[:, 0])
+                if filter_name in filter_trans_mean_list:
+                    self.__filter_shifts[filter_name] = filter_trans_mean_list[filter_name] - transmission_mean
 
     def __call__(self, ref_i, cat_i):
         """
@@ -69,7 +69,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         # Create a map with the shifted filters
         filter_map = {}
         for filter_name, transmission in self.__filter_trans_map.iteritems():
-            if self.__filter_shifts is not None:
+            if self.__filter_shifts[filter_name] is not None:
                 filter_map[filter_name] = transmission + self.__filter_shifts[filter_name][cat_i]
             else:
                 filter_map[filter_name] = transmission

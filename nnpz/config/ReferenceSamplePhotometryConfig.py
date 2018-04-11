@@ -19,6 +19,7 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__ref_phot_data = None
+        self.__ref_filters = None
         self.__out_mean_phot_filters = None
         self.__out_mean_phot_data = None
 
@@ -41,6 +42,10 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
 
             logger.info('Reference sample photometric bands: {}'.format(phot_filters))
             self.__ref_phot_data = ref_phot_prov.getData(*phot_filters)
+            self.__ref_phot_type = ref_phot_prov.getType()
+            self.__ref_filters = {}
+            for filter_name in phot_filters:
+                self.__ref_filters[filter_name] = ref_phot_prov.getFilterTransmission(filter_name)
 
             if 'reference_sample_out_mean_phot_filters' in args:
                 self.__out_mean_phot_filters = args['reference_sample_out_mean_phot_filters']
@@ -55,6 +60,8 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
         result = {}
         if self.__ref_phot_data is not None:
             result['reference_phot_data'] = self.__ref_phot_data
+            result['reference_phot_type'] = self.__ref_phot_type
+            result['reference_filter_transmission'] = self.__ref_filters
         if self.__out_mean_phot_filters is not None:
             result['out_mean_phot_filters'] = self.__out_mean_phot_filters
             result['out_mean_phot_data'] = self.__out_mean_phot_data
