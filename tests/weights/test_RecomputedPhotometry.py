@@ -31,4 +31,5 @@ def test_recomputedPhotometry(reference_sample_fixture, filters_fixture, target_
     for ref_i, ref in enumerate(reference_sample_fixture.iterate()):
         for cat_i in range(5):
             phot = recomputed(ref_i, cat_i)
+            print(phot)
             assert phot.shape == (len(filters_fixture), 2)

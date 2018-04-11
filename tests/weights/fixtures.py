@@ -94,7 +94,9 @@ def target_fixture(filters_fixture):
     The filter shifts are generated from the filters_fixture
     """
     NTargets = 10
-    filters_shift = np.random.randn(NTargets, len(filters_fixture))*100
+    filters_shift = {}
+    for filter in filters_fixture.keys():
+        filters_shift[filter] = np.random.randn(NTargets) * 100
 
     return {
         'ID': np.asarray(range(1, NTargets+1), dtype=np.float32),
