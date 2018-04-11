@@ -20,11 +20,11 @@ def test_recomputedPhotometry(reference_sample_fixture, filters_fixture, target_
     filter_map = dict(filters_fixture)
     phot_type = 'F_nu_uJy'
     ebv = target_fixture['ebv']
-    filters_shift = target_fixture['filters_shift']
+    filter_means = target_fixture['filter_means']
 
     # When
     recomputed = RecomputedPhotometry(
-        reference_sample_fixture, filter_map.keys(), filter_map, phot_type, ebv, filters_shift
+        reference_sample_fixture, filter_map.keys(), filter_map, phot_type, ebv, filter_means
     )
 
     # Then

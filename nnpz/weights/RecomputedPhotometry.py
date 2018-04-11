@@ -18,7 +18,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
     through the same part of the detector as the target source.
     """
 
-    def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_shift=None):
+    def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_list=None):
         """
         Constructor.
         Args:
@@ -27,17 +27,24 @@ class RecomputedPhotometry(WeightPhotometryProvider):
             filter_trans_map: A map filter_name => [average filter transmissions]
             phot_type: Photometry type
             ebv_list: A list/array with the E(B-V) corresponding to each entry in the target catalog
-            filter_shift: A map with the filter_name as key, and a list/array with the filter shifts corresponding to
-                each entry in the target catalog
+            filter_trans_mean_list: A map with the filter_name as key, and a list/array with the filter mean
+                corresponding to each entry in the target catalog
         """
         self.__ref_sample = ref_sample
         self.__filter_order = filter_order
         self.__filter_trans_map = filter_trans_map
         self.__ebv_list = ebv_list
-        self.__filter_shift = filter_shift
         self.__phot_pre_post = PhotometryTypeMap[phot_type][0]
         self.__current_ref_i = None
         self.__current_ref_sed = None
+
+        self.__filter_shifts = {}
+        for filter_name, transmissions in self.__filter_trans_map.iteritems():
+            transmission_mean = np.mean(transmissions[:, 0])
+            if filter_name in filter_trans_mean_list:
+                self.__filter_shifts[filter_name] = filter_trans_mean_list[filter_name] - transmission_mean
+            else:
+                self.__filter_shifts[filter_name] = None
 
 
     def __call__(self, ref_i, cat_i):
@@ -62,8 +69,10 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         # Create a map with the shifted filters
         filter_map = {}
         for filter_name, transmission in self.__filter_trans_map.iteritems():
-            shift = self.__filter_shift[filter_name][cat_i] if filter_name in self.__filter_shift else 0
-            filter_map[filter_name] = transmission + shift
+            if self.__filter_shifts is not None:
+                filter_map[filter_name] = transmission + self.__filter_shifts[filter_name][cat_i]
+            else:
+                filter_map[filter_name] = transmission
 
         # Create the photometry provider
         pre_post_proc = self.__phot_pre_post()

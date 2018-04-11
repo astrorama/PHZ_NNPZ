@@ -94,12 +94,13 @@ def target_fixture(filters_fixture):
     The filter shifts are generated from the filters_fixture
     """
     NTargets = 10
-    filters_shift = {}
-    for filter in filters_fixture.keys():
-        filters_shift[filter] = np.random.randn(NTargets) * 100
+    filter_means = {}
+    for filter_name, transmissions in filters_fixture.iteritems():
+        trans_avg = np.mean(transmissions[:, 0])
+        filter_means[filter_name] = trans_avg + np.random.randint(-100, 100, size=NTargets)
 
     return {
         'ID': np.asarray(range(1, NTargets+1), dtype=np.float32),
         'ebv': np.ones(NTargets),
-        'filters_shift': filters_shift,
+        'filter_means': filter_means,
     }
