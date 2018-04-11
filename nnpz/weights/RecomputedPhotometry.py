@@ -13,10 +13,23 @@ from nnpz.photometry import (PhotometryTypeMap, GalacticReddeningPrePostProcesso
 
 
 class RecomputedPhotometry(WeightPhotometryProvider):
-
+    """
+    RecomputedPhotometry calculates the photometry of a reference source as if it were seen
+    through the same part of the detector as the target source.
+    """
 
     def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_shift=None):
-
+        """
+        Constructor.
+        Args:
+            ref_sample: A ReferenceSample instance
+            filter_order: A list with the filters in the order they are expected to be returned
+            filter_trans_map: A map filter_name => [average filter transmissions]
+            phot_type: Photometry type
+            ebv_list: A list/array with the E(B-V) corresponding to each entry in the target catalog
+            filter_shift: A map with the filter_name as key, and a list/array with the filter shifts corresponding to
+                each entry in the target catalog
+        """
         self.__ref_sample = ref_sample
         self.__filter_order = filter_order
         self.__filter_trans_map = filter_trans_map
@@ -28,7 +41,18 @@ class RecomputedPhotometry(WeightPhotometryProvider):
 
 
     def __call__(self, ref_i, cat_i):
+        """
+        Re-compute the photometry of the reference sample as if it were seen through the same part of the detector
+        as the target.
+        Args:
+            ref_i: The index of the reference sample for which re-compute the photometry
+            cat_i: The index of the target to use for the re-computation
 
+        Returns:
+            A 2D numpy array of single precision floating point numbers. The
+            first dimension represents each filter, and the second one has always
+            size 2, representing the photometry value, and error (always 0 in this case).
+        """
         # Retrieve the SED of the reference sample object
         if ref_i != self.__current_ref_i:
             ref_id = self.__ref_sample.getIds()[ref_i]
