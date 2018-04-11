@@ -20,7 +20,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
     through the same part of the detector as the target source.
     """
 
-    def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_list=None):
+    def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_lists=None):
         """
         Constructor.
         Args:
@@ -41,11 +41,11 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         self.__current_ref_sed = None
 
         self.__filter_shifts = dict(itertools.product(self.__filter_trans_map.keys(), [None]))
-        if filter_trans_mean_list is not None:
+        if filter_trans_mean_lists is not None:
             for filter_name, transmissions in self.__filter_trans_map.iteritems():
                 transmission_mean = np.mean(transmissions[:, 0])
-                if filter_name in filter_trans_mean_list:
-                    self.__filter_shifts[filter_name] = filter_trans_mean_list[filter_name] - transmission_mean
+                if filter_name in filter_trans_mean_lists:
+                    self.__filter_shifts[filter_name] = filter_trans_mean_lists[filter_name] - transmission_mean
 
     def __call__(self, ref_i, cat_i):
         """

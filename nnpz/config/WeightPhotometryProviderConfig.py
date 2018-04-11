@@ -34,7 +34,7 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
         phot_type = ref_sample_photometry_config['reference_phot_type']
 
         self.__photometry_provider = RecomputedPhotometry(
-            ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_list=None
+            ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_lists=None
         )
 
     def __createPhotometryProvider(self, args):
