@@ -18,6 +18,8 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
     galactic reddening to the sed beforhand.
     """
 
+    __fp = ListFileFilterProvider(Auxiliary.getAuxiliaryPath('GalacticExtinctionCurves.list'))
+
     def __init__(self, pre_post_processor, p_14_ebv, b_filter=None, r_filter=None, galactic_reddening_curve=None):
         """Initialize a GalacticReddeningPrePostProcessor by decorating the
         provided pre/post processor
@@ -49,9 +51,8 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
         self.__processor = pre_post_processor
         self.__p_14_ebv = p_14_ebv
 
-        fp = ListFileFilterProvider(Auxiliary.getAuxiliaryPath('GalacticExtinctionCurves.list'))
-        self.__b_filter = fp.getFilterTransmission('b_filter') if b_filter is None else b_filter
-        self.__r_filter = fp.getFilterTransmission('r_filter') if r_filter is None else r_filter
+        self.__b_filter = self.__fp.getFilterTransmission('b_filter') if b_filter is None else b_filter
+        self.__r_filter = self.__fp.getFilterTransmission('r_filter') if r_filter is None else r_filter
         self.__reddening_curve = fp.getFilterTransmission('extinction_curve') if galactic_reddening_curve is None else galactic_reddening_curve
 
     def __truncateSed(self, sed, range):
