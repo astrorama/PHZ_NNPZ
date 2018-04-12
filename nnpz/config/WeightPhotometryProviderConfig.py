@@ -5,7 +5,7 @@ Author: Alejandro Alvarez Ayllon
 
 from __future__ import division, print_function
 
-from nnpz.config import ConfigManager, ReferenceSamplePhotometryConfig, ReferenceSampleConfig
+from nnpz.config import ConfigManager, ReferenceSamplePhotometryConfig, ReferenceSampleConfig, TargetCatalogConfig
 from nnpz.utils import Logging
 from nnpz.weights import CopiedPhotometry, RecomputedPhotometry
 
@@ -27,14 +27,16 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
 
         ref_sample_photometry_config = ConfigManager.getHandler(ReferenceSamplePhotometryConfig).parseArgs(args)
         ref_sample_config = ConfigManager.getHandler(ReferenceSampleConfig).parseArgs(args)
+        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
 
         ref_sample = ref_sample_config['reference_sample']
         filter_order = args['reference_sample_phot_filters']
         filter_trans_map = ref_sample_photometry_config['reference_filter_transmission']
         phot_type = ref_sample_photometry_config['reference_phot_type']
+        ebv = target_config['target_ebv']
 
         self.__photometry_provider = RecomputedPhotometry(
-            ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_lists=None
+            ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=ebv, filter_trans_mean_lists=None
         )
 
     def __createPhotometryProvider(self, args):

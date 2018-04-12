@@ -28,7 +28,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
             filter_order: A list with the filters in the order they are expected to be returned
             filter_trans_map: A map filter_name => [average filter transmissions]
             phot_type: Photometry type
-            ebv_list: A list/array with the E(B-V) corresponding to each entry in the target catalog
+            ebv_list: None, or a 2D array with the pair (E(B-V), error) corresponding to each entry in the target catalog
             filter_trans_mean_list: A map with the filter_name as key, and a list/array with the filter mean
                 corresponding to each entry in the target catalog
         """
@@ -77,7 +77,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         # Create the photometry provider
         pre_post_proc = self.__phot_pre_post()
         if self.__ebv_list is not None:
-            ebv = self.__ebv_list[cat_i]
+            ebv = self.__ebv_list[cat_i, 0]
             pre_post_proc = GalacticReddeningPrePostProcessor(pre_post_proc, ebv)
         phot_calc = PhotometryCalculator(filter_map, pre_post_proc)
 

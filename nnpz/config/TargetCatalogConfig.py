@@ -20,6 +20,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__target_ids = None
         self.__target_phot_data = None
         self.__target_astropy_table = None
+        self.__target_ebv = None
 
 
     def __createData(self, args):
@@ -33,8 +34,18 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         logger.info('Reading target catalog: {}'.format(target_cat))
         target_reader = CatalogReader(target_cat)
         self.__target_ids = target_reader.get(prop.ID)
-        self.__target_phot_data =target_reader.get(prop.Photometry(target_filters, missing_phot_flags))
+        self.__target_phot_data = target_reader.get(prop.Photometry(target_filters, missing_phot_flags))
         self.__target_astropy_table = target_reader.getAsAstropyTable()
+
+        target_catalog_ebv = args.get('target_catalog_ebv', None)
+        if target_catalog_ebv is not None:
+            if not isinstance(target_catalog_ebv, tuple) and not isinstance(target_catalog_ebv, list):
+                logger.error('target_catalog_ebv can only be a tuple or a list')
+                exit(1)
+            if len(target_catalog_ebv) != 2:
+                logger.error('target_catalog_ebv must have length 2')
+                exit(1)
+            self.__target_ebv = target_reader.get(prop.EBV(*target_catalog_ebv, nan_flags=missing_phot_flags))
 
         if 'input_size' in args:
             input_size = args['input_size']
@@ -51,6 +62,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         return {'target_ids' : self.__target_ids,
                 'target_phot_data' : self.__target_phot_data,
+                'target_ebv': self.__target_ebv,
                 'target_astropy_table' : self.__target_astropy_table}
 
 
