@@ -9,9 +9,10 @@ import itertools
 
 import numpy as np
 
+from nnpz.utils import Auxiliary
 from nnpz.weights import WeightPhotometryProvider
 from nnpz.photometry import (PhotometryTypeMap, GalacticReddeningPrePostProcessor,
-                             PhotometryCalculator)
+                             PhotometryCalculator, ListFileFilterProvider)
 
 
 class RecomputedPhotometry(WeightPhotometryProvider):
@@ -19,6 +20,16 @@ class RecomputedPhotometry(WeightPhotometryProvider):
     RecomputedPhotometry calculates the photometry of a reference source as if it were seen
     through the same part of the detector as the target source.
     """
+
+    def __init_filters_and_curve(self):
+        """
+        GalacticReddeningPrePostProcessor loads these files *each time* it is instantiated
+        unless we give them to it. So we pre-load them here if needed.
+        """
+        fp = ListFileFilterProvider(Auxiliary.getAuxiliaryPath('GalacticExtinctionCurves.list'))
+        self.__b_filter = fp.getFilterTransmission('b_filter')
+        self.__r_filter = fp.getFilterTransmission('r_filter')
+        self.__reddening_curve = fp.getFilterTransmission('extinction_curve')
 
     def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_lists=None):
         """
@@ -39,6 +50,9 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         self.__phot_pre_post = PhotometryTypeMap[phot_type][0]
         self.__current_ref_i = None
         self.__current_ref_sed = None
+
+        if self.__ebv_list is not None:
+            self.__init_filters_and_curve()
 
         self.__filter_shifts = dict(itertools.product(self.__filter_trans_map.keys(), [None]))
         if filter_trans_mean_lists is not None:
@@ -78,7 +92,10 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         pre_post_proc = self.__phot_pre_post()
         if self.__ebv_list is not None:
             ebv = self.__ebv_list[cat_i, 0]
-            pre_post_proc = GalacticReddeningPrePostProcessor(pre_post_proc, ebv)
+            pre_post_proc = GalacticReddeningPrePostProcessor(
+                pre_post_proc, ebv,
+                self.__b_filter, self.__r_filter, self.__reddening_curve
+            )
         phot_calc = PhotometryCalculator(filter_map, pre_post_proc)
 
         # Compute the photometry
