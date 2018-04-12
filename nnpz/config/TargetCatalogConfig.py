@@ -21,6 +21,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__target_phot_data = None
         self.__target_astropy_table = None
         self.__target_ebv = None
+        self.__target_filter_transmission = None
 
 
     def __createData(self, args):
@@ -47,6 +48,12 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
                 exit(1)
             self.__target_ebv = target_reader.get(prop.EBV(*target_catalog_ebv, nan_flags=missing_phot_flags))
 
+        target_catalog_filters_transmission = args.get('target_catalog_filters_transmission', None)
+        if target_catalog_filters_transmission is not None:
+            self.__target_filter_transmission = target_reader.get(
+                prop.FiltersTransmission(target_catalog_filters_transmission, missing_phot_flags)
+            )
+
         if 'input_size' in args:
             input_size = args['input_size']
             logger.warn('Processing only first {} objects from target catalog'.format(input_size))
@@ -63,6 +70,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         return {'target_ids' : self.__target_ids,
                 'target_phot_data' : self.__target_phot_data,
                 'target_ebv': self.__target_ebv,
+                'target_filter_transmission': self.__target_filter_transmission,
                 'target_astropy_table' : self.__target_astropy_table}
 
 
