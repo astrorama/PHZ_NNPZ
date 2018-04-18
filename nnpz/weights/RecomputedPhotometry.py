@@ -57,7 +57,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         self.__filter_shifts = dict(itertools.product(self.__filter_trans_map.keys(), [None]))
         if filter_trans_mean_lists is not None:
             for filter_name, transmissions in self.__filter_trans_map.iteritems():
-                transmission_mean = np.mean(transmissions[:, 0])
+                transmission_mean = np.average(transmissions[:, 0], weights=transmissions[:, 1])
                 if filter_name in filter_trans_mean_lists:
                     self.__filter_shifts[filter_name] = filter_trans_mean_lists[filter_name] - transmission_mean
 
