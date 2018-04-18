@@ -83,10 +83,10 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         # Create a map with the shifted filters
         filter_map = {}
         for filter_name, transmission in self.__filter_trans_map.iteritems():
+            filter_map[filter_name] = np.array(transmission, copy=True)
             if self.__filter_shifts[filter_name] is not None:
-                filter_map[filter_name] = transmission + self.__filter_shifts[filter_name][cat_i]
-            else:
-                filter_map[filter_name] = transmission
+                filter_map[filter_name][:, 0] += self.__filter_shifts[filter_name][cat_i]
+
 
         # Create the photometry provider
         pre_post_proc = self.__phot_pre_post()
