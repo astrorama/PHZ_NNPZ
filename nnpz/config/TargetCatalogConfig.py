@@ -51,7 +51,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         target_catalog_filters_transmission = args.get('target_catalog_filters_transmission', None)
         if target_catalog_filters_transmission is not None:
             self.__target_filter_transmission = target_reader.get(
-                prop.FiltersTransmission(target_catalog_filters_transmission, missing_phot_flags)
+                prop.FiltersMeanWavelength(target_catalog_filters_transmission, missing_phot_flags)
             )
 
         if 'input_size' in args:

@@ -11,7 +11,7 @@ from nnpz.exceptions import UnknownNameException
 from nnpz.io import CatalogReader
 
 
-class FiltersTransmission(CatalogReader.CatalogPropertyInterface):
+class FiltersMeanWavelength(CatalogReader.CatalogPropertyInterface):
     """Catalog property to retrieve the mean of the filter transmissions"""
 
     def __init__(self, filter_dict, nan_flags=[]):
