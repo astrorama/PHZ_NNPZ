@@ -21,7 +21,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__target_phot_data = None
         self.__target_astropy_table = None
         self.__target_ebv = None
-        self.__target_filter_transmission = None
+        self.__target_filter_mean_wavelength = None
 
 
     def __createData(self, args):
@@ -50,7 +50,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         target_catalog_filters_transmission = args.get('target_catalog_filters_transmission', None)
         if target_catalog_filters_transmission is not None:
-            self.__target_filter_transmission = target_reader.get(
+            self.__target_filter_mean_wavelength = target_reader.get(
                 prop.FiltersMeanWavelength(target_catalog_filters_transmission, missing_phot_flags)
             )
 
@@ -62,8 +62,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             self.__target_astropy_table = self.__target_astropy_table[:input_size]
             if self.__target_ebv is not None:
                 self.__target_ebv = self.__target_ebv[:input_size]
-            if self.__target_filter_transmission is not None:
-                self.__target_filter_transmission = self.__target_filter_transmission[:input_size]
+            if self.__target_filter_mean_wavelength is not None:
+                self.__target_filter_mean_wavelength = self.__target_filter_mean_wavelength[:input_size]
 
 
     def parseArgs(self, args):
@@ -74,7 +74,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         return {'target_ids' : self.__target_ids,
                 'target_phot_data' : self.__target_phot_data,
                 'target_ebv': self.__target_ebv,
-                'target_filter_transmission': self.__target_filter_transmission,
+                'target_filter_mean_wavelength': self.__target_filter_mean_wavelength,
                 'target_astropy_table' : self.__target_astropy_table}
 
 

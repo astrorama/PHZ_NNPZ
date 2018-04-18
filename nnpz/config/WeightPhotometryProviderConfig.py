@@ -34,7 +34,7 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
         filter_trans_map = ref_sample_photometry_config['reference_filter_transmission']
         phot_type = ref_sample_photometry_config['reference_phot_type']
         ebv = target_config['target_ebv']
-        trans_mean = target_config['target_filter_transmission']
+        trans_mean = target_config['target_filter_mean_wavelength']
 
         self.__photometry_provider = RecomputedPhotometry(
             ref_sample, filter_order, filter_trans_map, phot_type,
