@@ -11,6 +11,8 @@ import os
 from astropy.io import fits
 from astropy.table import Table
 
+from nnpz.utils.Fits import tableToHdu
+
 
 class OutputHandler(object):
 
@@ -76,12 +78,12 @@ class OutputHandler(object):
         for prov in self.__column_providers:
             for col in prov.getColumns():
                 out.add_column(col)
-        hdu_list.append(fits.table_to_hdu(out))
+        hdu_list.append(tableToHdu(out))
 
         # Extensions
         for hp in self.__hdu_providers:
             for name, table in hp.getExtensionTables().iteritems():
-                ext_hdu = fits.table_to_hdu(table)
+                ext_hdu = tableToHdu(table)
                 ext_hdu.name = name
                 hdu_list.append(ext_hdu)
 
