@@ -22,4 +22,7 @@ def tableToHdu(table):
         if len(data.shape) > 1:
             format = "{}{}".format(data.shape[1], format)
         columns.append(fits.Column(name=name, array=data, format=format))
-    return fits.BinTableHDU.from_columns(columns)
+    hdu = fits.BinTableHDU.from_columns(columns)
+    for key, value in table.meta.items():
+        hdu.header.append((key, value))
+    return hdu
