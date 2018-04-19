@@ -60,10 +60,6 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             self.__target_ids = self.__target_ids[:input_size]
             self.__target_phot_data = self.__target_phot_data[:input_size]
             self.__target_astropy_table = self.__target_astropy_table[:input_size]
-            if self.__target_ebv is not None:
-                self.__target_ebv = self.__target_ebv[:input_size]
-            if self.__target_filter_mean_wavelength is not None:
-                self.__target_filter_mean_wavelength = self.__target_filter_mean_wavelength[:input_size]
 
 
     def parseArgs(self, args):
