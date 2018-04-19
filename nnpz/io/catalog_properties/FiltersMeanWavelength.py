@@ -48,7 +48,7 @@ class FiltersMeanWavelength(CatalogReader.CatalogPropertyInterface):
                 raise UnknownNameException('Missing column {}'.format(column_name))
 
         data = {}
-        for filter_name, column_name in self.__filter_dict.iteritems():
+        for filter_name, column_name in self.__filter_dict.items():
             data[filter_name] = np.array(catalog[column_name], copy=True, dtype=np.float32)
             for flag in self.__nan_flags:
                 data[filter_name][data == flag] = np.nan

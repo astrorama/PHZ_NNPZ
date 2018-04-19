@@ -92,7 +92,7 @@ def target_fixture(filters_fixture):
     """
     NTargets = 10
     filter_means = {}
-    for filter_name, transmissions in filters_fixture.iteritems():
+    for filter_name, transmissions in filters_fixture.items():
         trans_avg = np.mean(transmissions[:, 0])
         filter_means[filter_name] = trans_avg + np.random.randint(-50, 50, size=NTargets)
 

@@ -82,7 +82,7 @@ class OutputHandler(object):
 
         # Extensions
         for hp in self.__hdu_providers:
-            for name, table in hp.getExtensionTables().iteritems():
+            for name, table in hp.getExtensionTables().items():
                 ext_hdu = tableToHdu(table)
                 ext_hdu.name = name
                 hdu_list.append(ext_hdu)
