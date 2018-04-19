@@ -42,15 +42,13 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
         )
 
     def __createPhotometryProvider(self, args):
-        self._checkParameterExists('weight_photometry_provider', args)
-        provider = args['weight_photometry_provider']
-
-        if provider == 'CopiedPhotometry':
-            self.__createCopiedPhotometry(args)
-        elif provider == 'RecomputedPhotometry':
+        if args.get('target_ebv', None) or args.get('target_filter_mean_wavelength', None):
+            logger.info('Using recomputed photometries for weight calculation')
             self.__createRecomputedPhotometry(args)
         else:
-            logger.error('Invalid photometry provider: {}'.format(provider))
+            logger.info('Using copied photometries for weight calculation')
+            self.__createCopiedPhotometry(args)
+
 
     def parseArgs(self, args):
         if self.__photometry_provider is None:
