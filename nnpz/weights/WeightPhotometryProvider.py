@@ -13,5 +13,5 @@ class WeightPhotometryProvider(object):
 
 
     @abc.abstractmethod
-    def __call__(self, ref_i, cat_i):
+    def __call__(self, ref_i, cat_i, flags):
         return

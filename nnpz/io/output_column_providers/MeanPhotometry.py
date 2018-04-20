@@ -28,7 +28,7 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
         self.__total_errors = np.zeros((catalog_size, len(filter_names)), dtype=np.float32)
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight):
+    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
 
         phot = self.__data[reference_sample_i]
         self.__total_weights[catalog_i] += weight

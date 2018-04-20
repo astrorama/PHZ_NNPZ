@@ -16,6 +16,7 @@ from nnpz.framework import *
 from nnpz.weights import *
 from nnpz.config import ConfigManager
 from nnpz.utils import Logging
+from nnpz import NnpzFlag
 
 
 #
@@ -91,10 +92,14 @@ target_data = conf_manager.getObject('target_phot_data')
 selector = conf_manager.getObject('neighbor_selector').initialize(ref_data)
 
 
+# Construct the array which keeps the flags objects of all the target sources
+result_flags = [NnpzFlag() for i in range(len(target_data))]
+
+
 # Construct the neighbor finder and build the affected sources map
 finder =  AffectedSourcesFinder(selector)
 progress_listener = ProgressListener(len(target_data)-1, 'Finding neighbors... ')
-affected = finder.findAffected(target_data, progress_listener)
+affected = finder.findAffected(target_data, result_flags, progress_listener)
 
 
 # Compute the weights
@@ -108,15 +113,17 @@ for progress, ref_i in enumerate(affected):
 
     target_i_list = affected[ref_i]
     target_obj = target_data[target_i_list]
+    target_flags = [result_flags[i] for i in target_i_list]
 
     # Get the reference sample object photometry to use for the weight calculation
     ref_obj = np.ndarray(target_obj.shape, dtype=np.float32)
     for i, target_i in enumerate(target_i_list):
-        ref_obj[i, :, :] = weight_phot_provider(ref_i, target_i)
+        flag = result_flags[target_i]
+        ref_obj[i, :, :] = weight_phot_provider(ref_i, target_i, flag)
 
     # Compute the weights. Note that we mask out the bands which are marked as NaN
     nan_masks = [np.logical_not(np.isnan(target_obj_i[:,0])) for target_obj_i in target_obj]
-    weights[ref_i] = [weight_calculator(ref_obj_i[mask_i,:], target_obj_i[mask_i,:]) for ref_obj_i, target_obj_i, mask_i in zip(ref_obj, target_obj, nan_masks)]
+    weights[ref_i] = [weight_calculator(ref_obj_i[mask_i,:], target_obj_i[mask_i,:], flag) for ref_obj_i, target_obj_i, mask_i, flag in zip(ref_obj, target_obj, nan_masks, target_flags)]
 
 
 
@@ -131,7 +138,7 @@ progress_listener = ProgressListener(len(affected)-1, 'Adding contributions to o
 for progress, ref_i in enumerate(sorted(affected)):
     progress_listener(progress)
     for target_i, w in zip(affected[ref_i], weights[ref_i]):
-        output.addContribution(ref_i, target_i, w)
+        output.addContribution(ref_i, target_i, w, result_flags[target_i])
 
 # Create the output catalog
 output_file = conf_manager.getObject('output_file')

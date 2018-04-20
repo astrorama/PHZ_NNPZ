@@ -18,7 +18,7 @@ class OutputHandler(object):
         __metaclass__ = abc.ABCMeta
 
         @abc.abstractmethod
-        def addContribution(self, reference_sample_i, catalog_i, weight):
+        def addContribution(self, reference_sample_i, catalog_i, weight, flags):
             pass
 
         @abc.abstractmethod
@@ -34,9 +34,9 @@ class OutputHandler(object):
         self.__providers.append(provider)
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight):
+    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
         for p in self.__providers:
-            p.addContribution(reference_sample_i, catalog_i, weight)
+            p.addContribution(reference_sample_i, catalog_i, weight, flags)
 
 
     def save(self, filename):

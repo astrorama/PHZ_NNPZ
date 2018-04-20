@@ -102,7 +102,7 @@ class BruteForceSelector(NeighborSelectorInterface):
         self.__ref_data_errors = ref_data[:, :, 1]
 
 
-    def _findNeighborsImpl(self, coordinate):
+    def _findNeighborsImpl(self, coordinate, flags):
         """Returns the neighbors of the given coordinate in the reference sample.
 
         For argument and return description see the interface documentation.

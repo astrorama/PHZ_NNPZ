@@ -19,7 +19,7 @@ class MedianTrueRedshift(OutputHandler.OutputColumnProviderInterface):
         self.__weights = [[] for i in range(catalog_size)]
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight):
+    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
         z = self.__ref_z[reference_sample_i]
         self.__zs[catalog_i].append(z)
         self.__weights[catalog_i].append(weight)

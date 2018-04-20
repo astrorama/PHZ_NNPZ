@@ -30,7 +30,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         self.__current_ref_i = None
         self.__current_ref_pdz = None
 
-    def addContribution(self, reference_sample_i, catalog_i, weight):
+    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
         if reference_sample_i != self.__current_ref_i:
             ref_id = self.__ref_ids[reference_sample_i]
             self.__current_ref_i = reference_sample_i

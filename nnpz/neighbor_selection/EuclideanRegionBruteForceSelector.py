@@ -52,7 +52,7 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         self.__kdtree = KDTreeSelector(self.__brute_force_batch_size).initialize(ref_data)
 
 
-    def _findNeighborsImpl(self, coordinate):
+    def _findNeighborsImpl(self, coordinate, flags):
         """Returns te n closest neighbors to the given coordinate.
 
         For argument and return description see the interface documentation.
@@ -67,7 +67,7 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         if np.isnan(coordinate).any():
             batch = np.arange(self.__ref_data.shape[0])
         else:
-            batch, _ = self.__kdtree.findNeighbors(coordinate)
+            batch, _ = self.__kdtree.findNeighbors(coordinate, flags)
 
         # Get the slice of the reference data which covers the batch
         batch_data = self.__ref_data[batch,:,:]
@@ -75,7 +75,7 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         # Now use a BruteForceSelector to find the chi2 neighbors in the batch
         import nnpz.neighbor_selection.brute_force_methods as bfm
         brute_force = BruteForceSelector(bfm.Chi2Distance(), bfm.SmallestSelector(self.__neighbors_no)).initialize(batch_data)
-        bf_ids, chi2 = brute_force.findNeighbors(coordinate)
+        bf_ids, chi2 = brute_force.findNeighbors(coordinate, flags)
 
         # Retrieve the IDs of the objects in the full reference sample
         ids = batch[bf_ids]
