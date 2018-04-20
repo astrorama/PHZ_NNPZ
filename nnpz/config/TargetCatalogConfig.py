@@ -31,10 +31,11 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self._checkParameterExists('target_catalog_filters', args)
         target_filters = args['target_catalog_filters']
         missing_phot_flags = args.get('missing_photometry_flags', [])
+        id_col_name = args.get('target_catalog_id_column', 'ID')
 
         logger.info('Reading target catalog: {}'.format(target_cat))
         target_reader = CatalogReader(target_cat)
-        self.__target_ids = target_reader.get(prop.ID)
+        self.__target_ids = target_reader.get(prop.ID(id_col_name))
         self.__target_phot_data = target_reader.get(prop.Photometry(target_filters, missing_phot_flags))
         self.__target_astropy_table = target_reader.getAsAstropyTable()
 
