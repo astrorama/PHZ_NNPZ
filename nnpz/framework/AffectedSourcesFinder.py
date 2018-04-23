@@ -28,12 +28,15 @@ class AffectedSourcesFinder(object):
         assert isinstance(neighbor_selector, NeighborSelectorInterface)
         self.__selector = neighbor_selector
 
-    def findAffected(self, input_coord_iter, progress_listener=None):
+    def findAffected(self, input_coord_iter, flags_iter, progress_listener=None):
         """Finds the input affected by each of the reference sample objects.
 
         Args:
             input_coord_iter: An iterable object which returns the coordinates
                 of the input sources
+            flags_iter: An iterable object which returns the NnpzFlag instances
+                to update with the neighbor selection related flags for each
+                input source
             progress_listener: A callable object, which will be called with the
                 index of the currently processed input object, to report the
                 progress of the search.
@@ -44,10 +47,10 @@ class AffectedSourcesFinder(object):
             by this reference object.
         """
         result = {}
-        for i, in_data in enumerate(input_coord_iter):
+        for i, (in_data, flags) in enumerate(zip(input_coord_iter, flags_iter)):
             if progress_listener:
                 progress_listener(i+1)
-            neighbor_indices, _ = self.__selector.findNeighbors(in_data)
+            neighbor_indices, _ = self.__selector.findNeighbors(in_data, flags)
             for ref_i in neighbor_indices:
                 if not ref_i in result:
                     result[ref_i] = []

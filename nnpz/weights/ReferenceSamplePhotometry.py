@@ -13,5 +13,5 @@ class ReferenceSamplePhotometry(WeightPhotometryProvider):
     def __init__(self, ref_phot):
         self.__ref_phot = ref_phot
 
-    def __call__(self, ref_i, cat_i):
+    def __call__(self, ref_i, cat_i, flags):
         return self.__ref_phot[ref_i]

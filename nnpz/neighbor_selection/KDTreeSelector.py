@@ -44,7 +44,7 @@ class KDTreeSelector(NeighborSelectorInterface):
         self.__kdtree = spatial.cKDTree(values)
 
 
-    def _findNeighborsImpl(self, coordinate):
+    def _findNeighborsImpl(self, coordinate, flags):
         """Returns te n closest neighbors to the given coordinate.
 
         For argument and return description see the interface documentation.

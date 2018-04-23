@@ -13,7 +13,7 @@ from nnpz.weights import WeightCalculatorInterface
 
 class LikelihoodWeight(WeightCalculatorInterface):
 
-    def __call__(self, obj_1, obj_2):
+    def __call__(self, obj_1, obj_2, flags):
         v1 = obj_1[:, 0]
         e1 = obj_1[:, 1]
         v2 = obj_2[:, 0]
