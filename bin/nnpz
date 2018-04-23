@@ -11,12 +11,10 @@ import os
 import sys
 import numpy as np
 
-import nnpz.io.output_column_providers as ocp
 from nnpz.framework import *
 from nnpz.weights import *
 from nnpz.config import ConfigManager
 from nnpz.utils import Logging
-from nnpz import NnpzFlag
 
 
 #
@@ -91,9 +89,8 @@ target_data = conf_manager.getObject('target_phot_data')
 # Get the neighbor selector and initialize it
 selector = conf_manager.getObject('neighbor_selector').initialize(ref_data)
 
-
-# Construct the array which keeps the flags objects of all the target sources
-result_flags = [NnpzFlag() for i in range(len(target_data))]
+# Get the flag list
+result_flags = conf_manager.getObject('flag_list')
 
 
 # Construct the neighbor finder and build the affected sources map
@@ -129,8 +126,6 @@ for progress, ref_i in enumerate(affected):
 
 # Get the output handler
 output = conf_manager.getObject('output_handler')
-import nnpz.io.output_column_providers as ocp
-output.addColumnProvider(ocp.Flags(result_flags, True))
 
 
 # Loop through the maps and add the contributions to the output
