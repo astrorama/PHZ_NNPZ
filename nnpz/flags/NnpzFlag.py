@@ -47,6 +47,10 @@ class NnpzFlag():
     def getFlagNames():
         return _flag_names
 
+    @staticmethod
+    def getArraySize():
+        return _array_size
+
     def __init__(self, *flag_list):
         self.__array = np.zeros(_array_size, dtype=np.uint8)
         for flag in flag_list:

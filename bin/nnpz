@@ -129,6 +129,9 @@ for progress, ref_i in enumerate(affected):
 
 # Get the output handler
 output = conf_manager.getObject('output_handler')
+import nnpz.io.output_column_providers as ocp
+output.addColumnProvider(ocp.Flags(result_flags, True))
+
 
 # Loop through the maps and add the contributions to the output
 # Note that we iterate the affected map in increasing order of the reference
