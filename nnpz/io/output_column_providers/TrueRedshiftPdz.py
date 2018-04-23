@@ -22,7 +22,7 @@ class TrueRedshiftPdz(OutputHandler.OutputColumnProviderInterface):
         self.__pdzs = np.zeros((catalog_size, len(self.__pdz_bins)), dtype=np.float32)
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight):
+    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
         z = self.__ref_z[reference_sample_i]
         pdz = self.__pdzs[catalog_i]
 

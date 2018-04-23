@@ -13,5 +13,5 @@ class WeightCalculatorInterface(object):
 
 
     @abc.abstractmethod
-    def __call__(self, obj_1, obj_2):
+    def __call__(self, obj_1, obj_2, flags):
         return

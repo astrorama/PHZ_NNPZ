@@ -15,7 +15,7 @@ class FullCatalogCopy(OutputHandler.OutputColumnProviderInterface):
         self.__catalog = catalog
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight):
+    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
         pass
 
 

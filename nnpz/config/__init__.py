@@ -11,4 +11,5 @@ from .ReferenceConfig import ReferenceConfig
 from .NeighborListOutputConfig import NeighborListOutputConfig
 from .MeanPhotOutputConfig import MeanPhotOutputConfig
 from .PdzOutputConfig import PdzOutputConfig
+from .FlagsConfig import FlagsConfig
 from .WeightPhotometryProviderConfig import WeightPhotometryProviderConfig

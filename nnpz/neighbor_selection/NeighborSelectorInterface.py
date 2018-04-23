@@ -73,7 +73,7 @@ class NeighborSelectorInterface(object):
 
 
     @abc.abstractmethod
-    def _findNeighborsImpl(self, coordinate):
+    def _findNeighborsImpl(self, coordinate, flags):
         """Must be implemented to find the neighbors in the reference sample.
 
         Args:
@@ -83,6 +83,8 @@ class NeighborSelectorInterface(object):
                 - First axis: Size of dimensionality of the parameter space
                 - Second axis: Always size two, where first element represents
                     the coordinate value and the second the uncertainty
+            flags: The NnpzFlag instance to update with the flags of the neighbor
+                selection process
 
         Returns:
             A tuple containing the following:
@@ -100,7 +102,7 @@ class NeighborSelectorInterface(object):
         return
 
 
-    def findNeighbors(self, coordinate):
+    def findNeighbors(self, coordinate, flags):
         """Returns the neighbors of the given coordinate in the reference sample.
 
         Args:
@@ -110,6 +112,8 @@ class NeighborSelectorInterface(object):
                 - First axis: Size of dimensionality of the parameter space
                 - Second axis: Always size two, where first element represents
                     the coordinate value and the second the uncertainty
+            flags: The NnpzFlag instance to update with the flags of the neighbor
+                selection process
 
         Returns:
             A tuple containing the following:
@@ -138,4 +142,4 @@ class NeighborSelectorInterface(object):
         if coordinate.shape[1] != 2:
             raise InvalidDimensionsException('coordinate second axis must have size 2')
 
-        return self._findNeighborsImpl(coordinate)
+        return self._findNeighborsImpl(coordinate, flags)

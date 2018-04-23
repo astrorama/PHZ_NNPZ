@@ -17,6 +17,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
 
     def __init__(self):
+        self.__target_size = None
         self.__target_ids = None
         self.__target_phot_data = None
         self.__target_astropy_table = None
@@ -62,6 +63,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             self.__target_phot_data = self.__target_phot_data[:input_size]
             self.__target_astropy_table = self.__target_astropy_table[:input_size]
 
+        self.__target_size = len(self.__target_ids)
+
 
     def parseArgs(self, args):
 
@@ -72,7 +75,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
                 'target_phot_data' : self.__target_phot_data,
                 'target_ebv': self.__target_ebv,
                 'target_filter_mean_wavelength': self.__target_filter_mean_wavelength,
-                'target_astropy_table' : self.__target_astropy_table}
+                'target_astropy_table' : self.__target_astropy_table,
+                'target_size' : self.__target_size}
 
 
 ConfigManager.addHandler(TargetCatalogConfig)

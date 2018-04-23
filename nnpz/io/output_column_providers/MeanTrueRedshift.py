@@ -19,7 +19,7 @@ class MeanTrueRedshift(OutputHandler.OutputColumnProviderInterface):
         self.__sums = np.zeros(catalog_size, dtype=np.float64)
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight):
+    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
         z = self.__ref_z[reference_sample_i]
         self.__total_weights[catalog_i] += weight
         self.__sums[catalog_i] += z * weight
