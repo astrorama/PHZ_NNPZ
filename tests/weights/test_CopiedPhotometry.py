@@ -5,6 +5,7 @@ Author: Alejandro Alvarez Ayllon
 
 from __future__ import division, print_function
 
+from nnpz.flags import NnpzFlag
 from nnpz.photometry import PhotometryProvider
 from nnpz.weights import CopiedPhotometry
 from tests.photometry.fixtures import *
@@ -22,5 +23,5 @@ def test_copiedPhotometryAll(photometry_file_fixture):
 
     # Then
     for ref_i in range(len(provider.getIds())):
-        phot = copied(ref_i, 1)
+        phot = copied(ref_i, 1, NnpzFlag())
         assert np.array_equal(phot, provider.getData()[ref_i])
