@@ -28,6 +28,11 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
         reference_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
         target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
 
+        if not 'reference_sample' in reference_config or reference_config['reference_sample'] is None:
+            logger.error('CONFIGURATION ERROR:')
+            logger.error('target_ebv and target_filter_mean_wavelength are only supported when reference_sample_dir is used')
+            exit(1)
+
         ref_sample = reference_config['reference_sample']
         filter_order = args['reference_sample_phot_filters']
         filter_trans_map = reference_config['reference_filter_transmission']
@@ -41,7 +46,8 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
         )
 
     def __createPhotometryProvider(self, args):
-        if args.get('target_ebv', None) or args.get('target_filter_mean_wavelength', None):
+        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
+        if 'target_ebv' in target_config or 'target_filter_mean_wavelength' in target_config:
             logger.info('Using recomputed photometries for weight calculation')
             self.__createRecomputedPhotometry(args)
         else:
