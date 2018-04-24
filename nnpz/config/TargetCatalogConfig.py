@@ -34,6 +34,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         missing_phot_flags = args.get('missing_photometry_flags', [])
         id_col_name = args.get('target_catalog_id_column', 'ID')
 
+        logger.info('Target catalog photometric columns: {}'.format(target_filters))
+
         logger.info('Reading target catalog: {}'.format(target_cat))
         target_reader = CatalogReader(target_cat)
         self.__target_ids = target_reader.get(prop.ID(id_col_name))
@@ -48,10 +50,12 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             if len(target_catalog_ebv) != 2:
                 logger.error('target_catalog_ebv must have length 2')
                 exit(1)
+            logger.info('Using E(B-V) columns {}'.format(target_catalog_ebv))
             self.__target_ebv = target_reader.get(prop.EBV(*target_catalog_ebv, nan_flags=missing_phot_flags))
 
         target_catalog_filters_transmission = args.get('target_catalog_filters_transmission', None)
         if target_catalog_filters_transmission is not None:
+            logger.info('Using filters mean wavelength columns {}'.format(target_catalog_filters_transmission))
             self.__target_filter_mean_wavelength = target_reader.get(
                 prop.FiltersMeanWavelength(target_catalog_filters_transmission, missing_phot_flags)
             )
