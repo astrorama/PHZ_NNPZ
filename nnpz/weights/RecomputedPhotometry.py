@@ -61,13 +61,14 @@ class RecomputedPhotometry(WeightPhotometryProvider):
                 if filter_name in filter_trans_mean_lists:
                     self.__filter_shifts[filter_name] = filter_trans_mean_lists[filter_name] - transmission_mean
 
-    def __call__(self, ref_i, cat_i):
+    def __call__(self, ref_i, cat_i, flags):
         """
         Re-compute the photometry of the reference sample as if it were seen through the same part of the detector
         as the target.
         Args:
             ref_i: The index of the reference sample for which re-compute the photometry
             cat_i: The index of the target to use for the re-computation
+            flags: The flags objects to update
 
         Returns:
             A 2D numpy array of single precision floating point numbers. The
