@@ -101,7 +101,7 @@ affected = finder.findAffected(target_data, result_flags, progress_listener)
 
 # Compute the weights
 weight_phot_provider = conf_manager.getObject('photometry_provider')
-weight_calculator = LikelihoodWeight()
+weight_calculator = conf_manager.getObject('weight_calculator')
 
 progress_listener = ProgressListener(len(affected)-1, 'Computing neighbor weights...')
 weights = {}
