@@ -53,7 +53,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             logger.info('Using E(B-V) columns {}'.format(target_catalog_ebv))
             self.__target_ebv = target_reader.get(prop.EBV(*target_catalog_ebv, nan_flags=missing_phot_flags))
 
-            target_catalog_filters_mean = args.get('target_catalog_filters_mean', None)
+        target_catalog_filters_mean = args.get('target_catalog_filters_mean', None)
         if target_catalog_filters_mean is not None:
             logger.info('Using filters mean wavelength columns {}'.format(target_catalog_filters_mean))
             self.__target_filter_mean_wavelength = target_reader.get(
