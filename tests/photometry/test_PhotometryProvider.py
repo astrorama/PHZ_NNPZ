@@ -47,7 +47,8 @@ def test_constructor_missingNnpzHdu(photometry_file_fixture):
     # Given
     hdus = fits.open(photometry_file_fixture)
     hdus[1].header['EXTNAME'] = 'NOT_PHOT'
-    hdus.writeto(photometry_file_fixture, overwrite=True)
+    os.unlink(photometry_file_fixture)
+    hdus.writeto(photometry_file_fixture)
 
     # Then
     with pytest.raises(WrongFormatException):

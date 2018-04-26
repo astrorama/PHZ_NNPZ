@@ -1,4 +1,5 @@
 from .WeightPhotometryProvider import WeightPhotometryProvider
-from .ReferenceSamplePhotometry import ReferenceSamplePhotometry
+from .CopiedPhotometry import CopiedPhotometry
 from .WeightCalculatorInterface import WeightCalculatorInterface
 from .LikelihoodWeight import LikelihoodWeight
+from .RecomputedPhotometry import RecomputedPhotometry

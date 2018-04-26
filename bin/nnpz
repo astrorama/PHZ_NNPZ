@@ -100,12 +100,15 @@ affected = finder.findAffected(target_data, result_flags, progress_listener)
 
 
 # Compute the weights
-weight_phot_provider = ReferenceSamplePhotometry(ref_data)
+weight_phot_provider = conf_manager.getObject('photometry_provider')
 weight_calculator = LikelihoodWeight()
 
 progress_listener = ProgressListener(len(affected)-1, 'Computing neighbor weights...')
 weights = {}
-for progress, ref_i in enumerate(affected):
+# Note that we iterate the affected map in increasing order of the reference
+# sample indices. This is done to use as much the cache of the disk, by accessing
+# the SEDs sequentially.
+for progress, ref_i in enumerate(sorted(affected)):
     progress_listener(progress)
 
     target_i_list = affected[ref_i]
@@ -131,7 +134,7 @@ output = conf_manager.getObject('output_handler')
 # Loop through the maps and add the contributions to the output
 # Note that we iterate the affected map in increasing order of the reference
 # sample indices. This is done to use as much the cache of the disk, by accessing
-# the PDZs and the SEDs sequentially.
+# the PDZs sequentially.
 progress_listener = ProgressListener(len(affected)-1, 'Adding contributions to output...')
 for progress, ref_i in enumerate(sorted(affected)):
     progress_listener(progress)

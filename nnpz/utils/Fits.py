@@ -18,5 +18,11 @@ def tableToHdu(table):
     for name in table.colnames:
         data = table[name].data
         dt = data.dtype.kind + str(data.dtype.alignment)
-        columns.append(fits.Column(name=name, array=data, format=fits.column.NUMPY2FITS[dt]))
-    return fits.BinTableHDU.from_columns(columns)
+        format = fits.column.NUMPY2FITS[dt]
+        if len(data.shape) > 1:
+            format = "{}{}".format(data.shape[1], format)
+        columns.append(fits.Column(name=name, array=data, format=format))
+    hdu = fits.BinTableHDU.from_columns(columns)
+    for key, value in table.meta.items():
+        hdu.header.append((key, value))
+    return hdu

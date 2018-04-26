@@ -20,4 +20,4 @@ class FullCatalogCopy(OutputHandler.OutputColumnProviderInterface):
 
 
     def getColumns(self):
-        return [c for _,c in self.__catalog.columns.iteritems()]
+        return [c for _,c in self.__catalog.columns.items()]

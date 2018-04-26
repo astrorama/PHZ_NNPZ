@@ -5,9 +5,10 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+import nnpz.io.output_column_providers as ocp
 from nnpz.config import (ConfigManager, OutputHandlerConfig, TargetCatalogConfig,
                          ReferenceConfig)
-import nnpz.io.output_column_providers as ocp
+from nnpz.io.output_hdul_providers.PdzBins import PdzBins
 
 
 class PdzOutputConfig(ConfigManager.ConfigHandler):
@@ -41,6 +42,7 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
         pdz_mc_samples = args.get('pdz_mc_samples', 0)
         output.addColumnProvider(ocp.PdfSampling(pdz_prov, pdz_col, quantiles=pdz_quantiles, mc_samples=pdz_mc_samples))
 
+        output.addExtensionTableProvider(PdzBins(pdz_prov))
 
     def parseArgs(self, args):
         if not self.__added:
