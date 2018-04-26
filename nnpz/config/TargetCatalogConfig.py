@@ -42,7 +42,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__target_phot_data = target_reader.get(prop.Photometry(target_filters, missing_phot_flags))
         self.__target_astropy_table = target_reader.getAsAstropyTable()
 
-        target_catalog_ebv = args.get('target_catalog_ebv', None)
+        target_catalog_ebv = args.get('target_catalog_gal_ebv', None)
         if target_catalog_ebv is not None:
             if not isinstance(target_catalog_ebv, tuple) and not isinstance(target_catalog_ebv, list):
                 logger.error('target_catalog_ebv can only be a tuple or a list')
@@ -53,11 +53,11 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             logger.info('Using E(B-V) columns {}'.format(target_catalog_ebv))
             self.__target_ebv = target_reader.get(prop.EBV(*target_catalog_ebv, nan_flags=missing_phot_flags))
 
-        target_catalog_filters_transmission = args.get('target_catalog_filters_transmission', None)
-        if target_catalog_filters_transmission is not None:
-            logger.info('Using filters mean wavelength columns {}'.format(target_catalog_filters_transmission))
+            target_catalog_filters_mean = args.get('target_catalog_filters_mean', None)
+        if target_catalog_filters_mean is not None:
+            logger.info('Using filters mean wavelength columns {}'.format(target_catalog_filters_mean))
             self.__target_filter_mean_wavelength = target_reader.get(
-                prop.FiltersMeanWavelength(target_catalog_filters_transmission, missing_phot_flags)
+                prop.FiltersMeanWavelength(target_catalog_filters_mean, missing_phot_flags)
             )
 
         if 'input_size' in args:

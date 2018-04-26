@@ -30,7 +30,7 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
 
         if not 'reference_sample' in reference_config or reference_config['reference_sample'] is None:
             logger.error('CONFIGURATION ERROR:')
-            logger.error('target_catalog_ebv and target_catalog_filters_transmission are only supported when reference_sample_dir is used')
+            logger.error('target_catalog_gal_ebv and target_catalog_filters_mean are only supported when reference_sample_dir is used')
             exit(1)
 
         ref_sample = reference_config['reference_sample']
