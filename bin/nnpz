@@ -94,7 +94,7 @@ result_flags = conf_manager.getObject('flag_list')
 
 
 # Construct the neighbor finder and build the affected sources map
-finder =  AffectedSourcesFinder(selector)
+finder = AffectedSourcesFinder(selector)
 progress_listener = ProgressListener(len(target_data)-1, 'Finding neighbors... ')
 affected = finder.findAffected(target_data, result_flags, progress_listener)
 
@@ -104,27 +104,9 @@ weight_phot_provider = conf_manager.getObject('photometry_provider')
 weight_calculator = conf_manager.getObject('weight_calculator')
 
 progress_listener = ProgressListener(len(affected)-1, 'Computing neighbor weights...')
-weights = {}
-# Note that we iterate the affected map in increasing order of the reference
-# sample indices. This is done to use as much the cache of the disk, by accessing
-# the SEDs sequentially.
-for progress, ref_i in enumerate(sorted(affected)):
-    progress_listener(progress)
 
-    target_i_list = affected[ref_i]
-    target_obj = target_data[target_i_list]
-    target_flags = [result_flags[i] for i in target_i_list]
-
-    # Get the reference sample object photometry to use for the weight calculation
-    ref_obj = np.ndarray(target_obj.shape, dtype=np.float32)
-    for i, target_i in enumerate(target_i_list):
-        flag = result_flags[target_i]
-        ref_obj[i, :, :] = weight_phot_provider(ref_i, target_i, flag)
-
-    # Compute the weights. Note that we mask out the bands which are marked as NaN
-    nan_masks = [np.logical_not(np.isnan(target_obj_i[:,0])) for target_obj_i in target_obj]
-    weights[ref_i] = [weight_calculator(ref_obj_i[mask_i,:], target_obj_i[mask_i,:], flag) for ref_obj_i, target_obj_i, mask_i, flag in zip(ref_obj, target_obj, nan_masks, target_flags)]
-
+ref_sample_weight_calc = ReferenceSampleWeightCalculator(weight_phot_provider, weight_calculator)
+weights = ref_sample_weight_calc.computeWeights(affected, target_data, result_flags, progress_listener)
 
 
 # Get the output handler
