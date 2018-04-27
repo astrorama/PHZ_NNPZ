@@ -25,7 +25,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         super(CoaddedPdz, self).__init__()
         self.__reference_sample = reference_sample
         self.__pdz_bins = reference_sample.getPdzData(ref_ids[0])[:, 0]
-        self.__pdzs = np.zeros((catalog_size, len(self.__pdz_bins)), dtype=np.float32)
+        self.__pdzs = np.zeros((catalog_size, len(self.__pdz_bins)), dtype=np.float64)
         self.__ref_ids = ref_ids
         self.__current_ref_i = None
         self.__current_ref_pdz = None
@@ -34,7 +34,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         if reference_sample_i != self.__current_ref_i:
             ref_id = self.__ref_ids[reference_sample_i]
             self.__current_ref_i = reference_sample_i
-            self.__current_ref_pdz = self.__reference_sample.getPdzData(ref_id)
+            self.__current_ref_pdz = np.array(self.__reference_sample.getPdzData(ref_id), dtype=np.float64)
             assert (self.__current_ref_pdz[:, 0] == self.__pdz_bins).all()
 
         self.__pdzs[catalog_i] += self.__current_ref_pdz[:, 1] * weight
@@ -43,7 +43,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
         normalized = (self.__pdzs.T * integrals).T
         return [
-            Column(normalized, 'CoaddedPdz'),
+            Column(normalized, 'CoaddedPdz', dtype=np.float32),
         ]
 
     def getPdzBins(self):
