@@ -10,7 +10,7 @@ import numpy as np
 from nnpz.weights import WeightCalculatorInterface
 
 
-class InverseEucledianWeight(WeightCalculatorInterface):
+class InverseEuclideanWeight(WeightCalculatorInterface):
 
     def __call__(self, obj_1, obj_2, flags):
         v1 = obj_1[:, 0]

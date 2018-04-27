@@ -7,13 +7,13 @@ from __future__ import division, print_function
 
 from nnpz.utils import Logging
 from nnpz.config import ConfigManager
-from nnpz.weights import (LikelihoodWeight, InverseEucledianWeight, InverseChi2Weight)
+from nnpz.weights import (LikelihoodWeight, InverseEuclideanWeight, InverseChi2Weight)
 
 
 logger = Logging.getLogger('Configuration')
 
 _calculator_map = {
-    'Eucledian' : InverseEucledianWeight(),
+    'Euclidean' : InverseEuclideanWeight(),
     'Chi2' : InverseChi2Weight(),
     'Likelihood' : LikelihoodWeight()
 }
