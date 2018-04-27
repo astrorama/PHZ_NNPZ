@@ -31,9 +31,15 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
             exit(1)
         self.__calculator = _calculator_map[method]
 
+        alternative = args.get('weight_method_alternative', None)
+        self.__calculator_alternative = _calculator_map[alternative] if alternative else None
+
     def parseArgs(self, args):
         if self.__calculator is None:
             self.__createCalculator(args)
-        return {'weight_calculator' : self.__calculator}
+        return {
+            'weight_calculator' : self.__calculator,
+            'weight_calculator_alternative': self.__calculator_alternative
+        }
 
 ConfigManager.addHandler(WeightCalculatorConfig)

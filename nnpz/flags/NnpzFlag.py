@@ -8,7 +8,7 @@ from __future__ import division, print_function
 import numpy as np
 
 _flag_names = [
-    'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10'
+    'AlternativeWeightFlag',
 ]
 
 if len(_flag_names) != len(set(_flag_names)):
