@@ -44,7 +44,6 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         normalized = (self.__pdzs.T * integrals).T
         return [
             Column(normalized, 'CoaddedPdz'),
-            Column([self.__pdz_bins] * normalized.shape[0], 'CoaddedPdzBins'),
         ]
 
     def getPdzBins(self):
