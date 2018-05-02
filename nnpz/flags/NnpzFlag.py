@@ -4,6 +4,7 @@ Author: Nikolaos Apostolakos
 """
 
 from __future__ import division, print_function
+from six import with_metaclass
 
 import numpy as np
 
@@ -39,9 +40,7 @@ class _NnpzFlagType(type):
         return ['getFlagNames()'] + _flag_names
 
 
-class NnpzFlag():
-
-    __metaclass__ = _NnpzFlagType
+class NnpzFlag(with_metaclass(_NnpzFlagType, object)):
 
     @staticmethod
     def getFlagNames():
