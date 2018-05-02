@@ -76,8 +76,7 @@ class OutputHandler(object):
         # Table with the results
         out = Table()
         for prov in self.__column_providers:
-            for col in prov.getColumns():
-                out.add_column(col)
+            out.add_columns(prov.getColumns(), copy=False)
         hdu_list.append(tableToHdu(out))
 
         # Extensions
