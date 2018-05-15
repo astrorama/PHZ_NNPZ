@@ -21,7 +21,7 @@ class NeighborListOutputConfig(ConfigManager.ConfigHandler):
             target_ids = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)['target_ids']
             ref_ids = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)['reference_ids']
             output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
-            output.addColumnProvider(ocp.NeighborList(len(target_ids), ref_ids, args['neighbors_no']))
+            output.addColumnProvider(ocp.NeighborList(len(target_ids), ref_ids))
 
     def parseArgs(self, args):
         if not self.__added:

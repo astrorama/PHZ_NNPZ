@@ -39,7 +39,6 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
 
         self.__pdzs[catalog_i] += self.__current_ref_pdz[:, 1] * weight
 
-
     def getColumns(self):
         integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
         normalized = (self.__pdzs.T * integrals).T
