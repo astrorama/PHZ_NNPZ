@@ -23,9 +23,9 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
         self.__filter_names = filter_names
         self.__data = data
 
-        self.__total_weights = np.zeros(catalog_size, dtype=np.float32)
-        self.__total_values = np.zeros((catalog_size, len(filter_names)), dtype=np.float32)
-        self.__total_errors = np.zeros((catalog_size, len(filter_names)), dtype=np.float32)
+        self.__total_weights = np.zeros(catalog_size, dtype=np.float64)
+        self.__total_values = np.zeros((catalog_size, len(filter_names)), dtype=np.float64)
+        self.__total_errors = np.zeros((catalog_size, len(filter_names)), dtype=np.float64)
 
 
     def addContribution(self, reference_sample_i, catalog_i, weight, flags):
@@ -41,6 +41,6 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
         errors = (np.sqrt(self.__total_errors).T / self.__total_weights).T
         columns = []
         for i, name in enumerate(self.__filter_names):
-            columns.append(Column(values[:,i], 'mean_' + name))
-            columns.append(Column(errors[:,i], 'mean_' + name + '_ERR'))
+            columns.append(Column(values[:,i], 'mean_' + name, dtype=np.float32))
+            columns.append(Column(errors[:,i], 'mean_' + name + '_ERR', dtype=np.float32))
         return columns

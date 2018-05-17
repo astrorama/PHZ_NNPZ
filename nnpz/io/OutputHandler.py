@@ -9,9 +9,8 @@ import abc
 import os
 
 from astropy.io import fits
-from astropy.table import Table
 
-from nnpz.utils.Fits import tableToHdu
+from nnpz.utils.Fits import tableToHdu, columnsToFitsColumn
 
 
 class OutputHandler(object):
@@ -74,11 +73,10 @@ class OutputHandler(object):
         hdu_list.append(fits.PrimaryHDU(header=hdr))
 
         # Table with the results
-        out = Table()
+        columns = []
         for prov in self.__column_providers:
-            for col in prov.getColumns():
-                out.add_column(col)
-        hdu_list.append(tableToHdu(out))
+            columns.extend(columnsToFitsColumn(prov.getColumns()))
+        hdu_list.append(fits.BinTableHDU.from_columns(columns))
 
         # Extensions
         for hp in self.__hdu_providers:

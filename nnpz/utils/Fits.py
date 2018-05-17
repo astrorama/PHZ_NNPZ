@@ -26,3 +26,15 @@ def tableToHdu(table):
     for key, value in table.meta.items():
         hdu.header.append((key, value))
     return hdu
+
+
+def columnsToFitsColumn(columns):
+    fits_cols = []
+    for col in columns:
+        data = col.data
+        dt = data.dtype.kind + str(data.dtype.alignment)
+        format = fits.column.NUMPY2FITS[dt]
+        if len(data.shape) > 1:
+            format = "{}{}".format(data.shape[1], format)
+        fits_cols.append(fits.Column(name=col.name, array=data, format=format))
+    return fits_cols
