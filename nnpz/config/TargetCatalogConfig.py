@@ -18,6 +18,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__target_size = None
+        self.__target_id_column = None
         self.__target_ids = None
         self.__target_phot_data = None
         self.__target_astropy_table = None
@@ -32,13 +33,13 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self._checkParameterExists('target_catalog_filters', args)
         target_filters = args['target_catalog_filters']
         missing_phot_flags = args.get('missing_photometry_flags', [])
-        id_col_name = args.get('target_catalog_id_column', 'ID')
+        self.__target_id_column = args.get('target_catalog_id_column', 'ID')
 
         logger.info('Target catalog photometric columns: {}'.format(target_filters))
 
         logger.info('Reading target catalog: {}'.format(target_cat))
         target_reader = CatalogReader(target_cat)
-        self.__target_ids = target_reader.get(prop.ID(id_col_name))
+        self.__target_ids = target_reader.get(prop.ID(self.__target_id_column))
         self.__target_phot_data = target_reader.get(prop.Photometry(target_filters, missing_phot_flags))
         self.__target_astropy_table = target_reader.getAsAstropyTable()
 
@@ -75,7 +76,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         if self.__target_ids is None:
             self.__createData(args)
 
-        return {'target_ids' : self.__target_ids,
+        return {'target_id_column': self.__target_id_column,
+                'target_ids' : self.__target_ids,
                 'target_phot_data' : self.__target_phot_data,
                 'target_ebv': self.__target_ebv,
                 'target_filter_mean_wavelength': self.__target_filter_mean_wavelength,

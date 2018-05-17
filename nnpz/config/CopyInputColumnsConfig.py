@@ -15,11 +15,17 @@ class CopyInputColumnsConfig(ConfigManager.ConfigHandler):
         self.__added = False
 
     def __addColumnProvider(self, args):
+        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
+        cat_to_copy = target_config['target_astropy_table']
+        output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
+
         do_copy = args.get('copy_input_columns', False)
         if do_copy:
-            cat_to_copy = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)['target_astropy_table']
-            output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
-            output.addColumnProvider(ocp.FullCatalogCopy(cat_to_copy))
+            output.addColumnProvider(ocp.CatalogCopy(cat_to_copy))
+        else:
+            id_column = target_config['target_id_column']
+            output.addColumnProvider(ocp.CatalogCopy(cat_to_copy, [id_column]))
+
 
     def parseArgs(self, args):
         if not self.__added:
