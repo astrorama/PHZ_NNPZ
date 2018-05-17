@@ -4,11 +4,12 @@ Author: Nikolaos Apostolakos
 """
 
 from __future__ import division, print_function
+from six import with_metaclass
 
 import numpy as np
 
 _flag_names = [
-    'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10'
+    'AlternativeWeightFlag',
 ]
 
 if len(_flag_names) != len(set(_flag_names)):
@@ -39,9 +40,7 @@ class _NnpzFlagType(type):
         return ['getFlagNames()'] + _flag_names
 
 
-class NnpzFlag():
-
-    __metaclass__ = _NnpzFlagType
+class NnpzFlag(with_metaclass(_NnpzFlagType, object)):
 
     @staticmethod
     def getFlagNames():

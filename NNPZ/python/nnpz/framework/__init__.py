@@ -1,2 +1,3 @@
 from .AffectedSourcesFinder import AffectedSourcesFinder
 from .ProgressListener import ProgressListener
+from .ReferenceSampleWeightCalculator import ReferenceSampleWeightCalculator
