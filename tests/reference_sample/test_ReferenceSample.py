@@ -16,6 +16,12 @@ from nnpz.exceptions import *
 from tests.util_fixtures import temp_dir_fixture
 from .fixtures import *
 
+def pdzEqual(a, b):
+    """Compare two pdz, taking into account their normalization"""
+    norm_a = a[:, 1] / np.trapz(a[:, 1], a[:, 0])
+    norm_b = b[:, 1] / np.trapz(b[:, 1], b[:, 0])
+    return np.allclose(norm_a, norm_b) and np.all(a[:, 0] == b[:, 0])
+
 ###############################################################################
 
 def test_createNew_dirExists(temp_dir_fixture):
@@ -648,7 +654,7 @@ def test_addPdzData_success(reference_sample_dir_fixture):
 
     # Then
     assert not pdz_data is None
-    assert np.all(pdz_data == expected_data)
+    assert pdzEqual(pdz_data, expected_data)
 
     # Given
     obj_id = 101
@@ -661,7 +667,7 @@ def test_addPdzData_success(reference_sample_dir_fixture):
 
     # Then
     assert not pdz_data is None
-    assert np.all(pdz_data == expected_data)
+    assert pdzEqual(pdz_data, expected_data)
     assert len(sample.missingPdzList()) == 0
 
 ###############################################################################
@@ -682,7 +688,7 @@ def test_addPdzData_newDataFile(reference_sample_dir_fixture):
 
     # Then
     assert not pdz_data is None
-    assert np.all(pdz_data == expected_data)
+    assert pdzEqual(pdz_data, expected_data)
     assert os.path.exists(os.path.join(reference_sample_dir_fixture, 'pdz_data_3.bin'))
     assert os.path.getsize(os.path.join(reference_sample_dir_fixture, 'pdz_data_3.bin')) == 4 + 4 * len(expected_data)
 
@@ -697,7 +703,7 @@ def test_addPdzData_newDataFile(reference_sample_dir_fixture):
 
     # Then
     assert not pdz_data is None
-    assert np.all(pdz_data == expected_data)
+    assert pdzEqual(pdz_data, expected_data)
     assert os.path.getsize(os.path.join(reference_sample_dir_fixture, 'pdz_data_2.bin')) == last_size
     assert os.path.getsize(os.path.join(reference_sample_dir_fixture, 'pdz_data_3.bin')) == 4 + 4 * len(expected_data) + 8 + 4 * len(expected_data)
 
@@ -718,7 +724,7 @@ def test_addPdzData_notInOrder(reference_sample_dir_fixture):
 
     # Then
     assert not pdz_data is None
-    assert np.all(pdz_data == expected_data)
+    assert pdzEqual(pdz_data, expected_data)
     assert set(sample.missingPdzList()) == set([100])
 
     # Given
@@ -731,7 +737,7 @@ def test_addPdzData_notInOrder(reference_sample_dir_fixture):
 
     # Then
     assert not pdz_data is None
-    assert np.all(pdz_data == expected_data)
+    assert pdzEqual(pdz_data, expected_data)
     assert len(sample.missingPdzList()) == 0
 
 ###############################################################################
@@ -853,5 +859,26 @@ def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_l
             assert expected == None
         else:
             assert np.all(obj.pdz == expected)
+
+###############################################################################
+
+def test_normalizePdz(reference_sample_dir_fixture):
+    """When adding a PDZ, it should be normalized before stored"""
+
+    # Given
+    provider = ReferenceSample(reference_sample_dir_fixture)
+    obj_id = 200
+    original_pdz_data = np.asarray([(1,10),(2,20),(5,50),(6,60),(8,80),(9,90)], dtype=np.float32)
+    original_integral = np.trapz(original_pdz_data[:, 1], original_pdz_data[:, 0])
+    assert original_integral != 1
+
+    # When
+    provider.createObject(obj_id)
+    provider.addPdzData(obj_id, original_pdz_data)
+
+    # Then
+    stored_pdz = provider.getPdzData(obj_id)
+    assert np.trapz(stored_pdz[:, 1], stored_pdz[:, 0]) == 1
+    assert pdzEqual(stored_pdz, original_pdz_data)
 
 ###############################################################################
