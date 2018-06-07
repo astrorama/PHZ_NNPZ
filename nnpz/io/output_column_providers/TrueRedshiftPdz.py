@@ -17,9 +17,9 @@ class TrueRedshiftPdz(OutputHandler.OutputColumnProviderInterface):
         self.__ref_z = ref_true_redshift_list
         self.__z_min = z_min
         self.__z_max = z_max
-        self.__pdz_bins = np.linspace(z_min, z_max, bins_no, dtype=np.float32)
+        self.__pdz_bins = np.linspace(z_min, z_max, bins_no, dtype=np.float64)
         self.__step = self.__pdz_bins[1] - self.__pdz_bins[0]
-        self.__pdzs = np.zeros((catalog_size, len(self.__pdz_bins)), dtype=np.float32)
+        self.__pdzs = np.zeros((catalog_size, len(self.__pdz_bins)), dtype=np.float64)
 
 
     def addContribution(self, reference_sample_i, catalog_i, weight, flags):
@@ -38,7 +38,7 @@ class TrueRedshiftPdz(OutputHandler.OutputColumnProviderInterface):
     def getColumns(self):
         integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
         normalized = (self.__pdzs.T * integrals).T
-        col = Column(normalized, 'TrueRedshiftPDZ')
+        col = Column(normalized, 'TrueRedshiftPDZ', dtype=np.float32)
         return [col]
 
 
