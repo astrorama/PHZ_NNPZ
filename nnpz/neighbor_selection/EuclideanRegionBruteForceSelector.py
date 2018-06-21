@@ -31,16 +31,19 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
     """
 
 
-    def __init__(self, neighbors_no, brute_force_batch_size=10000):
+    def __init__(self, neighbors_no, brute_force_batch_size=10000, balanced_tree=True):
         """Create a new instance of EuclideanRegionBruteForceSelector.
 
         Args:
             neighbors_no: The number of closest neighbors to search for
             brute_force_batch_size: The number of Euclidean neighbors to use as
                 the batch to search in
+            balanced: If true, the median will be used to split the data, generating
+                a more compact tree
         """
         self.__neighbors_no = neighbors_no
         self.__brute_force_batch_size = brute_force_batch_size
+        self.__balanced_tree = balanced_tree
 
 
     def _initializeImpl(self, ref_data):
@@ -49,7 +52,7 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         For argument description see the interface documentation.
         """
         self.__ref_data = ref_data
-        self.__kdtree = KDTreeSelector(self.__brute_force_batch_size).initialize(ref_data)
+        self.__kdtree = KDTreeSelector(self.__brute_force_batch_size, self.__balanced_tree).initialize(ref_data)
 
 
     def _findNeighborsImpl(self, coordinate, flags):

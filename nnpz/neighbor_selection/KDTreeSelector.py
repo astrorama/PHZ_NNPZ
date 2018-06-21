@@ -5,10 +5,15 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+import threading
+
 import numpy as np
 import scipy.spatial as spatial
 
 from nnpz.neighbor_selection import NeighborSelectorInterface
+from nnpz.utils import Logging
+
+log = Logging.getLogger(__name__)
 
 
 class KDTreeSelector(NeighborSelectorInterface):
@@ -24,13 +29,16 @@ class KDTreeSelector(NeighborSelectorInterface):
     """
 
 
-    def __init__(self, neighbors_no):
+    def __init__(self, neighbors_no, balanced_tree=True):
         """Create a new instance of KDTreeSelector.
 
         Args:
             neighbors_no: The number of closest neighbors to search for
+            balanced_tree: If true, the median will be used to split the data, generating
+                a more compact tree
         """
         self.__neighbors_no = neighbors_no
+        self.__balanced_tree = balanced_tree
 
 
     def _initializeImpl(self, ref_data):
@@ -38,10 +46,17 @@ class KDTreeSelector(NeighborSelectorInterface):
 
         For argument description see the interface documentation.
         """
+        def _warn_long_execution():
+            log.warning('Building the KD-tree seems to be taking too long')
+            log.warning('Some particular cases can trigger a worse-case performance when building the tree')
+            log.warning('You can try disabling the creation of a balanced tree')
 
         # We ignore the errors
         values = ref_data[:,:,0]
-        self.__kdtree = spatial.cKDTree(values)
+        timer = threading.Timer(120, _warn_long_execution)
+        timer.start()
+        self.__kdtree = spatial.cKDTree(values, balanced_tree=self.__balanced_tree)
+        timer.cancel()
 
 
     def _findNeighborsImpl(self, coordinate, flags):
