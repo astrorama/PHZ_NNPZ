@@ -5,8 +5,9 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+from nnpz.framework import ReferenceSampleWeightCalculator
 from nnpz.utils import Logging
-from nnpz.config import ConfigManager
+from nnpz.config import ConfigManager, WeightPhotometryProviderConfig
 from nnpz.weights import (LikelihoodWeight, InverseEuclideanWeight, InverseChi2Weight)
 
 
@@ -24,6 +25,8 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         self.__calculator = None
 
     def __createCalculator(self, args):
+        photo_provider_config = ConfigManager.getHandler(WeightPhotometryProviderConfig).parseArgs(args)
+
         self._checkParameterExists('weight_method', args)
         method = args['weight_method']
         if not method in _calculator_map:
@@ -34,12 +37,15 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         alternative = args.get('weight_method_alternative', None)
         self.__calculator_alternative = _calculator_map[alternative] if alternative else None
 
+        self.__ref_sample_weight_calculator = ReferenceSampleWeightCalculator(
+            photo_provider_config['photometry_provider'], self.__calculator, self.__calculator_alternative
+        )
+
     def parseArgs(self, args):
         if self.__calculator is None:
             self.__createCalculator(args)
         return {
-            'weight_calculator' : self.__calculator,
-            'weight_calculator_alternative': self.__calculator_alternative
+            'weight_calculator' : self.__ref_sample_weight_calculator,
         }
 
 ConfigManager.addHandler(WeightCalculatorConfig)
