@@ -21,18 +21,18 @@ class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
         self.__ref_z = None
         self.__out_mean_phot_filters = None
         self.__out_mean_phot_data = None
-
+        self.__ref_cat = None
 
     def __createData(self, args):
         if 'reference_catalog' in args:
-            ref_cat = args['reference_catalog']
+            self.__ref_cat = args['reference_catalog']
             self._checkParameterExists('reference_catalog_filters', args)
             ref_filters = args['reference_catalog_filters']
             self._checkParameterExists('reference_catalog_redshift', args)
             ref_z_col = args['reference_catalog_redshift']
 
             logger.info('Reading reference catalog from {}...'.format(ref_cat))
-            ref_reader = CatalogReader(ref_cat)
+            ref_reader = CatalogReader(self.__ref_cat)
             self.__ref_ids = ref_reader.get(prop.ID)
             self.__ref_phot_data = ref_reader.get(prop.Photometry(ref_filters))
             self.__ref_z = ref_reader.get(prop.Column(ref_z_col))
@@ -50,6 +50,7 @@ class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
 
         result = {}
         if self.__ref_ids is not None:
+            result['reference_catalog'] = self.__ref_cat
             result['reference_ids'] = self.__ref_ids
             result['reference_phot_data'] = self.__ref_phot_data
             result['reference_redshift'] = self.__ref_z
