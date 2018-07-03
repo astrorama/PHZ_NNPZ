@@ -25,14 +25,12 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
         # this case the PDZ is the weighted co-add of the sample PDZs.
         if 'reference_sample' in ref_options:
             ref_sample = ref_options['reference_sample']
-            pdz_col = 'CoaddedPdz'
             pdz_prov = ocp.CoaddedPdz(len(target_ids), ref_sample, ref_ids)
 
         # Now we handle the case where we have a reference catalog. In this case
         # the PDZ is the normalized histogram of the neighbors redshifts.
         if 'reference_redshift' in ref_options:
             ref_z = ref_options['reference_redshift']
-            pdz_col = 'TrueRedshiftPDZ'
             pdz_prov = ocp.TrueRedshiftPdz(len(target_ids), ref_z, 0, 6, 601)
 
         output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
@@ -40,7 +38,14 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
 
         pdz_quantiles = args.get('pdz_quantiles', [])
         pdz_mc_samples = args.get('pdz_mc_samples', 0)
-        output.addColumnProvider(ocp.PdfSampling(pdz_prov, pdz_col, quantiles=pdz_quantiles, mc_samples=pdz_mc_samples))
+        pdf_sampling = ocp.PdfSampling(pdz_prov, quantiles=pdz_quantiles, mc_samples=pdz_mc_samples)
+        output.addColumnProvider(pdf_sampling)
+        output.addHeaderProvider(pdf_sampling)
+
+        # If we use a reference sample then we want to also copy the 50%
+        # quantile in a column as the redshift median
+        if 'reference_sample' in ref_options:
+            output.addColumnProvider(ocp.MedianRedshiftFromQuantile(pdz_prov))
 
         output.addExtensionTableProvider(PdzBins(pdz_prov))
 
