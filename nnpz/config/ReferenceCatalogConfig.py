@@ -31,7 +31,7 @@ class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
             self._checkParameterExists('reference_catalog_redshift', args)
             ref_z_col = args['reference_catalog_redshift']
 
-            logger.info('Reading reference catalog from {}...'.format(ref_cat))
+            logger.info('Reading reference catalog from {}...'.format(self.__ref_cat))
             ref_reader = CatalogReader(self.__ref_cat)
             self.__ref_ids = ref_reader.get(prop.ID)
             self.__ref_phot_data = ref_reader.get(prop.Photometry(ref_filters))
