@@ -35,5 +35,5 @@ class MedianTrueRedshift(OutputHandler.OutputColumnProviderInterface):
                 if c > half:
                     median_z[i] = z[sort_i]
                     break
-        col = Column(median_z, 'MedianTrueZ')
+        col = Column(median_z, 'REDSHIFT_MEDIAN')
         return [col]

@@ -43,7 +43,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
         normalized = (self.__pdzs.T * integrals).T
         return [
-            Column(normalized, 'CoaddedPdz', dtype=np.float32),
+            Column(normalized, 'REDSHIFT_PDF', dtype=np.float32),
         ]
 
     def getPdzBins(self):
