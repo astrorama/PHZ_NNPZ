@@ -38,7 +38,7 @@ class TrueRedshiftPdz(OutputHandler.OutputColumnProviderInterface):
     def getColumns(self):
         integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
         normalized = (self.__pdzs.T * integrals).T
-        col = Column(normalized, 'TrueRedshiftPDZ', dtype=np.float32)
+        col = Column(normalized, 'REDSHIFT_PDF', dtype=np.float32)
         return [col]
 
 

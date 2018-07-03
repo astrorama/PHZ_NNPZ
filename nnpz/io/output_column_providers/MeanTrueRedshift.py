@@ -27,5 +27,5 @@ class MeanTrueRedshift(OutputHandler.OutputColumnProviderInterface):
 
     def getColumns(self):
         mean_z = self.__sums / self.__total_weights
-        col = Column(mean_z, 'WeightedMeanZ')
+        col = Column(mean_z, 'REDSHIFT_MEAN')
         return [col]

@@ -22,7 +22,7 @@ class PdzBins(OutputHandler.OutputExtensionTableProviderInterface):
     def getExtensionTables(self):
         bins = self.__pdz_provider.getPdzBins()
         return {
-            'PDZBins': Table({
-                'Redshift': bins,
+            'BINS_PDF': Table({
+                'BINS_PDF': bins,
             })
         }

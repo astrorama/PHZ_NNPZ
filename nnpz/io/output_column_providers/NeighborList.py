@@ -22,7 +22,7 @@ class NeighborList(OutputHandler.OutputColumnProviderInterface):
         self.__weights[catalog_i].append(weight)
 
     def getColumns(self):
-        neighbor_col = Column(self.__neighbors, 'NeighborIDs')
-        weight_col = Column(self.__weights, 'NeighborWeights')
+        neighbor_col = Column(self.__neighbors, 'NEIGHBOR_IDS')
+        weight_col = Column(self.__weights, 'NEIGHBOR_WEIGHTS')
         return [neighbor_col, weight_col]
 
