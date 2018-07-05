@@ -100,14 +100,10 @@ affected = finder.findAffected(target_data, result_flags, progress_listener)
 
 
 # Compute the weights
-weight_phot_provider = conf_manager.getObject('photometry_provider')
-weight_calculator = conf_manager.getObject('weight_calculator')
-weight_calculator_alt = conf_manager.getObject('weight_calculator_alternative')
-
 progress_listener = ProgressListener(len(affected)-1, 'Computing neighbor weights...')
 
-ref_sample_weight_calc = ReferenceSampleWeightCalculator(weight_phot_provider, weight_calculator, weight_calculator_alt)
-weights = ref_sample_weight_calc.computeWeights(affected, target_data, result_flags, progress_listener)
+weight_calculator = conf_manager.getObject('weight_calculator')
+weights = weight_calculator.computeWeights(affected, target_data, result_flags, progress_listener)
 
 
 # Get the output handler
