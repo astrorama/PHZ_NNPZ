@@ -7,4 +7,4 @@ from .MedianTrueRedshift import MedianTrueRedshift
 from .PdfSampling import PdfSampling
 from .CoaddedPdz import CoaddedPdz
 from .Flags import Flags
-from .MedianRedshiftFromQuantile import MedianRedshiftFromQuantile
+from .PdzPointEstimates import PdzPointEstimates

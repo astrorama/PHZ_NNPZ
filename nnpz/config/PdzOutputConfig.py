@@ -42,10 +42,9 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
         output.addColumnProvider(pdf_sampling)
         output.addHeaderProvider(pdf_sampling)
 
-        # If we use a reference sample then we want to also copy the 50%
-        # quantile in a column as the redshift median
-        if 'reference_sample' in ref_options:
-            output.addColumnProvider(ocp.MedianRedshiftFromQuantile(pdz_prov))
+        # Add point estimates
+        if 'pdz_point_estimates' in args:
+            output.addColumnProvider(ocp.PdzPointEstimates(pdz_prov, args['pdz_point_estimates']))
 
         output.addExtensionTableProvider(PdzBins(pdz_prov))
 
