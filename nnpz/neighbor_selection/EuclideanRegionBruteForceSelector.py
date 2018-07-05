@@ -6,6 +6,7 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
+from nnpz.exceptions import InvalidDimensionsException
 
 from nnpz.neighbor_selection import NeighborSelectorInterface, KDTreeSelector, BruteForceSelector
 
@@ -51,6 +52,12 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
 
         For argument description see the interface documentation.
         """
+        if self.__brute_force_batch_size > len(ref_data):
+            raise InvalidDimensionsException(
+                'The batch size is bigger than the number of reference objects: {} > {}'.format(
+                    self.__brute_force_batch_size, len(ref_data)
+                )
+            )
         self.__ref_data = ref_data
         self.__kdtree = KDTreeSelector(self.__brute_force_batch_size, self.__balanced_tree).initialize(ref_data)
 
