@@ -12,7 +12,7 @@ import pytest
 from astropy.table import Table
 from nnpz.reference_sample.ReferenceSample import ReferenceSample
 
-from tests.util_fixtures import temp_dir_fixture
+from ..util_fixtures import temp_dir_fixture
 
 @pytest.fixture()
 def reference_sample_fixture(temp_dir_fixture):

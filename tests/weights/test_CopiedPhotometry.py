@@ -8,7 +8,7 @@ from __future__ import division, print_function
 from nnpz.flags import NnpzFlag
 from nnpz.photometry import PhotometryProvider
 from nnpz.weights import CopiedPhotometry
-from tests.photometry.fixtures import *
+from ..photometry.fixtures import *
 
 
 ###############################################################################

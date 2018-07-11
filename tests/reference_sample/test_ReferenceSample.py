@@ -13,7 +13,7 @@ import numpy as np
 from nnpz import ReferenceSample
 from nnpz.exceptions import *
 
-from tests.util_fixtures import temp_dir_fixture
+from ..util_fixtures import temp_dir_fixture
 from .fixtures import *
 
 def pdzEqual(a, b):

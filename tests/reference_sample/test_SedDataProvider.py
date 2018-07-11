@@ -12,7 +12,7 @@ import numpy as np
 from nnpz.exceptions import *
 from nnpz.reference_sample.SedDataProvider import SedDataProvider
 
-from tests.util_fixtures import temp_dir_fixture
+from ..util_fixtures import temp_dir_fixture
 from .fixtures import sed_data_files_fixture, sed_list_fixture
 
 ###############################################################################

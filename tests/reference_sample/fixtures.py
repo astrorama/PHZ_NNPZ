@@ -9,7 +9,7 @@ import os
 import pytest
 import numpy as np
 
-from tests.util_fixtures import temp_dir_fixture
+from ..util_fixtures import temp_dir_fixture
 
 ##############################################################################
 

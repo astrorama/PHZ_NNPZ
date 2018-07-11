@@ -12,7 +12,7 @@ import numpy as np
 from nnpz.exceptions import *
 from nnpz.reference_sample.PdzDataProvider import PdzDataProvider
 
-from tests.util_fixtures import temp_dir_fixture
+from ..util_fixtures import temp_dir_fixture
 from .fixtures import redshift_bins_fixture, pdz_list_fixture, pdz_data_files_fixture
 
 ###############################################################################
