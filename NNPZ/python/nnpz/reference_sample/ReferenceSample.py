@@ -312,8 +312,9 @@ class ReferenceSample(object):
             if not np.array_equal(data_arr[:,0], existing_zs):
                 raise InvalidAxisException('Given wavelengths are different than existing ones')
 
-        # Add the PDZ data in the last file
-        new_pos = self.__pdz_map[last_pdz_file].appendPdz(obj_id, data_arr[:,1])
+        # Add the PDZ data in the last file, normalizing first
+        integral = np.trapz(data_arr[:, 1], data_arr[:, 0])
+        new_pos = self.__pdz_map[last_pdz_file].appendPdz(obj_id, data_arr[:,1] / integral)
         self.__index.setPdzFileAndPosition(obj_id, last_pdz_file, new_pos)
 
         # Check if the last file exceeded the size limit and create a new one

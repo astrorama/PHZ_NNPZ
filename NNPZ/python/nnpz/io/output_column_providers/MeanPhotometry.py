@@ -41,6 +41,6 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
         errors = (np.sqrt(self.__total_errors).T / self.__total_weights).T
         columns = []
         for i, name in enumerate(self.__filter_names):
-            columns.append(Column(values[:,i], 'mean_' + name, dtype=np.float32))
-            columns.append(Column(errors[:,i], 'mean_' + name + '_ERR', dtype=np.float32))
+            columns.append(Column(values[:,i], name + "_MEAN", dtype=np.float32))
+            columns.append(Column(errors[:,i], name + '_MEAN_ERR', dtype=np.float32))
         return columns

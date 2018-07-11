@@ -8,7 +8,10 @@ from __future__ import division, print_function
 from platform import processor
 import types
 import pytest
-from mock import Mock
+try:
+    from mock import Mock
+except ModuleNotFoundError:
+    from unittest.mock import Mock
 import numpy as np
 
 from nnpz.photometry import PhotometryPrePostProcessorInterface, GalacticReddeningPrePostProcessor
