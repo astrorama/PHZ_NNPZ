@@ -24,6 +24,10 @@ def tableToHdu(table):
         columns.append(fits.Column(name=name, array=data, format=format))
     hdu = fits.BinTableHDU.from_columns(columns)
     for key, value in table.meta.items():
+        # We do not copy the comments, as they are multilines and the
+        # value is a list which will cause an exception
+        if key == 'COMMENT':
+            continue
         hdu.header.append((key, value))
     return hdu
 
