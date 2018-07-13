@@ -38,8 +38,9 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
 
         cols = []
 
-        fixed_probs = np.asarray([self.__sample(pdf, bins, self.__qs) for pdf in pdfs], dtype=np.float32)
-        cols.append(Column(fixed_probs, "REDSHIFT_PDF_QUANTILES"))
+        if self.__qs:
+            fixed_probs = np.asarray([self.__sample(pdf, bins, self.__qs) for pdf in pdfs], dtype=np.float32)
+            cols.append(Column(fixed_probs, "REDSHIFT_PDF_QUANTILES"))
 
         if self.__mc_no > 0:
             mc_vals = np.asarray([self.__sample(pdf, bins, np.random.rand(self.__mc_no)) for pdf in pdfs], dtype=np.float32)
@@ -50,6 +51,7 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
 
     def getHeaderKeywords(self):
         keys = {}
-        keys["PDFQUAN"] =' '.join([str(q) for q in self.__qs])
+        if self.__qs:
+            keys["PDFQUAN"] =' '.join([str(q) for q in self.__qs])
         return keys
 
