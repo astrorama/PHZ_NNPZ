@@ -31,10 +31,21 @@ from nnpz.utils import Logging
 usr_args = sys.argv[1:]
 
 # First we check if the first parameter is a configuration file. If it is, we
-# use the options in it. Otherwise we find the default config file.
+# use the options in it. Otherwise we search for the --config-file parameter.
+# If it is not given we find the default config file.
 if len(usr_args) != 0 and os.path.isfile(usr_args[0]):
     conf_path = sys.argv[1]
     usr_args = usr_args[1:]
+elif len([x for x in usr_args if x.startswith('--config-file')]):
+    if '--config-file' in usr_args:
+        i = usr_args.index('--config-file')
+        conf_path = usr_args[i+1].strip('"')
+        usr_args = usr_args[:i] + usr_args[i+2:]
+    else:
+        arg = next(x for x in usr_args if x.startswith('--config-file'))
+        conf_path = arg[arg.index('=')+1:].strip('"')
+        i = usr_args.index(arg)
+        usr_args = usr_args[:i] + usr_args[i+1:]
 else:
     conf_path = os.path.abspath(os.path.dirname(__file__)) # Remove the filename
     conf_path = os.path.dirname(conf_path) # Remove the bin directory
