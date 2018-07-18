@@ -27,8 +27,6 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         unless we give them to it. So we pre-load them here if needed.
         """
         fp = ListFileFilterProvider(Auxiliary.getAuxiliaryPath('GalacticExtinctionCurves.list'))
-        self.__b_filter = fp.getFilterTransmission('b_filter')
-        self.__r_filter = fp.getFilterTransmission('r_filter')
         self.__reddening_curve = fp.getFilterTransmission('extinction_curve')
 
     def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_lists=None):
@@ -94,8 +92,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         if self.__ebv_list is not None:
             ebv = self.__ebv_list[cat_i, 0]
             pre_post_proc = GalacticReddeningPrePostProcessor(
-                pre_post_proc, ebv,
-                self.__b_filter, self.__r_filter, self.__reddening_curve
+                pre_post_proc, ebv, self.__reddening_curve
             )
         phot_calc = PhotometryCalculator(filter_map, pre_post_proc)
 
