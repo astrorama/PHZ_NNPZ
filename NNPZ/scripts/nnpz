@@ -55,18 +55,33 @@ exec(open(conf_path).read(), args)
 
 # Now go through the options given by the user at the command line and add then
 # to the args parameter
-for i in range(0, len(usr_args), 2):
+i = 0
+while i < len(usr_args):
+    # Get the next key
     key = usr_args[i]
-    value = usr_args[i+1]
     if not key.startswith('--'):
         print('Invalid option: {}'.format(key))
         exit(-1)
     key = key[2:]
+
+    # If the user use key=value split the key and the value. Otherwise the value
+    # is the next argument.
+    if '=' in key:
+        split = key.find('=')
+        value = key[split+1:]
+        key = key[:split]
+    else:
+        i += 1
+        value = usr_args[i]
+
+    # Evaluate the key and add it in the arguments
     try:
         args[key] = eval(value)
     except:
         # If the evaluation failed use the argument as a string
         args[key] = value
+
+    i += 1
 
 
 # If the user has set a log level use it. Otherwise use the default.
