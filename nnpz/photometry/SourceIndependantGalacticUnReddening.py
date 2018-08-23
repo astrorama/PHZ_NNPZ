@@ -63,8 +63,8 @@ class SourceIndependantGalacticUnReddening():
         
         # we use the knots of the reddening curve and resample the other curve 
         # according to it:
-        reddening_curve = fp.getFilterTransmission('extinction_curve') if galactic_reddening_curve is None else galactic_reddening_curve
-        ref_galactic_sed = fp.getFilterTransmission('typical_galactic_sed') if ref_sed is None else ref_sed
+        reddening_curve = SourceIndependantGalacticUnReddening.__fp.getFilterTransmission('extinction_curve') if galactic_reddening_curve is None else galactic_reddening_curve
+        ref_galactic_sed = SourceIndependantGalacticUnReddening.__fp.getFilterTransmission('typical_galactic_sed') if ref_sed is None else ref_sed
         ref_galactic_sed_ressampled=np.array(reddening_curve)
         ref_galactic_sed_ressampled[:,1]=np.interp(reddening_curve[:,0], ref_galactic_sed[:,0], ref_galactic_sed[:,1], left=0, right=0)
         
@@ -112,7 +112,7 @@ class SourceIndependantGalacticUnReddening():
             
             for filter_id in range(len(self._filter_order)):
                 filter_name = self._filter_order[filter_id]
-                data[source_id,filter_id,0]=self._unapply_reddening(target_data[source_id,filter_id,0],filter_name,ebv)
+                data[source_id,filter_id,0]=self._unapply_reddening(target_data[source_id,filter_id,0],filter_name,ebv[0])
         return data
     
     
