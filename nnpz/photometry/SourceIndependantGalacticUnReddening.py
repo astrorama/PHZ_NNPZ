@@ -112,7 +112,7 @@ class SourceIndependantGalacticUnReddening():
             
             for filter_id in range(len(self._filter_order)):
                 filter_name = self._filter_order[filter_id]
-                data[source_id,filter_id,0]=self._unapply_reddening(target_data[source_id,filter_id,0],filter_name,ebv[0])
+                data[source_id,filter_id,0]=self._unapply_reddening(target_data[source_id,filter_id,0],filter_name,ebv)
         return data
     
     

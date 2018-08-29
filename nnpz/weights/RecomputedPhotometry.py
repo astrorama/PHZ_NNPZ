@@ -90,7 +90,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         # Create the photometry provider
         pre_post_proc = self.__phot_pre_post()
         if self.__ebv_list is not None:
-            ebv = self.__ebv_list[cat_i, 0]
+            ebv = self.__ebv_list[cat_i]
             pre_post_proc = GalacticReddeningPrePostProcessor(
                 pre_post_proc, ebv, self.__reddening_curve
             )
