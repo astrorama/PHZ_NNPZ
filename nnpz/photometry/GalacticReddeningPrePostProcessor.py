@@ -41,7 +41,7 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
         """
         self.__processor = pre_post_processor
         self.__p_14_ebv = p_14_ebv
-        self.__reddening_curve = fp.getFilterTransmission('extinction_curve') if galactic_reddening_curve is None else galactic_reddening_curve
+        self.__reddening_curve = self.__fp.getFilterTransmission('extinction_curve') if galactic_reddening_curve is None else galactic_reddening_curve
 
 
     def _computeAbsorption(self,sed, reddening_curve, p_14_ebv ):
