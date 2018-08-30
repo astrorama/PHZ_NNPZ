@@ -45,14 +45,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         target_catalog_ebv = args.get('target_catalog_gal_ebv', None)
         if target_catalog_ebv is not None:
-            if not isinstance(target_catalog_ebv, tuple) and not isinstance(target_catalog_ebv, list):
-                logger.error('target_catalog_ebv can only be a tuple or a list')
-                exit(1)
-            if len(target_catalog_ebv) != 2:
-                logger.error('target_catalog_ebv must have length 2')
-                exit(1)
             logger.info('Using E(B-V) columns {}'.format(target_catalog_ebv))
-            self.__target_ebv = target_reader.get(prop.EBV(*target_catalog_ebv, nan_flags=missing_phot_flags))
+            self.__target_ebv = target_reader.get(prop.EBV(target_catalog_ebv, nan_flags=missing_phot_flags))
 
         target_catalog_filters_mean = args.get('target_catalog_filters_mean', None)
         if target_catalog_filters_mean is not None:
