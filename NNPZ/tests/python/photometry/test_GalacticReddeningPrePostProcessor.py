@@ -12,112 +12,62 @@ try:
     from mock import Mock
 except ModuleNotFoundError:
     from unittest.mock import Mock
+
 import numpy as np
 
 from nnpz.photometry import PhotometryPrePostProcessorInterface, GalacticReddeningPrePostProcessor
 
 
-def test_computeBpc():
-    """Test the computeBpc() method"""
-     # Given
-    pre_post_processor = Mock(spec_set=PhotometryPrePostProcessorInterface)
-    pre_post_processor.preProcess.side_effect = lambda x: x
-    pre_post_processor.postProcess.side_effect = lambda x,y,z: x
-
-    arr = [[i+4498,1] for i in range(504)]
-    arr[0][1]=0
-    arr[1][1]=0
-    arr[-1][1]=0
-    arr[-2][1]=0
-    b_filter = np.array(arr )
-
-    arr = [[i+5998,1] for i in range(1504)]
-    arr[0][1]=0
-    arr[1][1]=0
-    arr[-1][1]=0
-    arr[-2][1]=0
-    r_filter = np.array(arr)
-    galactic_reddening_curve = np.array([[1000,0],[5500,0],[5600,17.47425],[9000,17.47425]])
-
-    sed =  np.array([[i+1000,1] for i in range(9001)])
-    # we have b =500
-    #         b_r=500
-    #         r=1500
-    #         r_r=300
-    # so -0.04*log(b_r*r/(b*r_r)) = -0.0279588
-    expected = -17.47425
-
-    # When
-    processor=GalacticReddeningPrePostProcessor(pre_post_processor, 1.0, b_filter, r_filter, galactic_reddening_curve)
-    bpc = processor.computeBpc(sed)
-
-    # Then
-    assert bpc == pytest.approx(expected)
-
-
 ###############################################################################
-
-def test_preProcess():
-    """Test the preProcess() method"""
-
+def test_computeAbsorption():
+    
     pre_post_processor = Mock(spec_set=PhotometryPrePostProcessorInterface)
     pre_post_processor.preProcess.side_effect = lambda x: x
     pre_post_processor.postProcess.side_effect = lambda x,y,z: x
+    ebv=1.
+    red = np.array([[0.,0.1],[1.,0.2],[2.,0.3],[3.,0.4],[4.,0.5],[5.,0.6],[6.,0.7],[7.,0.8],[8.,0.9],[9.,1.0],[10.,1.1]])
+    processor = GalacticReddeningPrePostProcessor(pre_post_processor,ebv,red)
+    
+    sed = np.array([[0.,1.],[1.,1.],[2.,1.],[3.,1.],[4.,3],[5.,1],[6.,1],[7.,1],[8.,1],[9.,1],[10.,1]])
 
-    b_filter = np.array([[5000,1],[5500,1]] )
-    r_filter = np.array([[6000,1],[7500,1]] )
+    actual = processor._computeAbsorption(sed,red,ebv)
+    
+    expected=np.array([[0,0.91201083935591],[1,0.831763771102671],[2,0.758577575029184],[3,0.691830970918937],[4,1.89287203344058],[5,0.575439937337157],[6,0.524807460249773],[7,0.478630092322638],[8,0.436515832240166],[9,0.398107170553497],[10,0.363078054770101]])
+    
+    np.testing.assert_almost_equal(actual,expected) 
+    
+    # ebv dep 
+    ebv=0.1
+    actual = processor._computeAbsorption(sed,red,ebv)
+    expected=np.array([[0,0.990831944892768],[1,0.981747943019984],[2,0.972747223776965],[3,0.963829023623971],[4,2.86497775806431],[5,0.946237161365793],[6,0.93756200692588],[7,0.928966386779936],[8,0.920449571753171],[9,0.91201083935591],[10,0.903649473722301]])
+    np.testing.assert_almost_equal(actual,expected) 
+ 
+def test_preProcess():
+    pre_post_processor = Mock(spec_set=PhotometryPrePostProcessorInterface)
+    pre_post_processor.preProcess.side_effect = lambda x: x
+    pre_post_processor.postProcess.side_effect = lambda x,y,z: x
+    ebv=1.
+    red = np.array([[0.,0.1],[1.,0.2],[2.,0.3],[3.,0.4],[4.,0.5],[5.,0.6],[6.,0.7],[7.,0.8],[8.,0.9],[9.,1.0],[10.,1.1]])
+    processor = GalacticReddeningPrePostProcessor(pre_post_processor,ebv,red)
 
-    galactic_reddening_curve = np.array([[1000,0],[5599,0],[5600,1],[9200,1]])
+    sed = np.array([[0.,1.],[1.,1.],[2.,1.],[3.,1.],[4.,3],[5.,1],[6.,1],[7.,1],[8.,1],[9.,1],[10.,1]])
+    actual = processor.preProcess(sed) 
+    expected=np.array([[0,0.91201083935591],[1,0.831763771102671],[2,0.758577575029184],[3,0.691830970918937],[4,1.89287203344058],[5,0.575439937337157],[6,0.524807460249773],[7,0.478630092322638],[8,0.436515832240166],[9,0.398107170553497],[10,0.363078054770101]])
 
-    sed =  np.array([[i+1000,1.] for i in range(8001)])
-
-
-    def mock_computeBpc(self,sed):
-        return 1.0
-    # When
-    processor=GalacticReddeningPrePostProcessor(pre_post_processor, 2.5/1.018, b_filter, r_filter, galactic_reddening_curve)
-    processor.computeBpc = types.MethodType(mock_computeBpc, processor)
-
-    result = processor.preProcess(sed)
-
-    # Then
-    assert np.array_equal(result[:,0], sed[:,0])
-
-    assert np.array_equal(result[:4600,1], sed[:4600,1])
-    assert np.array_equal(result[4600:,1], sed[4600:,1]/10.)
-
-
-    # Check the bpc dependency
-    def mock_computeBpc_2(self,sed):
-        return 2.0
-
-    processor.computeBpc = types.MethodType(mock_computeBpc_2, processor)
-    # Changing bpc from 1 to 2 should devide the exponant by 2.
-    # It was tunned to be -1 so we expect a factor 1/sqrt(10)
-    result = processor.preProcess(sed)
-
-    # Then
-    assert np.array_equal(result[:,0], sed[:,0])
-
-    assert np.array_equal(result[:4600,1], sed[:4600,1])
-    assert np.array_equal(result[4600:,1], sed[4600:,1]/np.sqrt(10.))
+    # check that the preprocess actually redden the sed 
+    np.testing.assert_almost_equal(actual,expected) 
 
 
-    # Check the provided E(B-V) dependency
-    processor=GalacticReddeningPrePostProcessor(pre_post_processor, 5./1.018, b_filter, r_filter, galactic_reddening_curve)
-    processor.computeBpc = types.MethodType(mock_computeBpc, processor)
+def test_postProcess():
+    pre_post_processor = Mock(spec_set=PhotometryPrePostProcessorInterface)
+    pre_post_processor.preProcess.side_effect = lambda x: x
+    pre_post_processor.postProcess.side_effect = lambda x,y,z: x
+    ebv=1.
+    red = np.array([[0.,0.1],[1.,0.2],[2.,0.3],[3.,0.4],[4.,0.5],[5.,0.6],[6.,0.7],[7.,0.8],[8.,0.9],[9.,1.0],[10.,1.1]])
+    processor = GalacticReddeningPrePostProcessor(pre_post_processor,ebv,red)
 
-    # Changing E(B-V) by a factor 2 should multiply the exponant by 2.
-    # It was tunned to be -1 so we expect a factor 1/100
-    result = processor.preProcess(sed)
-
-    # Then
-    assert np.array_equal(result[:,0], sed[:,0])
-
-    assert np.array_equal(result[:4600,1], sed[:4600,1])
-    assert np.array_equal(result[4600:,1], sed[4600:,1]/100.)
-
-
-
-
+    values=[1,2,3,4,5,6,7,8]
+    actual = [processor.postProcess(v,'f1',[]) for v in values]
+    # check that the postprocessing has no effect
+    np.testing.assert_almost_equal(actual,values) 
 ###############################################################################

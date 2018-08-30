@@ -55,4 +55,3 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
             keys["PDFQUAN"] =' '.join([str(q) for q in self.__qs])
         return keys
 
-

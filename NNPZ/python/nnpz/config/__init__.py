@@ -14,3 +14,4 @@ from .PdzOutputConfig import PdzOutputConfig
 from .FlagsConfig import FlagsConfig
 from .WeightPhotometryProviderConfig import WeightPhotometryProviderConfig
 from .WeightCalculatorConfig import WeightCalculatorConfig
+from .GalacticUnreddenerConfig import GalacticUnreddenerConfig

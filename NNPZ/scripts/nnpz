@@ -110,7 +110,8 @@ ref_data = conf_manager.getObject('reference_phot_data')
 
 # Read the target catalog data
 target_ids = conf_manager.getObject('target_ids')
-target_data = conf_manager.getObject('target_phot_data')
+target_data = conf_manager.getObject('target_phot_data')    
+target_ebv = conf_manager.getObject('target_ebv')
 
 # Get the neighbor selector and initialize it
 selector = conf_manager.getObject('neighbor_selector').initialize(ref_data)
@@ -119,10 +120,22 @@ selector = conf_manager.getObject('neighbor_selector').initialize(ref_data)
 result_flags = conf_manager.getObject('flag_list')
 
 
+# Check if the Galactic reddening handling is on if so create de-reddend data
+if conf_manager.getObject('apply_galactic_absorption'):
+    
+    print('Using Galactic reddening correction.')
+    # Get the instance for de-redden the targets
+    galacticAbsorptionCorrector = conf_manager.getObject('galactic_absorption_unreddener')
+
+    # Get de-reddened data
+    de_reddened_target_data = galacticAbsorptionCorrector.de_redden_data(target_data, target_ebv)
+else:
+    de_reddened_target_data = target_data
+
 # Construct the neighbor finder and build the affected sources map
 finder = AffectedSourcesFinder(selector)
 progress_listener = ProgressListener(len(target_data)-1, 'Finding neighbors... ')
-affected = finder.findAffected(target_data, result_flags, progress_listener)
+affected = finder.findAffected(de_reddened_target_data, result_flags, progress_listener)
 
 
 # Compute the weights
