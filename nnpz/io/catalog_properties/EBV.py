@@ -45,7 +45,7 @@ class EBV(CatalogReader.CatalogPropertyInterface):
         if self.__ebv_column not in catalog.colnames:
             raise UnknownNameException('Missing column {}'.format(self.__ebv_column))
 
-        data = np.zeros((len(catalog), 1), dtype=np.float32)
+        data = np.zeros(len(catalog), dtype=np.float32)
 
         data[:, 0] = catalog[self.__ebv_column]
        
