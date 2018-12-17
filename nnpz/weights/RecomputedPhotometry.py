@@ -37,7 +37,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
             filter_order: A list with the filters in the order they are expected to be returned
             filter_trans_map: A map filter_name => [average filter transmissions]
             phot_type: Photometry type
-            ebv_list: None, or a 2D array with the pair (E(B-V), error) corresponding to each entry in the target catalog
+            ebv_list: None, or a 1D array with the (E(B-V) corresponding to each entry in the target catalog
             filter_trans_mean_list: A map with the filter_name as key, and a list/array with the filter mean
                 corresponding to each entry in the target catalog
         """
