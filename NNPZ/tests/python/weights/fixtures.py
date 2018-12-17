@@ -98,6 +98,6 @@ def target_fixture(filters_fixture):
 
     return {
         'ID': np.asarray(range(1, NTargets+1), dtype=np.float32),
-        'ebv': np.zeros((NTargets, 2)),
+        'ebv': np.zeros(NTargets),
         'filter_means': filter_means,
     }
