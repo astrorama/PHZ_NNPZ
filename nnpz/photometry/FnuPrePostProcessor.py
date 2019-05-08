@@ -22,7 +22,7 @@ class FnuPrePostProcessor(PhotometryPrePostProcessorInterface):
         #switching to the photon equation
         #"""Returns the SED unmodified"""
         #return sed
-        """Divides the SED with the wavelength"""
+        """Multiply the SED with the wavelength"""
         res = sed.copy()
         res[:,1] = res[:,1] * res[:,0]
         return res
