@@ -19,8 +19,13 @@ class FnuPrePostProcessor(PhotometryPrePostProcessorInterface):
 
 
     def preProcess(self, sed):
-        """Returns the SED unmodified"""
-        return sed
+        #switching to the photon equation
+        #"""Returns the SED unmodified"""
+        #return sed
+        """Multiply the SED with the wavelength"""
+        res = sed.copy()
+        res[:,1] = res[:,1] * res[:,0]
+        return res
 
 
     def postProcess(self, intensity, filter_name, filter_trans):
@@ -51,7 +56,7 @@ class FnuPrePostProcessor(PhotometryPrePostProcessorInterface):
         # recomputing them when the processor is used for multiple SEDs.
         if not filter_name in self.__filter_norm:
             l = filter_trans[:,0]
-            norm_f = filter_trans[:,1] / l / l
+            norm_f = filter_trans[:,1] / l # switching to the photon equation: remove the second / l
             self.__filter_norm[filter_name] = c * np.trapz(norm_f, x=l)
         norm = self.__filter_norm[filter_name]
 
