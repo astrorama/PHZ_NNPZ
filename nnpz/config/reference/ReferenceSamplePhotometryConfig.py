@@ -9,7 +9,7 @@ import numpy as np
 
 from nnpz.utils import Logging
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import ReferenceSampleConfig
+from nnpz.config.reference import ReferenceSampleConfig
 from nnpz.photometry import PhotometryProvider
 
 logger = Logging.getLogger('Configuration')

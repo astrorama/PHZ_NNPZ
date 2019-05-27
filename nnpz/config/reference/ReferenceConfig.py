@@ -6,8 +6,8 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import (ReferenceSampleConfig, ReferenceCatalogConfig,
-                              ReferenceSamplePhotometryConfig)
+from nnpz.config.reference import (ReferenceSampleConfig, ReferenceCatalogConfig,
+                                   ReferenceSamplePhotometryConfig)
 
 
 class ReferenceConfig(ConfigManager.ConfigHandler):

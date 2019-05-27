@@ -13,6 +13,7 @@ from nnpz.utils import Logging
 
 # Trigger the configuration of the NNPZ pipeline
 import nnpz.config.nnpz
+import nnpz.config.reference
 
 #
 # WARNING:
