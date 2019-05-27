@@ -11,6 +11,9 @@ from nnpz.config import ConfigManager
 from nnpz.framework import *
 from nnpz.utils import Logging
 
+# Trigger the configuration of the NNPZ pipeline
+import nnpz.config.nnpz
+
 #
 # WARNING:
 # This file is a prototype skeleton for the NNPZ framework. Its purpose is to

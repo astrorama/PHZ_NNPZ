@@ -8,8 +8,9 @@ from __future__ import division, print_function
 import sys
 
 import nnpz.io.output_column_providers as ocp
-from nnpz.config import (ConfigManager, OutputHandlerConfig, TargetCatalogConfig,
-                         ReferenceConfig, NeighborListOutputConfig)
+from nnpz.config import ConfigManager
+from nnpz.config.nnpz import (OutputHandlerConfig, TargetCatalogConfig,
+                              ReferenceConfig, NeighborListOutputConfig)
 from nnpz.io.output_hdul_providers.PdzBins import PdzBins
 from nnpz.utils import Logging
 

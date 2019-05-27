@@ -5,7 +5,8 @@ Author: Florian Dubath
 
 from __future__ import division, print_function
 
-from nnpz.config import ConfigManager, ReferenceConfig, TargetCatalogConfig
+from nnpz.config import ConfigManager
+from nnpz.config.nnpz import ReferenceConfig, TargetCatalogConfig
 from nnpz.utils import Logging
 from nnpz.photometry.SourceIndependantGalacticUnReddening import SourceIndependantGalacticUnReddening
 
