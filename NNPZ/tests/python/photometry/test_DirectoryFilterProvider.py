@@ -12,8 +12,7 @@ import numpy as np
 from nnpz.exceptions import *
 from nnpz.photometry import DirectoryFilterProvider
 
-from ..util_fixtures import temp_dir_fixture
-from .fixtures import filters_fixture, filter_dir_fixture
+from .fixtures import filters_fixture, filter_dir_fixture, temp_dir_fixture
 
 ###############################################################################
 
