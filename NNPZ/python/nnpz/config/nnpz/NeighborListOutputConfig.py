@@ -5,8 +5,9 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from nnpz.config import (ConfigManager, OutputHandlerConfig, TargetCatalogConfig,
-                         ReferenceConfig)
+from nnpz.config import ConfigManager
+from nnpz.config.nnpz import OutputHandlerConfig, TargetCatalogConfig
+from nnpz.config.reference import ReferenceConfig
 import nnpz.io.output_column_providers as ocp
 
 
@@ -14,10 +15,12 @@ class NeighborListOutputConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__added = False
+        self.__neighbor_info_output = False
 
 
     def __addColumnProvider(self, args):
-        if args.get('neighbor_info_output', False):
+        self.__neighbor_info_output = args.get('neighbor_info_output', False)
+        if self.__neighbor_info_output:
             target_ids = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)['target_ids']
             ref_ids = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)['reference_ids']
             output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
@@ -27,7 +30,9 @@ class NeighborListOutputConfig(ConfigManager.ConfigHandler):
         if not self.__added:
             self.__addColumnProvider(args)
             self.__added = True
-        return {}
+        return {
+            'neighbor_info_output': self.__neighbor_info_output
+        }
 
 
 ConfigManager.addHandler(NeighborListOutputConfig)

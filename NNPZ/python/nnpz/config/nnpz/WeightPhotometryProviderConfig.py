@@ -5,7 +5,9 @@ Author: Alejandro Alvarez Ayllon
 
 from __future__ import division, print_function
 
-from nnpz.config import ConfigManager, ReferenceConfig, TargetCatalogConfig
+from nnpz.config import ConfigManager
+from nnpz.config.nnpz import TargetCatalogConfig
+from nnpz.config.reference import ReferenceConfig
 from nnpz.utils import Logging
 from nnpz.weights import CopiedPhotometry, RecomputedPhotometry
 

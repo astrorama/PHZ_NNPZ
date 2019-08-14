@@ -9,6 +9,9 @@ from astropy.table import Column
 
 from nnpz.io import OutputHandler
 
+NEIGHBOR_IDS_COLNAME = 'NEIGHBOR_IDS'
+NEIGHBOR_WEIGHTS_COLNAME = 'NEIGHBOR_WEIGHTS'
+
 
 class NeighborList(OutputHandler.OutputColumnProviderInterface):
 
@@ -22,7 +25,7 @@ class NeighborList(OutputHandler.OutputColumnProviderInterface):
         self.__weights[catalog_i].append(weight)
 
     def getColumns(self):
-        neighbor_col = Column(self.__neighbors, 'NEIGHBOR_IDS')
-        weight_col = Column(self.__weights, 'NEIGHBOR_WEIGHTS')
+        neighbor_col = Column(self.__neighbors, NEIGHBOR_IDS_COLNAME)
+        weight_col = Column(self.__weights, NEIGHBOR_WEIGHTS_COLNAME)
         return [neighbor_col, weight_col]
 

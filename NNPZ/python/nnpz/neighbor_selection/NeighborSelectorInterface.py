@@ -138,7 +138,7 @@ class NeighborSelectorInterface(object):
             raise InvalidDimensionsException('coordinate must have two dimensions')
         if coordinate.shape[0] != self.__dimensionality:
             raise InvalidDimensionsException('Invalid parameter space size (' +
-                coordinate.shape[0] + ' instead of ' + self.__dimensionality + ')')
+                str(coordinate.shape[0]) + ' instead of ' + str(self.__dimensionality) + ')')
         if coordinate.shape[1] != 2:
             raise InvalidDimensionsException('coordinate second axis must have size 2')
 

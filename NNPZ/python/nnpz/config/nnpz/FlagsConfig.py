@@ -6,7 +6,8 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 from nnpz import NnpzFlag
-from nnpz.config import (ConfigManager, TargetCatalogConfig, OutputHandlerConfig)
+from nnpz.config import ConfigManager
+from nnpz.config.nnpz import (TargetCatalogConfig, OutputHandlerConfig)
 import nnpz.io.output_column_providers as ocp
 
 

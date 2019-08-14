@@ -5,21 +5,38 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+import sys
+
 import nnpz.io.output_column_providers as ocp
-from nnpz.config import (ConfigManager, OutputHandlerConfig, TargetCatalogConfig,
-                         ReferenceConfig)
+from nnpz.config import ConfigManager
+from nnpz.config.nnpz import OutputHandlerConfig, TargetCatalogConfig, NeighborListOutputConfig
+from nnpz.config.reference import ReferenceConfig
 from nnpz.io.output_hdul_providers.PdzBins import PdzBins
+from nnpz.utils import Logging
+
+logger = Logging.getLogger('Configuration')
 
 
 class PdzOutputConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__added = False
+        self.__add_pdz_output = True
 
     def __addColumnProvider(self, args):
         target_ids = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)['target_ids']
         ref_options = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
+        neighbor_options = ConfigManager.getHandler(NeighborListOutputConfig).parseArgs(args)
         ref_ids = ref_options['reference_ids']
+
+        # NNPZ can be run on neighbor-only mode, so skip PDZ computation in that case
+        # Make sure the list of neighbors is generated in that case!
+        self.__add_pdz_output = args.get('pdz_output', True)
+        if not self.__add_pdz_output:
+            if not neighbor_options['neighbor_info_output']:
+                logger.error('PDZ and neighbor list can not be disabled at the same time!')
+                sys.exit(-1)
+            return
 
         # First handle the case where we have a reference sample directory. In
         # this case the PDZ is the weighted co-add of the sample PDZs.

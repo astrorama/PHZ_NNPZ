@@ -12,7 +12,7 @@ import numpy as np
 from nnpz.exceptions import *
 from nnpz.reference_sample.IndexProvider import IndexProvider
 
-from ..util_fixtures import temp_dir_fixture
+from .fixtures import temp_dir_fixture
 
 
 def _addEntryToFile(values, f):

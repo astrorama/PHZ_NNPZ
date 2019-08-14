@@ -7,13 +7,11 @@ from __future__ import division, print_function
 
 import pytest
 import os
-from astropy.table import Table
 import numpy as np
 
 from nnpz import ReferenceSample
 from nnpz.exceptions import *
 
-from ..util_fixtures import temp_dir_fixture
 from .fixtures import *
 
 def pdzEqual(a, b):

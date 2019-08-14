@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Created on: 01/02/18
@@ -7,15 +7,13 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-import os
-import sys
-import numpy as np
-
-from nnpz.framework import *
-from nnpz.weights import *
 from nnpz.config import ConfigManager
+from nnpz.framework import *
 from nnpz.utils import Logging
 
+# Trigger the configuration of the NNPZ pipeline
+import nnpz.config.nnpz
+import nnpz.config.reference
 
 #
 # WARNING:
@@ -25,84 +23,10 @@ from nnpz.utils import Logging
 # NNPZ project.
 #
 
-
-# Read the configuration file and parse the user parameters
-
-usr_args = sys.argv[1:]
-
-# First we check if the first parameter is a configuration file. If it is, we
-# use the options in it. Otherwise we search for the --config-file parameter.
-# If it is not given we find the default config file.
-if len(usr_args) != 0 and os.path.isfile(usr_args[0]):
-    conf_path = sys.argv[1]
-    usr_args = usr_args[1:]
-elif len([x for x in usr_args if x.startswith('--config-file')]):
-    if '--config-file' in usr_args:
-        i = usr_args.index('--config-file')
-        conf_path = usr_args[i+1].strip('"')
-        usr_args = usr_args[:i] + usr_args[i+2:]
-    else:
-        arg = next(x for x in usr_args if x.startswith('--config-file'))
-        conf_path = arg[arg.index('=')+1:].strip('"')
-        i = usr_args.index(arg)
-        usr_args = usr_args[:i] + usr_args[i+1:]
-else:
-    conf_path = os.path.abspath(os.path.dirname(__file__)) # Remove the filename
-    conf_path = os.path.dirname(conf_path) # Remove the bin directory
-    conf_path = os.path.join(conf_path, 'config', 'nnpz.conf')
-args = {}
-exec(open(conf_path).read(), args)
-
-# Now go through the options given by the user at the command line and add then
-# to the args parameter
-i = 0
-while i < len(usr_args):
-    # Get the next key
-    key = usr_args[i]
-    if not key.startswith('--'):
-        print('Invalid option: {}'.format(key))
-        exit(-1)
-    key = key[2:]
-
-    # If the user use key=value split the key and the value. Otherwise the value
-    # is the next argument.
-    if '=' in key:
-        split = key.find('=')
-        value = key[split+1:]
-        key = key[:split]
-    else:
-        i += 1
-        value = usr_args[i]
-
-    # Evaluate the key and add it in the arguments
-    try:
-        args[key] = eval(value)
-    except:
-        # If the evaluation failed use the argument as a string
-        args[key] = value
-
-    i += 1
-
-
-# If the user has set a log level use it. Otherwise use the default.
-if 'log_level' in args:
-    Logging.enableStdErrLogging(args['log_level'])
-else:
-    Logging.enableStdErrLogging()
+# Create the object which handles the user parameters
+conf_manager = ConfigManager()
 
 logger = Logging.getLogger('Main')
-logger.debug('Configuration file: {}'.format(conf_path))
-logger.debug('Running NNPZ with the following options:')
-for key in args:
-    if key.startswith('_'):
-        continue
-    value = args[key]
-    logger.debug('    {} : {}'.format(key, value))
-logger.debug('')
-
-# Create the object which handles the user parameters
-conf_manager = ConfigManager(args)
-
 
 # Read the reference sample data
 ref_ids = conf_manager.getObject('reference_ids')

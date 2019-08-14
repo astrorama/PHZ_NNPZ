@@ -12,7 +12,7 @@ from astropy.table import Table, Column
 import astropy.io.fits as fits
 
 from nnpz.utils import Fits
-from ..util_fixtures import temp_dir_fixture
+from ..fixtures.util_fixtures import temp_dir_fixture
 
 ##############################################################################
 
