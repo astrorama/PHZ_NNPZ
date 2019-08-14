@@ -7,7 +7,9 @@ from __future__ import division, print_function
 
 import numpy as np
 import nnpz.io.catalog_properties as prop
-from nnpz.config import ConfigManager, WeightPhotometryProviderConfig, ReferenceConfig
+from nnpz.config import ConfigManager
+from nnpz.config.nnpz import WeightPhotometryProviderConfig
+from nnpz.config.reference import ReferenceConfig
 from nnpz.framework import ReferenceSampleWeightCalculator
 from nnpz.framework.ReferenceSampleWeightCorrector import ReferenceSampleWeightCorrector
 from nnpz.io import CatalogReader
