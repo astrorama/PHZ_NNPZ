@@ -17,3 +17,4 @@ project with changes in the original, one must perform the following steps:
   `NNPZ/conf` directory
 - Copy the `auxdir` directory of the original project in the `NNPZ` directory
 - Copy the `doc` directory of the original project in the `NNPZ` directory
+
