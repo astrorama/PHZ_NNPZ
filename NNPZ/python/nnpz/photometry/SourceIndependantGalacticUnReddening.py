@@ -5,11 +5,10 @@ Author: Florian Dubath
 
 from __future__ import division, print_function
 
-import os
 import numpy as np
-
+from ElementsKernel.Auxiliary import getAuxiliaryPath
 from nnpz.photometry import ListFileFilterProvider
-from nnpz.utils import Auxiliary
+
 
 class SourceIndependantGalacticUnReddening():
     """Source independant galactic absorption un-reddening.
@@ -19,7 +18,7 @@ class SourceIndependantGalacticUnReddening():
     J. Coupon private communication 9/07/2018 
     """
 
-    __fp = ListFileFilterProvider(Auxiliary.getAuxiliaryPath('GalacticExtinctionCurves.list'))
+    __fp = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
 
     def __init__(self, 
                  filter_map, 

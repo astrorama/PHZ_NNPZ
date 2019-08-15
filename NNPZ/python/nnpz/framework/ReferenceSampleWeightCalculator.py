@@ -3,9 +3,9 @@ Created on: 27/04/2018
 Author: Alejandro Alvarez Ayllon
 """
 import numpy as np
+from ElementsKernel import Logging
 
 from nnpz import NnpzFlag
-from nnpz.utils import Logging
 
 log = Logging.getLogger(__name__)
 

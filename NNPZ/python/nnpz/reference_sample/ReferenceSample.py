@@ -6,12 +6,11 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import os
-import numpy as np
 
-from nnpz.utils import Logging
+import numpy as np
+from ElementsKernel import Logging
 from nnpz.exceptions import *
 from nnpz.reference_sample import IndexProvider, PdzDataProvider, SedDataProvider
-
 
 logger = Logging.getLogger('ReferenceSample')
 
@@ -22,8 +21,8 @@ _pdz_data_filename_pattern = 'pdz_data_{}.bin'
 
 class ReferenceSample(object):
     """Object for handling the reference sample format of NNPZ"""
-    
-    
+
+
     @staticmethod
     def createNew(path):
         """Creates a new reference sample directory.
@@ -37,17 +36,17 @@ class ReferenceSample(object):
         The newly created reference sample directory will contain an empty index
         file, an empty SED data file and an empty PDZ data file.
         """
-        
+
         logger.debug('Creating reference sample directory ' + path + '...')
-        
+
         # Create the directory
         os.makedirs(path)
-        
+
         # Create an empty index file
         open(os.path.join(path, _index_filename), 'wb').close()
         open(os.path.join(path, _sed_data_filename_pattern.format(1)), 'wb').close()
         open(os.path.join(path, _pdz_data_filename_pattern.format(1)), 'wb').close()
-        
+
         return ReferenceSample(path)
 
 
@@ -59,8 +58,8 @@ class ReferenceSample(object):
             result.add(i)
             i += 1
         return result
-        
-        
+
+
     def __init__(self, path):
         """Creates a new ReferenceSample instance, managing the given path.
         
@@ -74,13 +73,13 @@ class ReferenceSample(object):
 
         # The file size which triggers the creation of a new data file
         self.__data_file_limit = 2**30 # 1GB
-        
+
         # Construct the paths to all files
         self.__root_path = path
         self.__index_path = os.path.join(self.__root_path, _index_filename)
         self.__sed_path_pattern = os.path.join(self.__root_path, _sed_data_filename_pattern)
         self.__pdz_path_pattern = os.path.join(self.__root_path, _pdz_data_filename_pattern)
-        
+
         # Check that the directory and the index file exist
         if not os.path.exists(self.__root_path):
             raise FileNotFoundException(self.__root_path + ' does not exist')
@@ -115,19 +114,19 @@ class ReferenceSample(object):
         self.__pdz_map = {}
         for pdz_file in existing_pdz_files:
             self.__pdz_map[pdz_file] = PdzDataProvider(self.__pdz_path_pattern.format(pdz_file))
-        
-        
+
+
     def size(self):
         """Returns the number of objects in the reference sample"""
         return self.__index.size()
-    
-    
+
+
     def getIds(self):
         """Returns the IDs of the reference sample objects as a numpy array of
         double precision (8 bytes) integers"""
         return self.__index.getIdList()
-    
-    
+
+
     def getSedData(self, obj_id):
         """Returns the SED data for the given reference sample object.
         
@@ -147,25 +146,25 @@ class ReferenceSample(object):
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the SED data file
         """
-        
+
         # Get from the index the SED data file and the position in it
         sed_file, sed_pos, _, _ = self.__index.getFilesAndPositions(obj_id)
 
         # If it is not set yet, return None
         if sed_pos == -1:
             return None
-        
+
         # Read the data from the SED data file
         file_id, sed_data = self.__sed_map[sed_file].readSed(sed_pos)
-        
+
         # Check that the index and the SED data file are consistent
         if file_id != obj_id:
             raise CorruptedFileException('Corrupted files: Index file contains ' +
                         ' the ID ' + str(obj_id) + ' and SED data file the ' + str(file_id))
-                        
+
         return sed_data
-    
-    
+
+
     def getPdzData(self, obj_id):
         """Returns the PDZ data for the given reference sample object.
         
@@ -185,32 +184,32 @@ class ReferenceSample(object):
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the PDZ data file
         """
-        
+
         # Get from the index the PDZ data file and the position in it
         _, _, pdz_file, pdz_pos = self.__index.getFilesAndPositions(obj_id)
 
         # If it is not set yet, return None
         if pdz_pos == -1:
             return None
-                        
+
         # Get the redshift bins of the PDZ. Note that this should never return
         # None if the pdz_pos is not -1.
         z_bins = self.__pdz_map[pdz_file].getRedshiftBins()
-        
+
         # Read the data from the SED data file
         file_id, pdz_data = self.__pdz_map[pdz_file].readPdz(pdz_pos)
-        
+
         # Check that the index and the PDZ data file are consistent
         if file_id != obj_id:
             raise CorruptedFileException('Corrupted files: Index file contains ' +
                         ' the ID ' + str(obj_id) + ' and PDZ data file the ' + str(file_id))
-                        
+
         result = np.ndarray((len(z_bins), 2), dtype=np.float32)
         result[:,0] = z_bins
         result[:,1] = pdz_data
         return result
-    
-    
+
+
     def createObject(self, new_id):
         """Creates a new object in the reference sample.
         
@@ -226,8 +225,8 @@ class ReferenceSample(object):
         set using the addSedData() and addPdzData() methods.
         """
         self.__index.appendId(new_id)
-    
-    
+
+
     def addSedData(self, obj_id, data):
         """Adds the SED data of a reference sample object.
         
@@ -271,8 +270,8 @@ class ReferenceSample(object):
         """Returns a list with the IDs of the objects for which the SED data have
         not been set"""
         return self.__index.missingSedList()
-    
-    
+
+
     def addPdzData(self, obj_id, data):
         """Adds the PDZ data of a reference sample object.
         
@@ -297,12 +296,12 @@ class ReferenceSample(object):
         _, _, _, pdz_pos = self.__index.getFilesAndPositions(obj_id)
         if pdz_pos != -1:
             raise AlreadySetException('PDZ for ID ' + str(obj_id) + ' is already set')
-        
+
         # Convert the data to a numpy array for easier handling
         data_arr = np.asarray(data, dtype=np.float32)
         if len(data_arr.shape) != 2 or data_arr.shape[1] != 2:
             raise InvalidDimensionsException()
-        
+
         # Handle the wavelength axis
         last_pdz_file = max(self.__pdz_map)
         existing_zs = self.__pdz_map[last_pdz_file].getRedshiftBins()
@@ -330,8 +329,8 @@ class ReferenceSample(object):
         """Returns a list with the IDs of the objects for which the PDZ data have
         not been set"""
         return self.__index.missingPdzList()
-    
-    
+
+
     def iterate(self):
         """Returns an iterable object over the reference sample objects.
         
@@ -350,19 +349,19 @@ class ReferenceSample(object):
             with the first element representing the wavelength and the second
             the probability value.
         """
-        
+
         class Element(object):
-            
+
             def __init__(self, obj_id, ref_sample):
                 self.id = obj_id
                 self.__ref_sample = ref_sample
-                
+
             @property
             def sed(self):
                 return self.__ref_sample.getSedData(self.id)
-                
+
             @property
             def pdz(self):
                 return self.__ref_sample.getPdzData(self.id)
-        
+
         return (Element(i, self) for i in self.getIds())

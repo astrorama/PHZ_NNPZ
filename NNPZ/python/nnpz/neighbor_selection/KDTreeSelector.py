@@ -9,9 +9,8 @@ import threading
 
 import numpy as np
 import scipy.spatial as spatial
-
+from ElementsKernel import Logging
 from nnpz.neighbor_selection import NeighborSelectorInterface
-from nnpz.utils import Logging
 
 log = Logging.getLogger(__name__)
 

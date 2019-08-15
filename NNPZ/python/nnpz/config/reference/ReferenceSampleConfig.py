@@ -5,9 +5,9 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from nnpz.utils import Logging
-from nnpz.config import ConfigManager
+from ElementsKernel import Logging
 from nnpz import ReferenceSample
+from nnpz.config import ConfigManager
 
 logger = Logging.getLogger('Configuration')
 

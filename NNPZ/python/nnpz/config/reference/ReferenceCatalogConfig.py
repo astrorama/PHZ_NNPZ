@@ -5,10 +5,10 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from nnpz.utils import Logging
+import nnpz.io.catalog_properties as prop
+from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.io import CatalogReader
-import nnpz.io.catalog_properties as prop
 
 logger = Logging.getLogger('Configuration')
 

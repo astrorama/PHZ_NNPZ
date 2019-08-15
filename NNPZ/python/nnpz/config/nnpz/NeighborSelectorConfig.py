@@ -5,11 +5,11 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from nnpz.utils import Logging
+import nnpz.neighbor_selection.brute_force_methods as bfm
+from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.neighbor_selection import (KDTreeSelector, BruteForceSelector,
                                      EuclideanRegionBruteForceSelector)
-import nnpz.neighbor_selection.brute_force_methods as bfm
 
 logger = Logging.getLogger('Configuration')
 

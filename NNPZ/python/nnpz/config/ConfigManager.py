@@ -7,8 +7,7 @@ from __future__ import division, print_function
 
 import abc
 
-import ElementsKernel.Configuration
-from nnpz.utils import Logging
+from ElementsKernel import Configuration, Logging
 
 logger = Logging.getLogger('Configuration')
 
@@ -40,7 +39,7 @@ class ConfigManager(object):
     def __init__(self, config_file, extra_arguments):
         # Populate values from the configuration file
         if not config_file:
-            config_file = ElementsKernel.Configuration.getConfigurationPath('nnpz.conf', True)
+            config_file = Configuration.getConfigurationPath('nnpz.conf', True)
         args = {}
         exec(open(config_file).read(), args)
 

@@ -5,11 +5,10 @@ Author: Florian Dubath
 
 from __future__ import division, print_function
 
-import os
 import numpy as np
-
+from ElementsKernel.Auxiliary import getAuxiliaryPath
 from nnpz.photometry import PhotometryPrePostProcessorInterface, ListFileFilterProvider
-from nnpz.utils import Auxiliary
+
 
 class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
     """Pre/Post processor for including the galactic absorption.
@@ -18,7 +17,7 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
     galactic reddening to the sed beforhand.
     """
 
-    __fp = ListFileFilterProvider(Auxiliary.getAuxiliaryPath('GalacticExtinctionCurves.list'))
+    __fp = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
 
     def __init__(self, pre_post_processor, p_14_ebv, galactic_reddening_curve=None):
         """Initialize a GalacticReddeningPrePostProcessor by decorating the

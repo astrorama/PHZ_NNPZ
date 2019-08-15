@@ -6,12 +6,11 @@ Author: Alejandro Alvarez Ayllon
 from __future__ import division, print_function
 
 import numpy as np
-
+from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.io import CatalogReader
 from nnpz.io.catalog_properties import Column
 from nnpz.io.output_column_providers.NeighborList import NEIGHBOR_IDS_COLNAME, NEIGHBOR_WEIGHTS_COLNAME
-from nnpz.utils import Logging
 
 logger = Logging.getLogger('Configuration')
 

@@ -5,7 +5,7 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from nnpz.utils import Logging
+from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 
 logger = Logging.getLogger('Configuration')
