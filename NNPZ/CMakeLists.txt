@@ -63,6 +63,8 @@ elements_install_aux_files()
 # elements_add_python_program(PythonProgramExample
 #                             ElementsExamples.PythonProgramExample)
 #===============================================================================
+elements_add_python_program(NnpzBuildPhotometry
+                            nnpz.program.BuildPhotometry)
 
 #===============================================================================
 # Add the elements_install_conf_files macro
