@@ -18,7 +18,7 @@ from nnpz.photometry import *
 from nnpz.utils import Fits
 from nnpz import ReferenceSample
 
-logger = Logging.getLogger(__name__)
+logger = Logging.getLogger('BuildPhotometry')
 
 
 def defineSpecificProgramOptions():

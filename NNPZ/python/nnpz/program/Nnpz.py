@@ -18,7 +18,7 @@ def defineSpecificProgramOptions():
 
 
 def mainMethod(args):
-    logger = Logging.getLogger(__name__)
+    logger = Logging.getLogger('NNPZ')
 
     # Create the object which handles the user parameters
     conf_manager = ConfigManager(args.config_file, args.extra_arguments)

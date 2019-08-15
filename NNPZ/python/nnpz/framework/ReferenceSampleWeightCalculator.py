@@ -7,7 +7,7 @@ from ElementsKernel import Logging
 
 from nnpz import NnpzFlag
 
-log = Logging.getLogger(__name__)
+log = Logging.getLogger('ReferenceSampleWeightCalculator')
 
 
 def _apply_weight_calculator(fcalculator, target_i_list, ref_obj, target_data, result_flags):

@@ -18,7 +18,7 @@ def defineSpecificProgramOptions():
 
 
 def mainMethod(args):
-    logger = Logging.getLogger(__name__)
+    logger = Logging.getLogger('ReconstructPDZ')
 
     conf_manager = ConfigManager(args.config_file, args.extra_arguments)
 

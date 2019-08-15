@@ -12,7 +12,7 @@ import scipy.spatial as spatial
 from ElementsKernel import Logging
 from nnpz.neighbor_selection import NeighborSelectorInterface
 
-log = Logging.getLogger(__name__)
+log = Logging.getLogger('KDTreeSelector')
 
 
 class KDTreeSelector(NeighborSelectorInterface):
