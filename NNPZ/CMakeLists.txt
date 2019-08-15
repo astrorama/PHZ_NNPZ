@@ -65,6 +65,8 @@ elements_install_aux_files()
 #===============================================================================
 elements_add_python_program(NnpzBuildPhotometry
                             nnpz.program.BuildPhotometry)
+elements_add_python_program(NnpzReconstructPDZ
+                            nnpz.program.ReconstructPDZ)
 
 #===============================================================================
 # Add the elements_install_conf_files macro

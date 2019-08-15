@@ -6,10 +6,8 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import abc
-import os
-import sys
-from argparse import ArgumentParser
 
+import ElementsKernel.Configuration
 from nnpz.utils import Logging
 
 logger = Logging.getLogger('Configuration')
@@ -39,42 +37,14 @@ class ConfigManager(object):
     def getHandler(handler_type):
         return _handler_map.get(handler_type)
 
-    def __init__(self, argv=sys.argv[1:], description=None):
-        parser = ArgumentParser(description=description)
-        parser.add_argument(
-            '--config-file', type=str, metavar='FILE', help='Configuration file'
-        )
-        arguments, extra_arguments = parser.parse_known_args(argv)
-        self.__config_file = arguments.config_file
-
-        # If not specified, try to find the configuration on a default location
-        if self.__config_file is None:
-            conf_path = os.path.abspath(os.path.dirname(__file__))  # Remove the filename
-            conf_path = os.path.dirname(conf_path)  # Remove the bin directory
-            self.__config_file = os.path.join(conf_path, 'config', 'nnpz.conf')
-
+    def __init__(self, config_file, extra_arguments):
         # Populate values from the configuration file
+        if not config_file:
+            config_file = ElementsKernel.Configuration.getConfigurationPath('nnpz.conf', True)
         args = {}
-        exec(open(self.__config_file).read(), args)
+        exec(open(config_file).read(), args)
 
-        try:
-            self.parseExtraArgs(args, extra_arguments)
-        except Exception as e:
-            parser.error(str(e))
-
-        if 'log_level' in args:
-            Logging.enableStdErrLogging(args['log_level'])
-        else:
-            Logging.enableStdErrLogging()
-
-        logger.debug('Configuration file: {}'.format(self.__config_file))
-        logger.debug('Running {} with the following options:'.format(parser.prog))
-        for key in sorted(args):
-            if key.startswith('_'):
-                continue
-            value = args[key]
-            logger.debug('    {} : {}'.format(key, value))
-        logger.debug('')
+        self.parseExtraArgs(args, extra_arguments)
 
         self.__objects = {}
         for handler in _handler_map.values():

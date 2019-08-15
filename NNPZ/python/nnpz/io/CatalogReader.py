@@ -58,7 +58,7 @@ class CatalogReader(object):
             raise FileNotFoundException('Missing file {}'.format(filename))
 
         try:
-            self.__catalog = Table.read(filename)
+            self.__catalog = Table.read(filename, hdu=1)
         except:
             try:
                 self.__catalog = Table.read(filename, format='ascii')
