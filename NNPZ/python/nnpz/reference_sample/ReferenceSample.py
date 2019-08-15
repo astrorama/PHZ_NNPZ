@@ -14,21 +14,27 @@ from nnpz.reference_sample import IndexProvider, PdzDataProvider, SedDataProvide
 
 logger = Logging.getLogger('ReferenceSample')
 
-_index_filename = 'index.bin'
-_sed_data_filename_pattern = 'sed_data_{}.bin'
-_pdz_data_filename_pattern = 'pdz_data_{}.bin'
-
 
 class ReferenceSample(object):
     """Object for handling the reference sample format of NNPZ"""
 
+    default_index_filename = 'index.bin'
+    sed_default_pattern = 'sed_data_{}.bin'
+    pdz_default_pattern = 'pdz_data_{}.bin'
 
     @staticmethod
-    def createNew(path):
+    def createNew(path, index_filename=None, sed_pattern=None, pdz_pattern=None):
         """Creates a new reference sample directory.
 
         Args:
-            path: The path to create the reference sample in
+            path:
+                The path to create the reference sample in
+            index_filename:
+                The name of the index file. Defaults to `index.bin`
+            sed_pattern:
+                The pattern of the SED files. Defaults to `sed_data_{}.bin`
+            pdz_pattern:
+                The pattern of the PDZ files. Defaults to `pdz_data_{}.bin`
             
         Returns:
             An instance of the ReferenceSample class representing the new sample
@@ -36,6 +42,12 @@ class ReferenceSample(object):
         The newly created reference sample directory will contain an empty index
         file, an empty SED data file and an empty PDZ data file.
         """
+        if index_filename is None:
+            index_filename = ReferenceSample.default_index_filename
+        if sed_pattern is None:
+            sed_pattern = ReferenceSample.sed_default_pattern
+        if pdz_pattern is None:
+            pdz_pattern = ReferenceSample.pdz_default_pattern
 
         logger.debug('Creating reference sample directory ' + path + '...')
 
@@ -43,11 +55,11 @@ class ReferenceSample(object):
         os.makedirs(path)
 
         # Create an empty index file
-        open(os.path.join(path, _index_filename), 'wb').close()
-        open(os.path.join(path, _sed_data_filename_pattern.format(1)), 'wb').close()
-        open(os.path.join(path, _pdz_data_filename_pattern.format(1)), 'wb').close()
+        open(os.path.join(path, index_filename), 'wb').close()
+        open(os.path.join(path, sed_pattern.format(1)), 'wb').close()
+        open(os.path.join(path, pdz_pattern.format(1)), 'wb').close()
 
-        return ReferenceSample(path)
+        return ReferenceSample(path, index_filename, sed_pattern, pdz_pattern)
 
 
     def __locate_existing_data_files(self, pattern):
@@ -60,25 +72,38 @@ class ReferenceSample(object):
         return result
 
 
-    def __init__(self, path):
+    def __init__(self, path, index_filename=None, sed_pattern=None, pdz_pattern=None):
         """Creates a new ReferenceSample instance, managing the given path.
         
         Args:
-            path: The path of the reference sample
+            path:
+                The path of the reference sample
+            index_filename:
+                The name of the index file. Defaults to `index.bin`
+            sed_pattern:
+                The pattern of the SED files. Defaults to `sed_data_{}.bin`
+            pdz_pattern:
+                The pattern of the PDZ files. Defaults to `pdz_data_{}.bin`
             
         Raises:
             FileNotFoundException: If any of the index or data files are not
                 present in the given directory directory
         """
+        if index_filename is None:
+            index_filename = ReferenceSample.default_index_filename
+        if sed_pattern is None:
+            sed_pattern = ReferenceSample.sed_default_pattern
+        if pdz_pattern is None:
+            pdz_pattern = ReferenceSample.pdz_default_pattern
 
         # The file size which triggers the creation of a new data file
-        self.__data_file_limit = 2**30 # 1GB
+        self.__data_file_limit = 2**30  # 1GB
 
         # Construct the paths to all files
         self.__root_path = path
-        self.__index_path = os.path.join(self.__root_path, _index_filename)
-        self.__sed_path_pattern = os.path.join(self.__root_path, _sed_data_filename_pattern)
-        self.__pdz_path_pattern = os.path.join(self.__root_path, _pdz_data_filename_pattern)
+        self.__index_path = os.path.join(self.__root_path, index_filename)
+        self.__sed_path_pattern = os.path.join(self.__root_path, sed_pattern)
+        self.__pdz_path_pattern = os.path.join(self.__root_path, pdz_pattern)
 
         # Check that the directory and the index file exist
         if not os.path.exists(self.__root_path):
@@ -92,7 +117,7 @@ class ReferenceSample(object):
         # Check that all the SED files referred in the index exist
         existing_sed_files = self.__locate_existing_data_files(self.__sed_path_pattern)
         index_sed_files = set(self.__index.getSedFileList())
-        index_sed_files.discard(0) # We remove the zero, which means no file
+        index_sed_files.discard(0)  # We remove the zero, which means no file
         if not existing_sed_files.issuperset(index_sed_files):
             missing_files = [self.__sed_path_pattern.format(i) for i in index_sed_files.difference(existing_sed_files)]
             raise FileNotFoundException('Missing SED data files: {}'.format(', '.join(missing_files)))
