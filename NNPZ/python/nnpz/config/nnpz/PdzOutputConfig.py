@@ -50,6 +50,11 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
             ref_z = ref_options['reference_redshift']
             pdz_prov = ocp.TrueRedshiftPdz(len(target_ids), ref_z, 0, 6, 601)
 
+        # Last, we handle a reference catalog where each reference object has an associated PDZ
+        if 'reference_pdz' in ref_options:
+            ref_pdz = ref_options['reference_pdz']
+            pdz_prov = ocp.CoaddedPdz(len(target_ids), ref_pdz, ref_ids)
+
         output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
         output.addColumnProvider(pdz_prov)
 
