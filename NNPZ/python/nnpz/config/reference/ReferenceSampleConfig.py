@@ -5,9 +5,9 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from nnpz.utils import Logging
-from nnpz.config import ConfigManager
+from ElementsKernel import Logging
 from nnpz import ReferenceSample
+from nnpz.config import ConfigManager
 
 logger = Logging.getLogger('Configuration')
 
@@ -21,7 +21,12 @@ class ReferenceSampleConfig(ConfigManager.ConfigHandler):
         if 'reference_sample_dir' in args:
             sample_dir = args['reference_sample_dir']
             logger.info('Reading reference sample from {}...'.format(sample_dir))
-            self.__sample = ReferenceSample(sample_dir)
+            self.__sample = ReferenceSample(
+                sample_dir,
+                index_filename=args.get('reference_sample_index', ReferenceSample.default_index_filename),
+                sed_pattern=args.get('reference_sample_sed_pattern', ReferenceSample.sed_default_pattern),
+                pdz_pattern=args.get('reference_sample_pdz_pattern', ReferenceSample.pdz_default_pattern)
+            )
             logger.info('Reading reference sample done')
 
     def parseArgs(self, args):
@@ -29,8 +34,8 @@ class ReferenceSampleConfig(ConfigManager.ConfigHandler):
             self.__createSample(args)
 
         if self.__sample is not None:
-            return {'reference_sample' : self.__sample,
-                    'reference_ids' : self.__sample.getIds()}
+            return {'reference_sample': self.__sample,
+                    'reference_ids': self.__sample.getIds()}
         else:
             return {}
 

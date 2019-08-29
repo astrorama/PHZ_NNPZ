@@ -6,8 +6,7 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-
-from nnpz.utils import Logging
+from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.config.reference import ReferenceSampleConfig
 from nnpz.photometry import PhotometryProvider

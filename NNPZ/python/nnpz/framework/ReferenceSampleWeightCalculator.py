@@ -3,11 +3,11 @@ Created on: 27/04/2018
 Author: Alejandro Alvarez Ayllon
 """
 import numpy as np
+from ElementsKernel import Logging
 
 from nnpz import NnpzFlag
-from nnpz.utils import Logging
 
-log = Logging.getLogger(__name__)
+log = Logging.getLogger('ReferenceSampleWeightCalculator')
 
 
 def _apply_weight_calculator(fcalculator, target_i_list, ref_obj, target_data, result_flags):

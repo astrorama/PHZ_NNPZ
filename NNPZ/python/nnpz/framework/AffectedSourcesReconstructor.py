@@ -15,7 +15,7 @@ class AffectedSourcesReconstructor(object):
     def __init__(self):
         pass
 
-    def reconstruct(self, ref_ids, src_indexes, neighbors, weights):
+    def reconstruct(self, ref_ids, src_indexes, neighbors, weights, progress_listener):
         """
 
         Args:
@@ -28,6 +28,8 @@ class AffectedSourcesReconstructor(object):
                 An iterable object where each position holds the neighbors of each source in the catalog.
             weights:
                 An iterable object where each position holds the weights for the neighbors of each source in the catalog.
+            progress_listener:
+                A callable that will be notified by the progress
         Returns:
             A map where the keys are the indices of the reference sample objects
             and values are lists of the input catalog indices that are affected
@@ -46,4 +48,5 @@ class AffectedSourcesReconstructor(object):
                     affected_weights[neighbor_idx] = []
                 affected[neighbor_idx].append(src_idx)
                 affected_weights[neighbor_idx].append(neighbor_weight)
+            progress_listener(i)
         return affected, affected_weights

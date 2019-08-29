@@ -54,7 +54,7 @@ elements_depends_on_subdirs(ElementsKernel)
 #  elements_install_scripts()
 #===============================================================================
 elements_install_python_modules()
-elements_install_scripts()
+# elements_install_scripts()
 elements_install_aux_files()
 
 #===============================================================================
@@ -63,6 +63,12 @@ elements_install_aux_files()
 # elements_add_python_program(PythonProgramExample
 #                             ElementsExamples.PythonProgramExample)
 #===============================================================================
+elements_add_python_program(NnpzBuildPhotometry
+                            nnpz.program.BuildPhotometry)
+elements_add_python_program(NnpzReconstructPDZ
+                            nnpz.program.ReconstructPDZ)
+elements_add_python_program(nnpz
+                            nnpz.program.Nnpz)
 
 #===============================================================================
 # Add the elements_install_conf_files macro

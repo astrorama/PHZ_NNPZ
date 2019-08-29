@@ -8,11 +8,10 @@ from __future__ import division, print_function
 import itertools
 
 import numpy as np
-
-from nnpz.utils import Auxiliary
-from nnpz.weights import WeightPhotometryProvider
+from ElementsKernel.Auxiliary import getAuxiliaryPath
 from nnpz.photometry import (PhotometryTypeMap, GalacticReddeningPrePostProcessor,
                              PhotometryCalculator, ListFileFilterProvider)
+from nnpz.weights import WeightPhotometryProvider
 
 
 class RecomputedPhotometry(WeightPhotometryProvider):
@@ -26,7 +25,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         GalacticReddeningPrePostProcessor loads these files *each time* it is instantiated
         unless we give them to it. So we pre-load them here if needed.
         """
-        fp = ListFileFilterProvider(Auxiliary.getAuxiliaryPath('GalacticExtinctionCurves.list'))
+        fp = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
         self.__reddening_curve = fp.getFilterTransmission('extinction_curve')
 
     def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_lists=None):
