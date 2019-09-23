@@ -48,7 +48,7 @@ class Photometry(CatalogReader.CatalogPropertyInterface):
             first dimension has the same size as the number of objects the table
             contains photometries for, the second axis has same size as the
             given bands and the third axis has always size two, where the first
-            element represents the photometry value and te second the
+            element represents the photometry value and the second the
             uncertainty.
 
         Raises:
