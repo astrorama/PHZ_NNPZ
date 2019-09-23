@@ -43,11 +43,12 @@ class CatalogReader(object):
             return
 
 
-    def __init__(self, filename):
+    def __init__(self, filename, hdu=1):
         """Creates a new instance of CatalogReader.
 
         Args:
             filename: The file containing the catalog
+            hdu: For FITS file, the HDU to read
 
         Raises:
             FileNotFoundException: If the given file does not exist
@@ -58,7 +59,7 @@ class CatalogReader(object):
             raise FileNotFoundException('Missing file {}'.format(filename))
 
         try:
-            self.__catalog = Table.read(filename, hdu=1)
+            self.__catalog = Table.read(filename, hdu=hdu)
         except:
             try:
                 self.__catalog = Table.read(filename, format='ascii')
