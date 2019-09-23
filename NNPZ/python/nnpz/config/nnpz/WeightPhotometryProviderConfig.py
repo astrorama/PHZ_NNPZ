@@ -30,7 +30,9 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
         reference_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
         target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
 
-        if not 'reference_sample' in reference_config or reference_config['reference_sample'] is None:
+        if 'reference_sample' not in reference_config \
+                or reference_config['reference_sample'] is None \
+                or not hasattr(reference_config['reference_sample'], 'getSedData'):
             logger.error('CONFIGURATION ERROR:')
             logger.error('target_catalog_gal_ebv and target_catalog_filters_mean are only supported when reference_sample_dir is used')
             exit(1)
