@@ -7,9 +7,8 @@ from __future__ import division, print_function
 
 import numpy as np
 import pytest
-from nnpz.flags import NnpzFlag
-from nnpz.io.catalog_properties import Photometry
 from astropy.table import Table
+from nnpz.io.catalog_properties import Photometry
 
 
 @pytest.fixture()

@@ -14,6 +14,12 @@ from nnpz.io import CatalogReader
 class Photometry(CatalogReader.CatalogPropertyInterface):
     """Catalog property for retrieving the photometry at NNPZ format"""
 
+    def _replace_nan(self, data):
+        """
+        Replace all the NaN flags
+        """
+        for flag in self.__nan_flags:
+            data[data == flag] = np.nan
 
     def __init__(self, column_list, nan_flags=[]):
         """Creates a new instance for the given column names.
@@ -35,7 +41,6 @@ class Photometry(CatalogReader.CatalogPropertyInterface):
         else:
             self.__column_list = list(map(lambda t: t + (None,), column_list))
         self.__nan_flags = nan_flags
-
 
     def __call__(self, catalog):
         """Returns the photometry of the catalog.
@@ -69,13 +74,11 @@ class Photometry(CatalogReader.CatalogPropertyInterface):
         # Populate the data
         for i, (value, error, correction) in enumerate(self.__column_list):
             data[:, i, 0] = catalog[value]
+            self._replace_nan(data[:, i, 0])
             if error is not None:
                 data[:, i, 1] = catalog[error]
+                self._replace_nan(data[:, i, 1])
             if correction is not None:
                 data[:, i, 0] *= catalog[correction]
-
-        # Replace all the NaN flags
-        for flag in self.__nan_flags:
-            data[data==flag] = np.nan
 
         return data
