@@ -5,10 +5,6 @@ Author: Alejandro Alvarez Ayllon
 
 from __future__ import division, print_function
 
-import pytest
-import numpy as np
-
-from nnpz.reference_sample.ReferenceSample import ReferenceSample
 from nnpz.weights import RecomputedPhotometry
 from .fixtures import *
 
@@ -24,12 +20,32 @@ def test_recomputedPhotometry(reference_sample_fixture, filters_fixture, target_
 
     # When
     recomputed = RecomputedPhotometry(
-        reference_sample_fixture, filter_map.keys(), filter_map, phot_type, ebv, filter_means
+        reference_sample_fixture, sorted(filter_map.keys()), filter_map, phot_type, ebv, filter_means
     )
 
     # Then
-    for ref_i, ref in enumerate(reference_sample_fixture.iterate()):
-        for cat_i in range(5):
-            phot = recomputed(ref_i, cat_i, None)
-            print(phot)
-            assert phot.shape == (len(filters_fixture), 2)
+
+    # The first one is not shifted at all, so the peak of the SED falls only on Y
+    phot = recomputed(0, 0, None)
+    assert phot.shape == (len(filters_fixture), 2)
+    assert phot[0, 0] > 1.
+    assert phot[1, 0] <= np.finfo(np.float).eps
+    assert phot[2, 0] <= np.finfo(np.float).eps
+
+    # The second one shifts VIS +1500, so it touches the peak of the SED
+    phot = recomputed(0, 1, None)
+    assert phot[0, 0] > 1.
+    assert phot[1, 0] <= np.finfo(np.float).eps
+    assert phot[2, 0] > 1.
+
+    # The third one shift VIS +1500 (touches first peak) and g +1000 (touches second peak)
+    phot = recomputed(0, 2, None)
+    assert phot[0, 0] > 1.
+    assert phot[1, 0] > 1.
+    assert phot[2, 0] > 1.
+
+    # The fourth one shift VIS +1500, g +1000 and Y -999, so Y stops touching the peak
+    phot = recomputed(0, 3, None)
+    assert phot[0, 0] <= np.finfo(np.float).eps
+    assert phot[1, 0] > 1.
+    assert phot[2, 0] > 1.
