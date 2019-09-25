@@ -95,9 +95,9 @@ def target_fixture(filters_fixture):
     for filter_name, transmissions in filters_fixture.items():
         trans_avg[filter_name] = np.average(transmissions[:, 0], weights=transmissions[:, 1])
 
-    filter_means['vis'] = trans_avg['vis'] + np.array([0., 1500, 1500., 1500.])
-    filter_means['g'] = trans_avg['g'] + np.array([0., 0., 1000., 1000.])
-    filter_means['Y'] = trans_avg['Y'] + np.array([0., 0., 0., -999.])
+    filter_means['vis'] = trans_avg['vis'] + np.array([0., 1500, 1500., 1500., np.nan])
+    filter_means['g'] = trans_avg['g'] + np.array([0., 0., 1000., 1000., np.nan])
+    filter_means['Y'] = trans_avg['Y'] + np.array([0., 0., 0., -999., np.nan])
 
     n_targets = len(filter_means['vis'])
     return {

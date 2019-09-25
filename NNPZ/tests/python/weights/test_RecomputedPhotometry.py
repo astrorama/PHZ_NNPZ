@@ -49,3 +49,37 @@ def test_recomputedPhotometry(reference_sample_fixture, filters_fixture, target_
     assert phot[0, 0] <= np.finfo(np.float).eps
     assert phot[1, 0] > 1.
     assert phot[2, 0] > 1.
+
+    # The last one has nan, it should behave as the first
+    phot = recomputed(0, 4, None)
+    assert phot.shape == (len(filters_fixture), 2)
+    assert phot[0, 0] > 1.
+    assert phot[1, 0] <= np.finfo(np.float).eps
+    assert phot[2, 0] <= np.finfo(np.float).eps
+
+###############################################################################
+
+def test_recomputedPhotometryNanMeans(reference_sample_fixture, filters_fixture, target_fixture):
+
+    # Given
+    filter_map = dict(filters_fixture)
+    phot_type = 'F_nu_uJy'
+    ebv = target_fixture['ebv']
+    filter_means = target_fixture['filter_means']
+    for k in filter_means:
+        filter_means[k][:] = np.nan
+
+    # When
+    recomputed = RecomputedPhotometry(
+        reference_sample_fixture, sorted(filter_map.keys()), filter_map, phot_type, ebv, filter_means
+    )
+
+    # Then
+
+    # It should, effectively, behave like the shift is 0
+    for i in range(len(filter_means['vis'])):
+        phot = recomputed(0, i, None)
+        assert phot.shape == (len(filters_fixture), 2)
+        assert phot[0, 0] > 1.
+        assert phot[1, 0] <= np.finfo(np.float).eps
+        assert phot[2, 0] <= np.finfo(np.float).eps
