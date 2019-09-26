@@ -56,7 +56,10 @@ class RecomputedPhotometry(WeightPhotometryProvider):
             for filter_name, transmissions in self.__filter_trans_map.items():
                 transmission_mean = np.average(transmissions[:, 0], weights=transmissions[:, 1])
                 if filter_name in filter_trans_mean_lists:
-                    self.__filter_shifts[filter_name] = filter_trans_mean_lists[filter_name] - transmission_mean
+                    source_transmission_mean = filter_trans_mean_lists[filter_name]
+                    not_nan_mean = np.isnan(source_transmission_mean) == False
+                    self.__filter_shifts[filter_name] = np.zeros(source_transmission_mean.shape)
+                    self.__filter_shifts[filter_name][not_nan_mean] = source_transmission_mean[not_nan_mean] - transmission_mean
 
     def __call__(self, ref_i, cat_i, flags):
         """
