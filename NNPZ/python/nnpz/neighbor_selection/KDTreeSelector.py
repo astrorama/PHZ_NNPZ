@@ -36,6 +36,7 @@ class KDTreeSelector(NeighborSelectorInterface):
             balanced_tree: If true, the median will be used to split the data, generating
                 a more compact tree
         """
+        super(KDTreeSelector, self).__init__()
         self.__neighbors_no = neighbors_no
         self.__balanced_tree = balanced_tree
 

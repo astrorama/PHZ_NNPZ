@@ -74,7 +74,7 @@ class BruteForceSelector(NeighborSelectorInterface):
         Args:
             distance_method: The method used for computing the distances between
                 a requested coordinate and all the reference data. It must
-                implement the DinstanceMethodInterface.
+                implement the DistanceMethodInterface.
             selection_method: The method used to select the neighbors based on
                 the computed distances. It must implement the SelectionMethodInterface.
 
@@ -82,7 +82,7 @@ class BruteForceSelector(NeighborSelectorInterface):
             WrongTypeException: If any of the given methods does not implement
                 the interfaces
         """
-
+        super(BruteForceSelector, self).__init__()
         if not isinstance(distance_method, BruteForceSelector.DistanceMethodInterface):
             raise WrongTypeException('The distance_method must implement the DistanceMethodInterface')
         if not isinstance(selection_method, BruteForceSelector.SelectionMethodInterface):

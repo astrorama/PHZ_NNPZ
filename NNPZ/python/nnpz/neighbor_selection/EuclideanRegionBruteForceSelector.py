@@ -7,8 +7,8 @@ from __future__ import division, print_function
 
 import numpy as np
 from nnpz.exceptions import InvalidDimensionsException
-
 from nnpz.neighbor_selection import NeighborSelectorInterface, KDTreeSelector, BruteForceSelector
+from nnpz.neighbor_selection.brute_force_methods import Chi2Distance, SmallestSelector
 
 class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
     """Implementation of NeighborSelectorInterface which combines KDTree and brute force.
@@ -32,7 +32,7 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
     """
 
 
-    def __init__(self, neighbors_no, brute_force_batch_size=10000, balanced_tree=True):
+    def __init__(self, neighbors_no, brute_force_batch_size=10000, balanced_tree=True, distance_method=Chi2Distance()):
         """Create a new instance of EuclideanRegionBruteForceSelector.
 
         Args:
@@ -42,9 +42,12 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
             balanced: If true, the median will be used to split the data, generating
                 a more compact tree
         """
+        super(EuclideanRegionBruteForceSelector, self).__init__()
         self.__neighbors_no = neighbors_no
         self.__brute_force_batch_size = brute_force_batch_size
         self.__balanced_tree = balanced_tree
+
+        self.__distance = distance_method
 
 
     def _initializeImpl(self, ref_data):
@@ -83,8 +86,7 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         batch_data = self.__ref_data[batch,:,:]
 
         # Now use a BruteForceSelector to find the chi2 neighbors in the batch
-        import nnpz.neighbor_selection.brute_force_methods as bfm
-        brute_force = BruteForceSelector(bfm.Chi2Distance(), bfm.SmallestSelector(self.__neighbors_no)).initialize(batch_data)
+        brute_force = BruteForceSelector(self.__distance, SmallestSelector(self.__neighbors_no)).initialize(batch_data)
         bf_ids, chi2 = brute_force.findNeighbors(coordinate, flags)
 
         # Retrieve the IDs of the objects in the full reference sample
