@@ -8,8 +8,10 @@ from __future__ import division, print_function
 import nnpz.neighbor_selection.brute_force_methods as bfm
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
+from nnpz.config.nnpz import TargetCatalogConfig
 from nnpz.neighbor_selection import (KDTreeSelector, BruteForceSelector,
                                      EuclideanRegionBruteForceSelector)
+from nnpz.neighbor_selection.AdaptiveSelector import AdaptiveSelector
 
 logger = Logging.getLogger('Configuration')
 
@@ -25,6 +27,7 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         neighbor_method = args['neighbor_method']
         self._checkParameterExists('neighbors_no', args)
         neighbors_no = args['neighbors_no']
+        use_adaptive_bands = args.get('neighbor_adaptive_bands', False)
 
         if neighbor_method == 'KDTree':
             self.__selector = KDTreeSelector(
@@ -42,6 +45,12 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         else:
             logger.error('Invalid neighbor_method option: {}'.format(neighbor_method))
             exit(-1)
+
+        if use_adaptive_bands:
+            target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
+            self.__selector = AdaptiveSelector(
+                self.__selector, target_config['target_phot_data'], target_config['target_filters']
+            )
 
 
     def parseArgs(self, args):

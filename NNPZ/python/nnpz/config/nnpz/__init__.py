@@ -1,6 +1,6 @@
+from .TargetCatalogConfig import TargetCatalogConfig
 from .NeighborSelectorConfig import NeighborSelectorConfig
 from .OutputHandlerConfig import OutputHandlerConfig
-from .TargetCatalogConfig import TargetCatalogConfig
 from .CopyInputColumnsConfig import CopyInputColumnsConfig
 from .NeighborListOutputConfig import NeighborListOutputConfig
 from .MeanPhotOutputConfig import MeanPhotOutputConfig
