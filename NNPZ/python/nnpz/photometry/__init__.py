@@ -9,6 +9,7 @@ from .FnuuJyPrePostProcessor import FnuuJyPrePostProcessor
 from .MagAbPrePostProcessor import MagAbPrePostProcessor
 from .FlambdaPrePostProcessor import FlambdaPrePostProcessor
 from .ReferenceSamplePhotometryBuilder import ReferenceSamplePhotometryBuilder
+from .ReferenceSampleParallelPhotometryBuilder import ReferenceSamplePhotometryParallelBuilder
 from .PhotometryProvider import PhotometryProvider
 from .GalacticReddeningPrePostProcessor import GalacticReddeningPrePostProcessor
 from .PhotometryTypeMap import PhotometryTypeMap

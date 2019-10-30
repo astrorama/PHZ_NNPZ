@@ -118,3 +118,9 @@ class PhotometryCalculator(object):
 
         return photometry_map
 
+
+    def __call__(self, sed):
+        """
+        Convenience method to make this class callable
+        """
+        return self.compute(sed)

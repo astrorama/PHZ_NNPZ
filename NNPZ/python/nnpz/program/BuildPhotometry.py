@@ -33,6 +33,8 @@ def defineSpecificProgramOptions():
                         help='The output FITS file to create the photometry in')
     parser.add_argument('--gal-ebv', dest='gal_ebv', type=float,
                         help='The E(B-V) value of the galactic absorption to apply to the SEDs')
+    parser.add_argument('--parallel', dest='parallel', type=int, default=None,
+                        help='Number of parallel processes to spawn')
     return parser
 
 
@@ -75,7 +77,12 @@ def mainMethod(args):
     pre_post_processor = PhotometryTypeMap[args.type][0]()
     if not args.gal_ebv is None:
         pre_post_processor = GalacticReddeningPrePostProcessor(pre_post_processor, args.gal_ebv)
-    phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor)
+
+    if args.parallel:
+        phot_builder = ReferenceSamplePhotometryParallelBuilder(filter_provider, pre_post_processor, args.parallel)
+    else:
+        phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor)
+
     phot_builder.setFilters(filter_name_list)
 
     # Compute the photometry values
