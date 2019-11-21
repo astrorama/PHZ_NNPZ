@@ -12,4 +12,4 @@ find_package(ElementsProject)
 #                         elements_project(MyProject 1.0 USE Element 3.9)
 #===============================================================================
 
-elements_project(PHZ_NNPZ 0.4 USE Elements 5.2.2)
+elements_project(PHZ_NNPZ 0.6 USE Elements 5.8)
