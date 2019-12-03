@@ -75,7 +75,12 @@ class DirectoryFilterProvider(FilterProviderInterface):
             raise InvalidPathException(path + ' is not a directory')
 
         # Get the list with the (filtername, filename) pairs
-        dir_contents = os.listdir(path)
+        dir_contents = []
+        for root, _, files in os.walk(path):
+            for fname in files:
+                filter_path = os.path.join(root, fname) if root else fname
+                dir_contents.append(os.path.relpath(filter_path, path))
+
         filter_file_pairs = (self.__parseFilterListFile(path, dir_contents)
                  if ('filter_list.txt' in dir_contents)
                  else [(os.path.splitext(f)[0], f) for f in dir_contents])
