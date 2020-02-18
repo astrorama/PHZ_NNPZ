@@ -38,6 +38,10 @@ def test_compute():
         'second' : np.asarray([(2.11,0), (3.21,1), (4.19,0)], dtype=np.float32)
     }
 
+    for f, t in filter_map.items():
+        filter_map[f] = np.copy(sed)
+        filter_map[f][:, 1] = np.interp(sed[:, 0], t[:, 0], t[:, 1])
+
     pre_post_processor = Mock(spec_set=PhotometryPrePostProcessorInterface)
     pre_post_processor.preProcess.side_effect = lambda x: x
     pre_post_processor.postProcess.side_effect = lambda x,y,z: x
@@ -47,11 +51,6 @@ def test_compute():
     photometry = calculator.compute(sed)
 
     # Then
-
-    # Check the preProcess() has been called with the SED truncated to the range
-    # of the filters
-    pre_post_processor.preProcess.assert_called_once()
-    assert np.array_equal(pre_post_processor.preProcess.call_args[0][0], sed[3:44])
 
     # Compute the expected photometry values
     expected = {}
