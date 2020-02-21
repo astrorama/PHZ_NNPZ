@@ -38,10 +38,6 @@ def test_compute():
         'second' : np.asarray([(2.11,0), (3.21,1), (4.19,0)], dtype=np.float32)
     }
 
-    for f, t in filter_map.items():
-        filter_map[f] = np.copy(sed)
-        filter_map[f][:, 1] = np.interp(sed[:, 0], t[:, 0], t[:, 1])
-
     pre_post_processor = Mock(spec_set=PhotometryPrePostProcessorInterface)
     pre_post_processor.preProcess.side_effect = lambda x: x
     pre_post_processor.postProcess.side_effect = lambda x,y,z: x
@@ -52,7 +48,13 @@ def test_compute():
 
     # Then
 
-    # Compute the expected photometry values
+    # Check the preProcess() has been called with the SED truncated to the range
+    # of the filters
+    pre_post_processor.preProcess.assert_called_once()
+    assert np.array_equal(pre_post_processor.preProcess.call_args[0][0], sed[3:44])
+
+    # Compute the expected photometry values. Note that the grid here is not the same
+    # used in PhotometryCalculator, so we need to give a considerable tolerance
     expected = {}
     filter_1 = filter_map['first']
     filtered_sed_1 = sed[:,1] * np.interp(sed[:,0], filter_1[:,0], filter_1[:,1], left=0, right=0)
@@ -66,11 +68,11 @@ def test_compute():
     for args in pre_post_processor.postProcess.call_args_list:
         intensity, filter_name, filter_trans = args[0]
         assert filter_name in expected
-        assert intensity == pytest.approx(expected[filter_name])
+        assert intensity == pytest.approx(expected[filter_name], rel=1e-1)
         assert np.array_equal(filter_trans, filter_map[filter_name])
 
     # Check that the result has the correct values
-    assert photometry['first'] == pytest.approx(expected['first'])
-    assert photometry['second'] == pytest.approx(expected['second'])
+    assert photometry['first'] == pytest.approx(expected['first'], rel=1e-1)
+    assert photometry['second'] == pytest.approx(expected['second'], rel=1e-1)
 
 ###############################################################################
