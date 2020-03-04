@@ -9,7 +9,7 @@ from astropy.io import fits
 
 
 def npDtype2FitsTForm(data):
-    if data.dtype.kind == 'S':
+    if data.dtype.kind in ('S', 'U'):
         format = "{}A".format(data.dtype.itemsize)
     else:
         dt = data.dtype.kind + str(data.dtype.alignment)
