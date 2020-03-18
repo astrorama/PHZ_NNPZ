@@ -37,8 +37,8 @@ class ReferenceSamplePhotometryBuilder(object):
         if not isinstance(pre_post_processor, PhotometryPrePostProcessorInterface):
             raise WrongTypeException('pre_post_processor must implement PhotometryPrePostProcessorInterface')
 
-        self.__filter_provider = filter_provider
-        self.__pre_post_processor = pre_post_processor
+        self._filter_provider = filter_provider
+        self._pre_post_processor = pre_post_processor
 
         # By default we produce photometry for every available filter
         self.setFilters(filter_provider.getFilterNames())
@@ -58,9 +58,9 @@ class ReferenceSamplePhotometryBuilder(object):
         to build the photometry for all filters available.
         """
 
-        self.__filter_map = {}
+        self._filter_map = {}
         for f in filter_list:
-            self.__filter_map[f] = self.__filter_provider.getFilterTransmission(f)
+            self._filter_map[f] = self._filter_provider.getFilterTransmission(f)
 
 
     def buildPhotometry(self, sample_iter, progress_listener=None):
@@ -87,11 +87,11 @@ class ReferenceSamplePhotometryBuilder(object):
         """
 
         # Create the calculator which will be used for the photometry computation
-        calculator = PhotometryCalculator(self.__filter_map, self.__pre_post_processor)
+        calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor)
 
         # Create the result map with empty list assigned to each filter
         photo_list_map = {}
-        for f in self.__filter_map:
+        for f in self._filter_map:
             photo_list_map[f] = []
 
         # Iterate through all the elements the iterator points to
