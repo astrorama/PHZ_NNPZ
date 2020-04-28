@@ -28,7 +28,7 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
         self.__mc_no = mc_samples
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
+    def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
 

@@ -19,7 +19,7 @@ class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
             self.__columns = self.__catalog.colnames
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
+    def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
 

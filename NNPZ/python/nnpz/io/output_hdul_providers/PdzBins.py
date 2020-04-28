@@ -16,7 +16,7 @@ class PdzBins(OutputHandler.OutputExtensionTableProviderInterface):
     def __init__(self, pdz_provider):
         self.__pdz_provider = pdz_provider
 
-    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
+    def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
     def getExtensionTables(self):

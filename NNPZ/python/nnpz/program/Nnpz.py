@@ -56,7 +56,7 @@ def mainMethod(args):
     progress_listener = ProgressListener(len(affected) - 1, 'Computing neighbor weights...', logger=logger)
 
     weight_calculator = conf_manager.getObject('weight_calculator')
-    weights = weight_calculator.computeWeights(affected, target_data, result_flags, progress_listener)
+    weight_calculator.computeWeights(affected, target_data, result_flags, progress_listener)
 
     # Get the output handler
     output = conf_manager.getObject('output_handler')
@@ -68,8 +68,8 @@ def mainMethod(args):
     progress_listener = ProgressListener(len(affected) - 1, 'Adding contributions to output...', logger=logger)
     for progress, ref_i in enumerate(sorted(affected)):
         progress_listener(progress)
-        for target_i, w in zip(affected[ref_i], weights[ref_i]):
-            output.addContribution(ref_i, target_i, w, result_flags[target_i])
+        for target in affected[ref_i]:
+            output.addContribution(ref_i, target, result_flags[target.index])
 
     # Create the output catalog
     output_file = conf_manager.getObject('output_file')

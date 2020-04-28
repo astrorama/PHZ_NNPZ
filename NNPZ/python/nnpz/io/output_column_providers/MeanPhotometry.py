@@ -28,12 +28,12 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
         self.__total_errors = np.zeros((catalog_size, len(filter_names)), dtype=np.float64)
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
+    def addContribution(self, reference_sample_i, neighbor, flags):
 
         phot = self.__data[reference_sample_i]
-        self.__total_weights[catalog_i] += weight
-        self.__total_values[catalog_i] += weight * phot[:,0]
-        self.__total_errors[catalog_i] += weight * phot[:,1] * weight * phot[:,1]
+        self.__total_weights[neighbor.index] += neighbor.weight
+        self.__total_values[neighbor.index] += neighbor.weight * phot[:,0]
+        self.__total_errors[neighbor.index] += neighbor.weight * phot[:,1] * neighbor.weight * phot[:,1]
 
 
     def getColumns(self):

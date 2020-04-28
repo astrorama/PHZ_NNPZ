@@ -22,7 +22,7 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
             if not hasattr(self, 'getEstimate' + e.capitalize()):
                 raise Exception('Unknown redshift PDF estimate {}'.format(e))
 
-    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
+    def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
     def getEstimateMedian(self, *_):
