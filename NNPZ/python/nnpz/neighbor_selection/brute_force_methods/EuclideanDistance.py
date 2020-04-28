@@ -29,4 +29,4 @@ class EuclideanDistance(BruteForceSelector.DistanceMethodInterface):
         dist = np.sum(dist, axis=1)
         dist = np.sqrt(dist)
 
-        return dist
+        return dist, np.ones(dist.shape)

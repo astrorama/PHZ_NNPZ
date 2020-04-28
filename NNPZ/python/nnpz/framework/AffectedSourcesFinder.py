@@ -50,7 +50,7 @@ class AffectedSourcesFinder(object):
         for i, (in_data, flags) in enumerate(zip(input_coord_iter, flags_iter)):
             if progress_listener:
                 progress_listener(i+1)
-            neighbor_indices, _ = self.__selector.findNeighbors(in_data, flags)
+            neighbor_indices, _, _ = self.__selector.findNeighbors(in_data, flags)
             for ref_i in neighbor_indices:
                 if not ref_i in result:
                     result[ref_i] = []

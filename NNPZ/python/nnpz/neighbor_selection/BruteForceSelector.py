@@ -43,9 +43,13 @@ class BruteForceSelector(NeighborSelectorInterface):
                     It has the same size as the coord_values.
 
             Returns:
-                A 1D numpy array containing the distances of the given coordinate
-                to all the reference data. It must have size same as the first
-                axis of the ref_data_values and the order must match.
+                A tuple:
+
+                * The first element is a 1D numpy array containing the distances of the given coordinate
+                  to all the reference data.
+                * The second element is a 1D numpy array containing the scaling applied to the neighbor fluxes
+
+                Both must have size same as the first axis of the ref_data_values and the order must match.
             """
             return
 
@@ -118,8 +122,10 @@ class BruteForceSelector(NeighborSelectorInterface):
         # We are going to ignore all NaN values from the computation
         not_nan = np.logical_not(np.isnan(obj_values))
 
-        distances = self.__distance(self.__ref_data_values[:,not_nan], self.__ref_data_errors[:,not_nan], obj_values[not_nan], obj_errors[not_nan])
+        distances, scales = self.__distance(self.__ref_data_values[:, not_nan], self.__ref_data_errors[:, not_nan],
+                                            obj_values[not_nan], obj_errors[not_nan])
         neighbor_ids = self.__selection(distances)
         neighbor_distances = distances[neighbor_ids]
+        neighbor_scales = scales[neighbor_ids]
 
-        return neighbor_ids, neighbor_distances
+        return neighbor_ids, neighbor_distances, neighbor_scales
