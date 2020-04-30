@@ -9,23 +9,28 @@ from scipy.optimize import minimize_scalar
 class ScaledChi2Distance(BruteForceSelector.DistanceMethodInterface):
     """Chi2 distance implementation"""
 
-    def __init__(self, prior, a_min=1e-5, a_max=1e2, n_samples=1000):
+    def __init__(self, prior, a_min=1e-5, a_max=1e2, n_samples=1000, max_iter=20, xtol=1e-4):
         """
         Constructor
         Args:
             prior: A function that models the prior for the scale factor a
             a_min: Minimum acceptable value for the scale
             a_max: Maximum acceptable value for the scale
+            n_samples: Number of samples to use for finding the edges of the prior
+            max_iter: Maximum number of iterations for the minimizer
+            xtol: Relative tolerance for the minimizer
         """
         assert hasattr(prior, '__call__')
         self.prior = prior
         # Find the min and max from the prior itself
-        self.__a_s = np.sort(np.append(np.linspace(1, np.round(a_max), int(a_max)),
+        self.__a_s = np.sort(np.append(np.arange(1, np.floor(a_max) + 1),
                                        np.exp(np.linspace(np.log(a_min), np.log(a_max), n_samples))))
         pv = prior(self.__a_s)
         gt0 = pv > 0.
         self.a_min = self.__a_s[np.argmax(gt0)]
         self.a_max = np.flip(self.__a_s)[np.argmax(np.flip(gt0))]
+        self.__max_iter = max_iter
+        self.__xtol = xtol
 
     def __call__(self, ref_values, ref_errors, coord_values, coord_errors):
         """
@@ -68,7 +73,7 @@ class ScaledChi2Distance(BruteForceSelector.DistanceMethodInterface):
             a0 = self.__a_s[max(0, ai - 1)]
             a1 = self.__a_s[min(len(self.__a_s) - 1, ai + 1)]
             a[i] = minimize_scalar(lambda a: chi2(a) / 2 - np.log(self.prior(a)), bracket=(a0, a1), method='brent',
-                                   options=dict(xtol=1e-4, maxiter=20)).x
+                                   options=dict(xtol=self.__xtol, maxiter=self.__max_iter)).x
             # The optimizer can move us outside the limits!
             a[i] = max(min(self.a_max, a[i]), self.a_min)
 
