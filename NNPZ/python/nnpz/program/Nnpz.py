@@ -49,11 +49,11 @@ def mainMethod(args):
 
     # Construct the neighbor finder and build the affected sources map
     finder = AffectedSourcesFinder(selector)
-    progress_listener = ProgressListener(len(target_data) - 1, 'Finding neighbors... ', logger=logger)
+    progress_listener = ProgressListener(len(target_data), 'Finding neighbors... ', logger=logger)
     affected = finder.findAffected(de_reddened_target_data, result_flags, progress_listener)
 
     # Compute the weights
-    progress_listener = ProgressListener(len(affected) - 1, 'Computing neighbor weights...', logger=logger)
+    progress_listener = ProgressListener(len(affected), 'Computing neighbor weights...', logger=logger)
 
     weight_calculator = conf_manager.getObject('weight_calculator')
     weight_calculator.computeWeights(affected, target_data, result_flags, progress_listener)

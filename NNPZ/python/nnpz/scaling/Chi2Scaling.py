@@ -36,7 +36,6 @@ class Chi2Scaling(object):
         Minimizes the chi2 distance using the scale factor a, which is constrained by
         the prior passed to the constructor
         """
-
         # Do an informed guess
         num = ref_values * coord_values / coord_errors ** 2
         den = ref_values ** 2 / coord_errors ** 2

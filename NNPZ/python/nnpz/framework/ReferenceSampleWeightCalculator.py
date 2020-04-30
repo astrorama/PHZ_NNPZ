@@ -15,22 +15,24 @@ def _apply_weight_calculator(fcalculator, target_list, ref_obj, target_data, res
     target_flags = [result_flags[t.index] for t in target_list]
     nan_masks = [np.logical_not(np.isnan(target_obj_i[:, 0])) for target_obj_i in target_obj]
     return [fcalculator(ref_obj_i[mask_i, :], target_obj_i[mask_i, :], flag) for
-                      ref_obj_i, target_obj_i, mask_i, flag in
-                      zip(ref_obj, target_obj, nan_masks, target_flags)]
+            ref_obj_i, target_obj_i, mask_i, flag in
+            zip(ref_obj, target_obj, nan_masks, target_flags)]
 
 
 class ReferenceSampleWeightCalculator(object):
 
-    def __init__(self, weight_phot_provider, weight_calculator, weight_calculator_alt):
+    def __init__(self, weight_phot_provider, weight_calculator, weight_calculator_alt, scaling):
         """
         Constructor
         Args:
             weight_phot_provider: An object implementing WeightPhotometryProvider
             weight_calculator: An object implementing WeightCalculatorInterface
+            scaling: An object that implement photometry rescaling
         """
         self._weight_phot_provider = weight_phot_provider
         self._weight_calculator = weight_calculator
         self._weight_calculator_alt = weight_calculator_alt
+        self._scaling = scaling
 
     def computeWeights(self, affected, target_data, result_flags, progress_listener):
         """
@@ -72,6 +74,13 @@ class ReferenceSampleWeightCalculator(object):
             for i, target in enumerate(target_list):
                 flag = result_flags[target.index]
                 ref_photometry[i, :, :] = self._weight_phot_provider(ref_i, target, flag)
+
+                # Re-apply the scaling if needed
+                if self._scaling:
+                    target.scale = self._scaling(
+                        ref_photometry[i:i + 1, :, 0], ref_photometry[i:i + 1, :, 1],
+                        target_data[target.index, :, 0], target_data[target.index, :, 1])
+            ref_photometry[i, :, :] *= target_list.scale
 
             weights = _apply_weight_calculator(
                 self._weight_calculator, target_list, ref_photometry, target_data, result_flags
