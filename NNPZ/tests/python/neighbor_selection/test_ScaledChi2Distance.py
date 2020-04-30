@@ -36,7 +36,7 @@ def test_simple_uniform_prior(target_object, exact_reference_objects, reference_
     the ScaledChi2Distance should return a distance of 0, and a recovered scale.
     We use an uniform prior (equivalent to looking in color space).
     """
-    distance_method = ScaledChi2Distance(lambda a: 1, a_min=-np.inf, a_max=np.inf)
+    distance_method = ScaledChi2Distance(lambda a: 1, a_min=1e-6, a_max=1e6)
     computed_d, computed_s = distance_method(exact_reference_objects[:, 0, :], exact_reference_objects[:, 1, :],
                                              target_object[0, :], target_object[1, :])
     assert np.allclose(computed_s, 1. / reference_scaling, rtol=1e-3)
