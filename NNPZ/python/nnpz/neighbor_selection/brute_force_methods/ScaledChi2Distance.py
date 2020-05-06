@@ -3,7 +3,6 @@ from __future__ import division, print_function
 import numpy as np
 
 from nnpz.neighbor_selection import BruteForceSelector
-from scipy.optimize import minimize_scalar
 
 
 class ScaledChi2Distance(BruteForceSelector.DistanceMethodInterface):

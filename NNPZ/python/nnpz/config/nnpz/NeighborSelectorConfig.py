@@ -63,7 +63,7 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
             self._checkParameterExists('scale_prior', args)
             self.__scaling = Chi2Scaling(
                 self.__getPrior(args['scale_prior']),
-                max_iter=args.get('scale_max_iter', 20), xtol=args.get('scale_xtol', 1e-4)
+                max_iter=args.get('scale_max_iter', 20), rtol=args.get('scale_rtol', 1e-4)
             )
             self.__selector = BruteForceSelector(
                 bfm.ScaledChi2Distance(self.__scaling), bfm.SmallestSelector(neighbors_no)

@@ -80,7 +80,7 @@ class ReferenceSampleWeightCalculator(object):
                     target.scale = self._scaling(
                         ref_photometry[i:i + 1, :, 0], ref_photometry[i:i + 1, :, 1],
                         target_data[target.index, :, 0], target_data[target.index, :, 1])
-            ref_photometry[i, :, :] *= target_list.scale
+                    ref_photometry[i, :, :] *= target.scale
 
             weights = _apply_weight_calculator(
                 self._weight_calculator, target_list, ref_photometry, target_data, result_flags
