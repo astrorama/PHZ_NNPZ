@@ -57,10 +57,12 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         if 'input_size' in args:
             input_size = args['input_size']
-            logger.warn('Processing only first {} objects from target catalog'.format(input_size))
-            self.__target_ids = self.__target_ids[:input_size]
-            self.__target_phot_data = self.__target_phot_data[:input_size]
-            self.__target_astropy_table = self.__target_astropy_table[:input_size]
+            if not isinstance(input_size, slice):
+                input_size = slice(input_size)
+            logger.warn('Processing only {} objects from target catalog'.format(input_size))
+            self.__target_ids = self.__target_ids[input_size]
+            self.__target_phot_data = self.__target_phot_data[input_size]
+            self.__target_astropy_table = self.__target_astropy_table[input_size]
 
         self.__target_size = len(self.__target_ids)
 
