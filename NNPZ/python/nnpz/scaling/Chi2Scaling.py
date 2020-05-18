@@ -8,7 +8,7 @@ from scipy.optimize import newton
 class Chi2Scaling(object):
     """Find the appropriate scaling minimizing the chi2 and applying a prior"""
 
-    def __init__(self, prior, a_min=1e-5, a_max=1e2, n_samples=1000, max_iter=20, rtol=1e-4, epsilon=1e-4):
+    def __init__(self, prior, a_min=1e-5, a_max=1e5, n_samples=1000, max_iter=20, rtol=1e-4, epsilon=1e-4):
         """
         Constructor
         Args:
@@ -68,11 +68,16 @@ class Chi2Scaling(object):
             return (chi2_prior(a + self.__epsilon, *args) - chi2_prior(a - self.__epsilon, *args)) / self.__epsilon * 2
 
         if within_mask.any():
-            a[within_mask] = newton(
-                chi2_prior_da, a[within_mask], args=(
-                    ref_values[within_mask, :], ref_errors[within_mask, :], coord_values, coord_errors
-                ),
-                maxiter=self.__max_iter, rtol=self.__rtol, disp=False
-            )
+            try:
+                new_a = newton(
+                    chi2_prior_da, a[within_mask], args=(
+                        ref_values[within_mask, :], ref_errors[within_mask, :], coord_values, coord_errors
+                    ),
+                    maxiter=self.__max_iter, rtol=self.__rtol, disp=False
+                )
+                not_nan = np.isnan(new_a) == False
+                a[within_mask][not_nan] = new_a[not_nan]
+            except RuntimeError:
+                pass 
 
         return a
