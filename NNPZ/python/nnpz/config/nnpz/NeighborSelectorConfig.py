@@ -61,8 +61,10 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
             )
         elif neighbor_method == 'ScaledChi2':
             self._checkParameterExists('scale_prior', args)
+            self._checkParameterExists('batch_size', args)
             self.__scaling = Chi2Scaling(
                 self.__getPrior(args['scale_prior']),
+                batch_size=args.get('batch_size'),
                 max_iter=args.get('scale_max_iter', 20), rtol=args.get('scale_rtol', 1e-4)
             )
             self.__selector = BruteForceSelector(
