@@ -91,7 +91,8 @@ class Chi2Scaling(object):
                     maxiter=self.__max_iter, rtol=self.__rtol, disp=False
                 )
                 not_nan = np.isnan(new_a) == False
-                a[reference_mask][not_nan] = new_a[not_nan]
+                reference_mask[reference_mask] = not_nan
+                a[reference_mask] = new_a[not_nan]
             except RuntimeError:
                 pass
 
