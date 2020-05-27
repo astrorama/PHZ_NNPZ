@@ -51,7 +51,7 @@ class Chi2Scaling(object):
 
         # Target function to be minimized
         def chi2_prior(a, *args):
-            return chi2(a, *args) - np.log(self.prior(a))
+            return chi2(a, *args)/2 - np.log(self.prior(a))
 
         # Use newtown method to optimize all within in one go
         # Implies looking for a 0 on the derivative
