@@ -51,24 +51,21 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
                 neighbors_no, balanced_tree=args.get('balanced_kdtree', True)
             )
         elif neighbor_method == 'BruteForce':
+            scale_prior = args.get('scale_prior', None)
+            if scale_prior:
+                self._checkParameterExists('batch_size', args)
+                self.__scaling = Chi2Scaling(
+                    self.__getPrior(args['scale_prior']),
+                    batch_size=args.get('batch_size'),
+                    max_iter=args.get('scale_max_iter', 20), rtol=args.get('scale_rtol', 1e-4)
+                )
             self.__selector = BruteForceSelector(
-                bfm.Chi2Distance(), bfm.SmallestSelector(neighbors_no)
+                bfm.Chi2Distance(), bfm.SmallestSelector(neighbors_no), self.__scaling
             )
         elif neighbor_method == 'Combined':
             self._checkParameterExists('batch_size', args)
             self.__selector = EuclideanRegionBruteForceSelector(
                 neighbors_no, args['batch_size'], balanced_tree=args.get('balanced_kdtree', True)
-            )
-        elif neighbor_method == 'ScaledChi2':
-            self._checkParameterExists('scale_prior', args)
-            self._checkParameterExists('batch_size', args)
-            self.__scaling = Chi2Scaling(
-                self.__getPrior(args['scale_prior']),
-                batch_size=args.get('batch_size'),
-                max_iter=args.get('scale_max_iter', 20), rtol=args.get('scale_rtol', 1e-4)
-            )
-            self.__selector = BruteForceSelector(
-                bfm.ScaledChi2Distance(self.__scaling), bfm.SmallestSelector(neighbors_no)
             )
         else:
             logger.error('Invalid neighbor_method option: {}'.format(neighbor_method))

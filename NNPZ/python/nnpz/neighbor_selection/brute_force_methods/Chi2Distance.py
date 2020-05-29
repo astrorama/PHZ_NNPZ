@@ -28,4 +28,4 @@ class Chi2Distance(BruteForceSelector.DistanceMethodInterface):
 
         den = ref_data_errors * ref_data_errors + coord_errors * coord_errors
 
-        return np.sum(nom / den, axis=1), np.ones(len(ref_data_values))
+        return np.sum(nom / den, axis=1)

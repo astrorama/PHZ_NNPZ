@@ -14,4 +14,4 @@ class AngularDistance(BruteForceSelector.DistanceMethodInterface):
         angular_den = np.linalg.norm(ref_data_values, axis=1) * np.linalg.norm(coord_values)
         angular = angular_num / angular_den
 
-        return np.sin(np.arccos(angular)), np.ones(angular.shape)
+        return np.sin(np.arccos(angular))

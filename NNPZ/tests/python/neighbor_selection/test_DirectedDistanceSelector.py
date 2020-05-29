@@ -23,7 +23,7 @@ def test_DirectedDistance(directed_distance):
     reference = np.array(list(itertools.product(axis, axis)))
     point = np.array([20, 20])
 
-    distances = directed_distance(reference, None, point, None)[0]
+    distances = directed_distance(reference, None, point, None)
 
     assert len(distances) == len(reference)
 
