@@ -80,16 +80,16 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         if np.isnan(coordinate).any():
             batch = np.arange(self.__ref_data.shape[0])
         else:
-            batch, _ = self.__kdtree.findNeighbors(coordinate, flags)
+            batch, _, _ = self.__kdtree.findNeighbors(coordinate, flags)
 
         # Get the slice of the reference data which covers the batch
         batch_data = self.__ref_data[batch,:,:]
 
         # Now use a BruteForceSelector to find the chi2 neighbors in the batch
         brute_force = BruteForceSelector(self.__distance, SmallestSelector(self.__neighbors_no)).initialize(batch_data)
-        bf_ids, chi2 = brute_force.findNeighbors(coordinate, flags)
+        bf_ids, chi2, scales = brute_force.findNeighbors(coordinate, flags)
 
         # Retrieve the IDs of the objects in the full reference sample
         ids = batch[bf_ids]
 
-        return ids, chi2
+        return ids, chi2, scales

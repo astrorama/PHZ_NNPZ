@@ -68,7 +68,7 @@ class BruteForceSelector(NeighborSelectorInterface):
             return
 
 
-    def __init__(self, distance_method, selection_method):
+    def __init__(self, distance_method, selection_method, scaling_method=None):
         """Creates a new instance of BruteForceSelector
 
         Args:
@@ -77,7 +77,7 @@ class BruteForceSelector(NeighborSelectorInterface):
                 implement the DistanceMethodInterface.
             selection_method: The method used to select the neighbors based on
                 the computed distances. It must implement the SelectionMethodInterface.
-
+            scaling_method: Scaling method to apply before computing the distances (optional)
         Raises:
             WrongTypeException: If any of the given methods does not implement
                 the interfaces
@@ -90,6 +90,7 @@ class BruteForceSelector(NeighborSelectorInterface):
 
         self.__distance = distance_method
         self.__selection = selection_method
+        self.__scaling = scaling_method
 
 
     def _initializeImpl(self, ref_data):
@@ -118,8 +119,18 @@ class BruteForceSelector(NeighborSelectorInterface):
         # We are going to ignore all NaN values from the computation
         not_nan = np.logical_not(np.isnan(obj_values))
 
-        distances = self.__distance(self.__ref_data_values[:,not_nan], self.__ref_data_errors[:,not_nan], obj_values[not_nan], obj_errors[not_nan])
+        # Compute the scaling
+        if self.__scaling:
+            a = self.__scaling(self.__ref_data_values[:, not_nan], self.__ref_data_errors[:, not_nan],
+                               obj_values[not_nan], obj_errors[not_nan])
+        else:
+            a = np.ones((len(self.__ref_data_values)))
+
+        distances = self.__distance(a[:, np.newaxis] * self.__ref_data_values[:, not_nan],
+                                    a[:, np.newaxis] * self.__ref_data_errors[:, not_nan],
+                                    obj_values[not_nan], obj_errors[not_nan])
         neighbor_ids = self.__selection(distances)
         neighbor_distances = distances[neighbor_ids]
+        neighbor_scales = a[neighbor_ids]
 
-        return neighbor_ids, neighbor_distances
+        return neighbor_ids, neighbor_distances, neighbor_scales

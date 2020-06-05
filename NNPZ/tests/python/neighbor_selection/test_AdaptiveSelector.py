@@ -40,10 +40,11 @@ def test_Adaptive(reference_values, target_values):
     adaptive_selector = AdaptiveSelector(KDTreeSelector(neighbors_no=7), target_values[np.newaxis, :, :])
     adaptive_selector.initialize(reference_values)
 
-    idx, distances = adaptive_selector.findNeighbors(target_values, None)
+    idx, distances, scales = adaptive_selector.findNeighbors(target_values, None)
     assert (len(idx) == len(distances))
     assert (len(idx) == 7)
     assert (np.all(distances <= 1.01))
+    assert (np.all(scales == 1.))
 
 
 ###############################################################################
@@ -56,11 +57,12 @@ def test_KDTree2(reference_values, target_values):
     adaptive_selector = AdaptiveSelector(KDTreeSelector(neighbors_no=10), target_values[np.newaxis, :, :])
     adaptive_selector.initialize(reference_values)
 
-    idx, distances = adaptive_selector.findNeighbors(target_values, None)
+    idx, distances, scales = adaptive_selector.findNeighbors(target_values, None)
     assert (len(idx) == len(distances))
     assert (len(idx) == 10)
     assert ((distances <= 1.01).sum() == 7)
     assert ((distances > 1.01).sum() == 3)
+    assert (np.all(scales == 1.))
 
 
 ###############################################################################
@@ -80,7 +82,8 @@ def test_KDTreeNan(reference_values, target_values):
     adaptive_selector = AdaptiveSelector(KDTreeSelector(neighbors_no=10), target_values[np.newaxis, :, :])
     adaptive_selector.initialize(reference_values)
 
-    idx, distances = adaptive_selector.findNeighbors(target_values, None)
+    idx, distances, scales = adaptive_selector.findNeighbors(target_values, None)
     assert (len(idx) == len(distances))
     assert (len(idx) == 10)
     assert (np.all(distances <= 1.01))
+    assert (np.all(scales == 1.))

@@ -6,6 +6,7 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 from nnpz.neighbor_selection import NeighborSelectorInterface
+from .NeighborSet import NeighborSet
 
 
 class AffectedSourcesFinder(object):
@@ -49,10 +50,10 @@ class AffectedSourcesFinder(object):
         result = {}
         for i, (in_data, flags) in enumerate(zip(input_coord_iter, flags_iter)):
             if progress_listener:
-                progress_listener(i+1)
-            neighbor_indices, _ = self.__selector.findNeighbors(in_data, flags)
-            for ref_i in neighbor_indices:
-                if not ref_i in result:
-                    result[ref_i] = []
-                result[ref_i].append(i)
+                progress_listener(i + 1)
+            neighbor_indices, distances, scales = self.__selector.findNeighbors(in_data, flags)
+            for ref_i, d, s in zip(neighbor_indices, distances, scales):
+                if ref_i not in result:
+                    result[ref_i] = NeighborSet()
+                result[ref_i].append(i, distance=d, scale=s)
         return result

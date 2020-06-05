@@ -39,10 +39,11 @@ def test_KDTree(reference_values, target_values):
     kd_selector = KDTreeSelector(neighbors_no=7)
     kd_selector.initialize(reference_values)
 
-    idx, distances = kd_selector.findNeighbors(target_values, None)
+    idx, distances, scales = kd_selector.findNeighbors(target_values, None)
     assert (len(idx) == len(distances))
     assert (len(idx) == 7)
     assert (np.all(distances <= 1.01))
+    assert (np.all(scales == 1.))
 
 ###############################################################################
 
@@ -54,11 +55,12 @@ def test_KDTree2(reference_values, target_values):
     kd_selector = KDTreeSelector(neighbors_no=10)
     kd_selector.initialize(reference_values)
 
-    idx, distances = kd_selector.findNeighbors(target_values, None)
+    idx, distances, scales = kd_selector.findNeighbors(target_values, None)
     assert (len(idx) == len(distances))
     assert (len(idx) == 10)
     assert ((distances <= 1.01).sum() == 7)
     assert ((distances > 1.01).sum() == 3)
+    assert (np.all(scales == 1.))
 
 
 ###############################################################################
@@ -77,8 +79,9 @@ def test_KDTreeNan(reference_values, target_values):
     kd_selector.initialize(reference_values)
 
     target_values[2, :] = np.nan
-    idx, distances = kd_selector.findNeighbors(target_values, None)
+    idx, distances, scales = kd_selector.findNeighbors(target_values, None)
     # Only the center is a hit
     assert (len(idx) == len(distances))
     assert (len(idx) == 10)
     assert (np.all(distances <= 1.01))
+    assert (np.all(scales == 1.))

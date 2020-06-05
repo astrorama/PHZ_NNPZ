@@ -9,7 +9,7 @@ import nnpz.io.catalog_properties as prop
 import numpy as np
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import WeightPhotometryProviderConfig
+from nnpz.config.nnpz import WeightPhotometryProviderConfig, NeighborSelectorConfig
 from nnpz.config.reference import ReferenceConfig
 from nnpz.framework import ReferenceSampleWeightCalculator
 from nnpz.framework.ReferenceSampleWeightCorrector import ReferenceSampleWeightCorrector
@@ -19,10 +19,11 @@ from nnpz.weights import (LikelihoodWeight, InverseEuclideanWeight, InverseChi2W
 logger = Logging.getLogger('Configuration')
 
 _calculator_map = {
-    'Euclidean' : InverseEuclideanWeight(),
-    'Chi2' : InverseChi2Weight(),
-    'Likelihood' : LikelihoodWeight()
+    'Euclidean': InverseEuclideanWeight(),
+    'Chi2': InverseChi2Weight(),
+    'Likelihood': LikelihoodWeight()
 }
+
 
 class WeightCalculatorConfig(ConfigManager.ConfigHandler):
 
@@ -62,6 +63,7 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
 
     def __createCalculator(self, args):
         photo_provider_config = ConfigManager.getHandler(WeightPhotometryProviderConfig).parseArgs(args)
+        neighbor_sel_config = ConfigManager.getHandler(NeighborSelectorConfig).parseArgs(args)
 
         self._checkParameterExists('weight_method', args)
         method = args['weight_method']
@@ -74,7 +76,8 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         self.__calculator_alternative = _calculator_map[alternative] if alternative else None
 
         self.__ref_sample_weight_calculator = ReferenceSampleWeightCalculator(
-            photo_provider_config['photometry_provider'], self.__calculator, self.__calculator_alternative
+            photo_provider_config['photometry_provider'], self.__calculator, self.__calculator_alternative,
+            scaling=neighbor_sel_config['scaling']
         )
 
         if args.get('absolute_weights', None):
@@ -84,7 +87,8 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         if self.__calculator is None:
             self.__createCalculator(args)
         return {
-            'weight_calculator' : self.__ref_sample_weight_calculator,
+            'weight_calculator': self.__ref_sample_weight_calculator,
         }
+
 
 ConfigManager.addHandler(WeightCalculatorConfig)

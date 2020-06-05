@@ -73,4 +73,4 @@ class KDTreeSelector(NeighborSelectorInterface):
         values = coordinate[:,0]
         result = self.__kdtree.query(values, k = self.__neighbors_no)
 
-        return np.asarray(result[1], dtype=np.int64), np.asarray(result[0], dtype=np.float32)
+        return np.asarray(result[1], dtype=np.int64), np.asarray(result[0], dtype=np.float32), np.ones(result[0].shape)

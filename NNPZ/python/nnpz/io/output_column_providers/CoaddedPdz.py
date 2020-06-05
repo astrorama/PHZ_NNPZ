@@ -30,14 +30,14 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         self.__current_ref_i = None
         self.__current_ref_pdz = None
 
-    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
+    def addContribution(self, reference_sample_i, neighbor, flags):
         if reference_sample_i != self.__current_ref_i:
             ref_id = self.__ref_ids[reference_sample_i]
             self.__current_ref_i = reference_sample_i
             self.__current_ref_pdz = np.array(self.__reference_sample.getPdzData(ref_id), dtype=np.float64)
             assert (self.__current_ref_pdz[:, 0] == self.__pdz_bins).all()
 
-        self.__pdzs[catalog_i] += self.__current_ref_pdz[:, 1] * weight
+        self.__pdzs[neighbor.index] += self.__current_ref_pdz[:, 1] * neighbor.weight
 
     def getColumns(self):
         integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)

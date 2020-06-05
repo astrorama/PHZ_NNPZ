@@ -22,9 +22,9 @@ class TrueRedshiftPdz(OutputHandler.OutputColumnProviderInterface):
         self.__pdzs = np.zeros((catalog_size, len(self.__pdz_bins)), dtype=np.float64)
 
 
-    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
+    def addContribution(self, reference_sample_i, neighbor, flags):
         z = self.__ref_z[reference_sample_i]
-        pdz = self.__pdzs[catalog_i]
+        pdz = self.__pdzs[neighbor.index]
 
         pdz_i = int((z - self.__z_min + self.__step / 2.) / self.__step)
         if pdz_i < 0:
@@ -32,7 +32,7 @@ class TrueRedshiftPdz(OutputHandler.OutputColumnProviderInterface):
         if pdz_i >= len(self.__pdz_bins):
             pdz_i = self.__pdz_bins -1
 
-        pdz[pdz_i] += weight
+        pdz[pdz_i] += neighbor.weight
 
 
     def getColumns(self):

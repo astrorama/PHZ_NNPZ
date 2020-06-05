@@ -18,7 +18,7 @@ class Flags(OutputHandler.OutputColumnProviderInterface):
         self.__flag_list = flag_list
         self.__separate_columns = separate_columns
 
-    def addContribution(self, reference_sample_i, catalog_i, weight, flags):
+    def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
     def _separateColumns(self):

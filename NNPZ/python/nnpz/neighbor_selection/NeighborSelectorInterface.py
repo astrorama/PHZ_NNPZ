@@ -39,7 +39,7 @@ class NeighborSelectorInterface(object):
         return
 
 
-    def initialize(self,ref_data):
+    def initialize(self, ref_data):
         """Initializes the selector with the given reference data.
 
         Args:
@@ -93,6 +93,8 @@ class NeighborSelectorInterface(object):
                 integers.
             - A numpy array of single precision floats with the distances of the
                 neighbors.
+            - A numpy array of single precision floats with the scaling applied to the
+                neighbors.
 
         Implementations are allowed to return any number of neighbors. Note that
         this method is guaranteed to be executed after the _initializeImpl() has
@@ -121,6 +123,8 @@ class NeighborSelectorInterface(object):
                 given to the initialize() method, as a numpy array of long
                 integers.
             - A numpy array of single precision floats with the distances of the
+                neighbors.
+            - A numpy array of single precision floats with the scaling applied to the
                 neighbors.
 
         Raises:

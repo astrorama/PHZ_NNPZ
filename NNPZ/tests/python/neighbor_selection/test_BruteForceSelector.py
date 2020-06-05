@@ -40,11 +40,12 @@ def test_BruteForceLessThan(reference_values, target_values):
     bf_selector = BruteForceSelector(EuclideanDistance(), LessThanSelector(1.01))
     bf_selector.initialize(reference_values)
 
-    idx, distances = bf_selector.findNeighbors(target_values, None)
+    idx, distances, scales = bf_selector.findNeighbors(target_values, None)
     # Only the center point and those that are within a sphere of radius 1.01
     assert (len(idx) == len(distances))
     assert (len(idx) == 7)
     assert (np.all(distances <= 1.))
+    assert (np.all(scales == 1.))
 
 
 ###############################################################################
@@ -56,11 +57,12 @@ def test_BruteForceSmallest(reference_values, target_values):
     bf_selector = BruteForceSelector(EuclideanDistance(), SmallestSelector(1))
     bf_selector.initialize(reference_values)
 
-    idx, distances = bf_selector.findNeighbors(target_values, None)
+    idx, distances, scales = bf_selector.findNeighbors(target_values, None)
     # Only the center is a hit
     assert (len(idx) == len(distances))
     assert (len(idx) == 1)
     assert (np.all(distances <= 0.1))
+    assert (np.all(scales == 1.))
 
 
 ###############################################################################
@@ -78,11 +80,13 @@ def test_BruteForceLessThanNan(reference_values, target_values):
     bf_selector.initialize(reference_values)
 
     target_values[2, :] = np.nan
-    idx, distances = bf_selector.findNeighbors(target_values, None)
+    idx, distances, scales = bf_selector.findNeighbors(target_values, None)
     # Only the center point and those that are within a circle of radius 1.01
     assert (len(idx) == len(distances))
     assert (len(idx) == 15)
     assert (np.all(distances <= 1.))
+    assert (np.all(scales == 1.))
+
 
 ###############################################################################
 
@@ -99,8 +103,9 @@ def test_BruteForceSmallest(reference_values, target_values):
     bf_selector.initialize(reference_values)
 
     target_values[2, :] = np.nan
-    idx, distances = bf_selector.findNeighbors(target_values, None)
+    idx, distances, scales = bf_selector.findNeighbors(target_values, None)
     # Only the center is a hit
     assert (len(idx) == len(distances))
     assert (len(idx) == 1)
     assert (np.all(distances <= 0.1))
+    assert (np.all(scales == 1.))
