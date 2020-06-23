@@ -162,4 +162,25 @@ def test_de_redden_data(sed, reddening, filter_map, photometry):
     # expected were computed with a hand calculator with only 7 digit...
     np.testing.assert_almost_equal(expected, corrected, 5)
 
+
+def test_redden_data(sed, reddening, filter_map, photometry):
+    """
+    Reddening must be symmetrical with de-reddening
+    """
+    filter_order = ['f1', 'f2']
+    ebv_0 = 0.02
+
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, reddening, sed, ebv_0)
+    de_reddened_photo = dereddener.de_redden_data(photometry, [0.05, 0.01, 0.02])
+
+    and_back = dereddener.redden_data(de_reddened_photo, [0.05, 0.01, 0.02])
+    np.testing.assert_almost_equal(photometry, and_back, 5)
+
+    filter_order = ['f2', 'f1']
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, reddening, sed, ebv_0)
+    de_reddened_photo = dereddener.de_redden_data(photometry, [0.05, 0.01, 0.02])
+
+    and_back = dereddener.redden_data(de_reddened_photo, [0.05, 0.01, 0.02])
+    np.testing.assert_almost_equal(photometry, and_back, 5)
+
 ################################################
