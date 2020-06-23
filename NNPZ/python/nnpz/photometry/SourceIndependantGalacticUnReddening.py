@@ -24,6 +24,7 @@ class SourceIndependantGalacticUnReddening(object):
     def __init__(self,
                  filter_map,
                  filter_order,
+                 out_filter_order=None,
                  galactic_reddening_curve=None,
                  ref_sed=None,
                  ebv_0=0.02
@@ -37,7 +38,9 @@ class SourceIndependantGalacticUnReddening(object):
                 first element being the wavelength (expressed in Angstrom) and
                 the second the filter transmission (in the range [0,1])
 
-            filter_order: An ordered list of the filter names
+            filter_order: An ordered list of the filter names *for de-reddening*
+
+            out_filter_order: An ordered list of the filter names *for reddening*
 
             galactic_reddening_curve: The galactic reddening curve.
                 The curve is a 2D numpy arrays, where the first axis
@@ -60,16 +63,22 @@ class SourceIndependantGalacticUnReddening(object):
         F99 extinction curve and J.Coupon ref SED from the auxiliary data.
         """
 
-
         # we use the knots of the reddening curve and resample the other curve
         # according to it:
-        reddening_curve = SourceIndependantGalacticUnReddening.__fp.getFilterTransmission('extinction_curve') if galactic_reddening_curve is None else galactic_reddening_curve
-        ref_galactic_sed = SourceIndependantGalacticUnReddening.__fp.getFilterTransmission('typical_galactic_sed') if ref_sed is None else ref_sed
-        ref_galactic_sed_ressampled=np.array(reddening_curve)
-        ref_galactic_sed_ressampled[:,1]=np.interp(reddening_curve[:,0], ref_galactic_sed[:,0], ref_galactic_sed[:,1], left=0, right=0)
+        if galactic_reddening_curve is None:
+            galactic_reddening_curve = self.__fp.getFilterTransmission('extinction_curve')
+        if ref_sed is None:
+            ref_sed = self.__fp.getFilterTransmission('typical_galactic_sed')
+        if out_filter_order is None:
+            out_filter_order = filter_order
+        ref_galactic_sed_ressampled = np.array(galactic_reddening_curve)
+        ref_galactic_sed_ressampled[:, 1] = np.interp(
+            galactic_reddening_curve[:, 0], ref_sed[:, 0], ref_sed[:, 1], left=0, right=0
+        )
 
-        self._k_x=self._compute_ks(filter_map,ref_galactic_sed_ressampled,reddening_curve,ebv_0)
-        self._filter_order=filter_order
+        self._k_x = self._compute_ks(filter_map, ref_galactic_sed_ressampled, galactic_reddening_curve, ebv_0)
+        self._filter_order = filter_order
+        self._output_filter_order = out_filter_order
 
     def _compute_ks(self,filter_map,ref_galactic_sed,reddening_curve,ebv_0):
         ks={}
@@ -104,8 +113,8 @@ class SourceIndependantGalacticUnReddening(object):
         """
         data = np.zeros(target_data.shape, dtype=np.float32)
 
-        #Copy the errors which are unaffected
-        data[:,:,1]=target_data[:,:,1]
+        # Copy the errors which are unaffected
+        data[:, :, 1] = target_data[:, :, 1]
 
         for source_id in range(target_data.shape[0]):
             ebv=target_ebv[source_id]
@@ -125,8 +134,8 @@ class SourceIndependantGalacticUnReddening(object):
         for source_id in range(target_data.shape[0]):
             ebv = target_ebv[source_id]
 
-            for filter_id in range(len(self._filter_order)):
-                filter_name = self._filter_order[filter_id]
+            for filter_id in range(len(self._output_filter_order)):
+                filter_name = self._output_filter_order[filter_id]
                 data[source_id, filter_id, 0] = self._apply_reddening(target_data[source_id, filter_id, 0],
                                                                       filter_name, ebv)
         return data

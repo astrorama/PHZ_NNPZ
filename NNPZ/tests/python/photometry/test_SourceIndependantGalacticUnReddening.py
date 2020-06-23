@@ -48,7 +48,8 @@ def photometry():
 def test_compute_k_x(sed, reddening, filter_1):
     """Test the preProcess() method"""
     ebv_0 = 1.
-    dereddener = SourceIndependantGalacticUnReddening({}, [], reddening, sed, ebv_0)
+    dereddener = SourceIndependantGalacticUnReddening({}, [], galactic_reddening_curve=reddening, ref_sed=sed,
+                                                      ebv_0=ebv_0)
     k_x = dereddener._compute_k_x(sed, reddening, filter_1, ebv_0)
     np.testing.assert_almost_equal(k_x, 0.1)
 
@@ -96,7 +97,8 @@ def test_compute_k_x(sed, reddening, filter_1):
 def test_compute_ks(sed, reddening, filter_map):
     ebv_0 = 1.
 
-    dereddener = SourceIndependantGalacticUnReddening(filter_map, [], reddening, sed, ebv_0)
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, [], galactic_reddening_curve=reddening, ref_sed=sed,
+                                                      ebv_0=ebv_0)
     ks = dereddener._compute_ks(filter_map, sed, reddening, ebv_0)
 
     assert len(ks) == 2
@@ -108,7 +110,8 @@ def test_compute_ks(sed, reddening, filter_map):
 
 def test_init(sed, reddening, filter_map):
     ebv_0 = 1.
-    dereddener = SourceIndependantGalacticUnReddening(filter_map, [], reddening, sed, ebv_0)
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, [], galactic_reddening_curve=reddening, ref_sed=sed,
+                                                      ebv_0=ebv_0)
 
     assert len(dereddener._k_x) == 2
     assert 'f1' in dereddener._k_x
@@ -120,7 +123,8 @@ def test_init(sed, reddening, filter_map):
 def test_unapply_reddening(sed, reddening, filter_map):
     ebv_0 = 1.
 
-    dereddener = SourceIndependantGalacticUnReddening(filter_map, [], reddening, sed, ebv_0)
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, [], galactic_reddening_curve=reddening, ref_sed=sed,
+                                                      ebv_0=ebv_0)
 
     np.testing.assert_almost_equal(dereddener._k_x['f1'], 0.1)
 
@@ -143,7 +147,8 @@ def test_unapply_reddening(sed, reddening, filter_map):
 def test_de_redden_data(sed, reddening, filter_map, photometry):
     filter_order = ['f1', 'f2']
     ebv_0 = 0.02
-    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, reddening, sed, ebv_0)
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, galactic_reddening_curve=reddening,
+                                                      ref_sed=sed, ebv_0=ebv_0)
     np.testing.assert_almost_equal(dereddener._k_x['f1'], 0.1)
     np.testing.assert_almost_equal(dereddener._k_x['f2'], 0.599769741601381)
 
@@ -154,7 +159,8 @@ def test_de_redden_data(sed, reddening, filter_map, photometry):
 
     # filter order
     filter_order = ['f2', 'f1']
-    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, reddening, sed, ebv_0)
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, galactic_reddening_curve=reddening,
+                                                      ref_sed=sed, ebv_0=ebv_0)
     np.testing.assert_almost_equal(dereddener._k_x['f1'], 0.1)
     np.testing.assert_almost_equal(dereddener._k_x['f2'], 0.599769741601381)
     corrected = dereddener.de_redden_data(photometry, [0.05, 0.01, 0.02])
@@ -170,14 +176,16 @@ def test_redden_data(sed, reddening, filter_map, photometry):
     filter_order = ['f1', 'f2']
     ebv_0 = 0.02
 
-    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, reddening, sed, ebv_0)
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, galactic_reddening_curve=reddening,
+                                                      ref_sed=sed,ebv_0=ebv_0)
     de_reddened_photo = dereddener.de_redden_data(photometry, [0.05, 0.01, 0.02])
 
     and_back = dereddener.redden_data(de_reddened_photo, [0.05, 0.01, 0.02])
     np.testing.assert_almost_equal(photometry, and_back, 5)
 
     filter_order = ['f2', 'f1']
-    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, reddening, sed, ebv_0)
+    dereddener = SourceIndependantGalacticUnReddening(filter_map, filter_order, galactic_reddening_curve=reddening,
+                                                      ref_sed=sed, ebv_0=ebv_0)
     de_reddened_photo = dereddener.de_redden_data(photometry, [0.05, 0.01, 0.02])
 
     and_back = dereddener.redden_data(de_reddened_photo, [0.05, 0.01, 0.02])
