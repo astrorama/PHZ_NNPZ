@@ -3,9 +3,9 @@ from .NeighborSelectorConfig import NeighborSelectorConfig
 from .OutputHandlerConfig import OutputHandlerConfig
 from .CopyInputColumnsConfig import CopyInputColumnsConfig
 from .NeighborListOutputConfig import NeighborListOutputConfig
-from .MeanPhotOutputConfig import MeanPhotOutputConfig
 from .PdzOutputConfig import PdzOutputConfig
 from .FlagsConfig import FlagsConfig
 from .WeightPhotometryProviderConfig import WeightPhotometryProviderConfig
 from .WeightCalculatorConfig import WeightCalculatorConfig
 from .GalacticUnreddenerConfig import GalacticUnreddenerConfig
+from .MeanPhotOutputConfig import MeanPhotOutputConfig

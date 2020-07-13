@@ -52,6 +52,10 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
                 self.__out_mean_phot_filters = args['reference_sample_out_mean_phot_filters']
                 self.__out_mean_phot_data = ref_phot_prov.getData(*self.__out_mean_phot_filters)
 
+                for filter_name in self.__out_mean_phot_filters:
+                    if filter_name not in self.__ref_filters:
+                        self.__ref_filters[filter_name] = ref_phot_prov.getFilterTransmission(filter_name)
+
 
     def parseArgs(self, args):
 
