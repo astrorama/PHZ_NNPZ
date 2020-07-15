@@ -1,3 +1,19 @@
+#
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of
+# the GNU Lesser General Public License as published by the Free Software Foundation;
+# either version 3.0 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library;
+# if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301 USA
+#
+
 """
 Created on: 09/11/17
 Author: Nikolaos Apostolakos
@@ -35,7 +51,7 @@ class ReferenceSample(object):
                 The pattern of the SED files. Defaults to `sed_data_{}.bin`
             pdz_pattern:
                 The pattern of the PDZ files. Defaults to `pdz_data_{}.bin`
-            
+
         Returns:
             An instance of the ReferenceSample class representing the new sample
 
@@ -74,7 +90,7 @@ class ReferenceSample(object):
 
     def __init__(self, path, index_filename=None, sed_pattern=None, pdz_pattern=None):
         """Creates a new ReferenceSample instance, managing the given path.
-        
+
         Args:
             path:
                 The path of the reference sample
@@ -84,7 +100,7 @@ class ReferenceSample(object):
                 The pattern of the SED files. Defaults to `sed_data_{}.bin`
             pdz_pattern:
                 The pattern of the PDZ files. Defaults to `pdz_data_{}.bin`
-            
+
         Raises:
             FileNotFoundException: If any of the index or data files are not
                 present in the given directory directory
@@ -154,10 +170,10 @@ class ReferenceSample(object):
 
     def getSedData(self, obj_id):
         """Returns the SED data for the given reference sample object.
-        
+
         Args:
             obj_id: The ID of the object to retrieve the SED for
-        
+
         Returns:
             None if the SED is not set for the given object, otherwise the data
             of the SED as a two dimensional numpy array of single precision
@@ -165,7 +181,7 @@ class ReferenceSample(object):
             and the second dimension has always size equal to two, with the
             first element representing the wavelength and the second the energy
             value.
-        
+
         Raises:
             IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
@@ -192,10 +208,10 @@ class ReferenceSample(object):
 
     def getPdzData(self, obj_id):
         """Returns the PDZ data for the given reference sample object.
-        
+
         Args:
             obj_id: The ID of the object to retrieve the PDZ for
-        
+
         Returns:
             None if the PDZ is not set for the given object, otherwise the data
             of the PDZ as a two dimensional numpy array of single precision
@@ -203,7 +219,7 @@ class ReferenceSample(object):
             and the second dimension has always size equal to two, with the
             first element representing the wavelength and the second the
             probability value.
-        
+
         Raises:
             IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
@@ -237,14 +253,14 @@ class ReferenceSample(object):
 
     def createObject(self, new_id):
         """Creates a new object in the reference sample.
-        
+
         Args:
             new_id: The ID of the object to create. It must be an integer.
-        
+
         Throws:
             DuplicateIdException: if there is already an object with this ID in
                 the reference sample
-        
+
         When this method is called a new object in the reference sample is
         created. No SED or PDZ data are associated with this object. They can be
         set using the addSedData() and addPdzData() methods.
@@ -254,7 +270,7 @@ class ReferenceSample(object):
 
     def addSedData(self, obj_id, data):
         """Adds the SED data of a reference sample object.
-        
+
         Args:
             obj_id: The ID of the object to add the SED for. It must be an integer.
             data: The data of the SED as a two dimensional array-like object.
@@ -262,7 +278,7 @@ class ReferenceSample(object):
                 the second dimension has always size equal to two, with the
                 first element representing the wavelength and the second the
                 energy value.
-        
+
         Raises:
             IdMismatchException: If the given ID is not in the reference sample
             AlreadySetException: If the SED data are already set for the given ID
@@ -299,7 +315,7 @@ class ReferenceSample(object):
 
     def addPdzData(self, obj_id, data):
         """Adds the PDZ data of a reference sample object.
-        
+
         Args:
             obj_id: The ID of the object to add the PDZ for. It must be an integer.
             data: The data of the PDZ as a two dimensional array-like object.
@@ -307,7 +323,7 @@ class ReferenceSample(object):
                 the second dimension has always size equal to two, with the
                 first element representing the wavelength and the second the
                 probability value.
-                
+
         Raises:
             IdMismatchException: If the given ID is not in the reference sample
             AlreadySetException: If the PDZ data are aready set for the given ID
@@ -358,7 +374,7 @@ class ReferenceSample(object):
 
     def iterate(self):
         """Returns an iterable object over the reference sample objects.
-        
+
         The objects iterated provide the following members:
         - id: The ID of the object
         - sed: None if the SED is not set for the given object, otherwise the

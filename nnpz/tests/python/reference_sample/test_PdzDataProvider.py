@@ -1,3 +1,19 @@
+#
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of
+# the GNU Lesser General Public License as published by the Free Software Foundation;
+# either version 3.0 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library;
+# if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301 USA
+#
+
 """
 Created on: 10/11/17
 Author: Nikolaos Apostolakos
@@ -18,10 +34,10 @@ from .fixtures import *
 
 def test_constructor_missingFile(temp_dir_fixture):
     """Tests the case that the file does not exist"""
-    
+
     # Given
     filename = os.path.join(temp_dir_fixture, 'missing')
-    
+
     # Then
     with pytest.raises(FileNotFoundException):
         PdzDataProvider(filename)
@@ -30,16 +46,16 @@ def test_constructor_missingFile(temp_dir_fixture):
 
 def test_setRedshiftBins_notSetBefore(temp_dir_fixture):
     """Tests that if the file has no header the setRedshftBins() populates it correctly"""
-    
+
     # Given
     filename = os.path.join(temp_dir_fixture, 'empty.bin')
     open(filename, 'w').close()
     expected_bins = np.asarray([1,2,3,4], dtype=np.float32)
-    
+
     # When
     provider = PdzDataProvider(filename)
     provider.setRedshiftBins(expected_bins)
-    
+
     # Then
     assert os.path.getsize(filename) == 4 + 4 * len(expected_bins)
     with open(filename, 'rb') as f:

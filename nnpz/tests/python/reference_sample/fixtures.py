@@ -1,3 +1,19 @@
+#
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of
+# the GNU Lesser General Public License as published by the Free Software Foundation;
+# either version 3.0 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library;
+# if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301 USA
+#
+
 """
 Created on: 10/11/17
 Author: Nikolaos Apostolakos
@@ -16,7 +32,7 @@ from ..fixtures.util_fixtures import temp_dir_fixture
 @pytest.fixture()
 def sed_list_fixture():
     """Returns a list of SEDs to be used for testing.
-    
+
     The SEDs are the following:
       File   ID  Data
      ------ ---- --------------
@@ -47,7 +63,7 @@ def sed_data_files_fixture(temp_dir_fixture, sed_list_fixture):
     """Creates SED data files to be used for testing.
 
     Returns: A map with keys the file indices and values the paths of the files
-    
+
     The created files contains the SEDs of the sed_list_fixture.
     """
 
@@ -64,16 +80,16 @@ def sed_data_files_fixture(temp_dir_fixture, sed_list_fixture):
                 data_arr = np.asarray(data, dtype='float32')
                 data_arr.flatten().tofile(out)
         result[file_index] = filename
-    
+
     return result
-    
+
 ##############################################################################
 
 @pytest.fixture()
 def redshift_bins_fixture():
     """Returns an array with the redsift bins of the PDZs to be used for testing"""
     return np.asarray([1,2,5,6,8,9], dtype=np.float32)
-    
+
 ##############################################################################
 
 @pytest.fixture()
@@ -91,15 +107,15 @@ def pdz_list_fixture():
             [56, np.asarray([12,13,14,15,16,17], dtype=np.float32)]
         ]
     }
-    
+
 ##############################################################################
 
 @pytest.fixture()
 def pdz_data_files_fixture(temp_dir_fixture, redshift_bins_fixture, pdz_list_fixture):
     """Creates PDZ data files to be used for testing.
-    
+
     Returns: A map with keys the file indices and values he path to the newly created files
-    
+
     The created files contain the PDZs of the pdz_list_fixture and the redshift
     bins of the redshift_bins_fixture.
     """
@@ -117,17 +133,17 @@ def pdz_data_files_fixture(temp_dir_fixture, redshift_bins_fixture, pdz_list_fix
                 np.asarray([i], dtype=np.int64).tofile(out)
                 np.asarray(data, dtype=np.float32).tofile(out)
         result[file_index] = filename
-            
+
     return result
-    
+
 ##############################################################################
-    
+
 @pytest.fixture()
 def reference_sample_dir_fixture(temp_dir_fixture, sed_data_files_fixture,
                                  pdz_data_files_fixture, sed_list_fixture,
                                  redshift_bins_fixture):
     """Returns a directory which contains a reference sample"""
-    
+
     # Create the index file
     pdz_length = len(redshift_bins_fixture)
     pdz_offset = 4 + 4 * pdz_length
@@ -144,7 +160,7 @@ def reference_sample_dir_fixture(temp_dir_fixture, sed_data_files_fixture,
                 np.asarray([pdz_pos], dtype=np.int64).tofile(f)
                 sed_pos += 8 + 4 + 4 * sed_data.size
                 pdz_pos += 8 + 4 * pdz_length
-        
+
         # Add two more objects without data
         np.asarray([100], dtype=np.int64).tofile(f)
         np.asarray([0], dtype=np.uint16).tofile(f)
@@ -156,7 +172,7 @@ def reference_sample_dir_fixture(temp_dir_fixture, sed_data_files_fixture,
         np.asarray([-1], dtype=np.int64).tofile(f)
         np.asarray([0], dtype=np.uint16).tofile(f)
         np.asarray([-1], dtype=np.int64).tofile(f)
-    
+
     return temp_dir_fixture
-    
+
 ##############################################################################

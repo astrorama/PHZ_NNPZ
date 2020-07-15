@@ -1,3 +1,19 @@
+#
+# Copyright (C) 2012-2020 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of
+# the GNU Lesser General Public License as published by the Free Software Foundation;
+# either version 3.0 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library;
+# if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301 USA
+#
+
 """
 Created on: 10/11/17
 Author: Nikolaos Apostolakos
@@ -18,10 +34,10 @@ from .fixtures import *
 
 def test_constructor_missingFile(temp_dir_fixture):
     """Tests the case that the file does not exist"""
-    
+
     # Given
     filename = os.path.join(temp_dir_fixture, 'missing')
-    
+
     # Then
     with pytest.raises(FileNotFoundException):
         SedDataProvider(filename)
@@ -30,16 +46,16 @@ def test_constructor_missingFile(temp_dir_fixture):
 
 def test_readSed_success(sed_data_files_fixture, sed_list_fixture):
     """Tests successful call of readSed()"""
-    
+
     # Given
     provider = SedDataProvider(sed_data_files_fixture[1])
-    
+
     pos = 0
     for expected_id, expected_data in sed_list_fixture[1]:
-        
+
         # When
         found_id, found_data = provider.readSed(pos)
-        
+
         # Then
         assert found_id == expected_id
         assert len(found_data.shape) == 2
@@ -48,26 +64,26 @@ def test_readSed_success(sed_data_files_fixture, sed_list_fixture):
         for i, (x, y) in enumerate(expected_data):
             assert found_data[i][0] == x
             assert found_data[i][1] == y
-        
+
         # Increase the position for the ID, the length and the SED data
         pos = pos + 8 + 4 + (4 * 2 * len(expected_data))
-    
+
 ###############################################################################
 
 def test_appendSed_success(sed_data_files_fixture):
     """Tests successful call of appendSed()"""
-    
+
     # Given
     expected_id = 87
     expected_pos = os.path.getsize(sed_data_files_fixture[1])
     expected_data = np.asarray([(1.,10,), (2.,20.), (3.,30)], dtype=np.float32)
     expected_size = expected_pos + 8 + 4 + (2 * 4 * len(expected_data))
     provider = SedDataProvider(sed_data_files_fixture[1])
-    
+
     # When
     pos = provider.appendSed(expected_id, expected_data)
     file_size = os.path.getsize(sed_data_files_fixture[1])
-    
+
     # Then
     assert file_size == expected_size
     assert pos == expected_pos
@@ -82,7 +98,7 @@ def test_appendSed_success(sed_data_files_fixture):
         # Check that the data are written correctly
         file_data = np.fromfile(f, count=2*file_length, dtype='float32')
         assert np.array_equal(file_data, expected_data.flatten())
-    
+
 ###############################################################################
 
 def test_appendSed_invalidDataDimension(sed_data_files_fixture):
