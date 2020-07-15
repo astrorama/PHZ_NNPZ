@@ -1,10 +1,13 @@
-/.project
-/.cproject
-/.settings
-/build*
-/InstallArea
-/*.log
-/.pydevproject
 
-*~
 *.pyc
+*~
+.coverage
+.scannerwork
+/*.log
+/.cproject
+/.project
+/.pydevproject
+/.settings
+/InstallArea
+/build*
+PAQA
