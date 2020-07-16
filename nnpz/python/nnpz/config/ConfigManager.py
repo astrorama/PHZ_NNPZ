@@ -133,7 +133,7 @@ class ConfigManager(object):
             try:
                 # pylint: disable=eval-used
                 args[key] = eval(value)
-            except SyntaxError:
+            except (SyntaxError, NameError):
                 # If the evaluation failed use the argument as a string
                 args[key] = value
 

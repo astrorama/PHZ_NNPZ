@@ -81,7 +81,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             input_size = args['input_size']
             if not isinstance(input_size, slice):
                 input_size = slice(input_size)
-            logger.warning('Processing only %d objects from target catalog', input_size)
+            logger.warning('Processing only %s objects from target catalog', input_size)
             self.__target_ids = self.__target_ids[input_size]
             self.__target_phot_data = self.__target_phot_data[input_size]
             self.__target_astropy_table = self.__target_astropy_table[input_size]

@@ -22,6 +22,7 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import os.path
+import sys
 
 import nnpz.neighbor_selection.brute_force_methods as bfm
 from ElementsKernel import Logging
@@ -87,7 +88,7 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
             )
         else:
             logger.error('Invalid neighbor_method option: %s', neighbor_method)
-            exit(-1)
+            sys.exit(-1)
 
         if use_adaptive_bands:
             target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
