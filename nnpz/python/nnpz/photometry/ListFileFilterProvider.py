@@ -24,9 +24,9 @@ from __future__ import division, print_function
 import os
 
 import numpy as np
-
+from astropy.table import Table
+from nnpz.exceptions import FileNotFoundException, UnknownNameException
 from nnpz.photometry import FilterProviderInterface
-from nnpz.exceptions import *
 
 
 class ListFileFilterProvider(FilterProviderInterface):
@@ -43,8 +43,8 @@ class ListFileFilterProvider(FilterProviderInterface):
     the filter transmission (in the range [0,1]).
     """
 
-
-    def __parseFilterListFile(self, list_file):
+    @staticmethod
+    def __parseFilterListFile(list_file):
         """Parses the given file in a list of (filtername, filename) pairs"""
 
         list_file = os.path.abspath(list_file)
@@ -54,21 +54,21 @@ class ListFileFilterProvider(FilterProviderInterface):
 
         result = []
 
-        for l in lines:
+        for line in lines:
             # Remove any comments from the line
-            if '#' in l:
-                l = l[:l.index('#')]
-            l = l.strip()
-            if len(l) == 0:
+            if '#' in line:
+                line = line[:line.index('#')]
+            line = line.strip()
+            if len(line) == 0:
                 continue
 
             # Check if the user gave a name
-            if ':' in l:
-                filename, filtername = l.split(':')
+            if ':' in line:
+                filename, filtername = line.split(':')
                 filename = filename.strip()
                 filtername = filtername.strip()
             else:
-                filename = l.strip()
+                filename = line.strip()
                 filtername = os.path.splitext(os.path.basename(filename))[0]
 
             # If we have a relative path, make it relative to the list file
@@ -80,7 +80,6 @@ class ListFileFilterProvider(FilterProviderInterface):
             result.append((filtername, filename))
 
         return result
-
 
     def __init__(self, list_file):
         """Creates a new ListFileFilterProvider for the given list file.
@@ -95,7 +94,7 @@ class ListFileFilterProvider(FilterProviderInterface):
         if not os.path.exists(list_file):
             raise FileNotFoundException(list_file + ' does not exist')
 
-         # Get the list with the (filtername, filename) pairs
+        # Get the list with the (filtername, filename) pairs
         filter_file_pairs = self.__parseFilterListFile(list_file)
 
         # Populate the member variables
@@ -106,11 +105,9 @@ class ListFileFilterProvider(FilterProviderInterface):
             self.__name_list.append(filtername)
             self.__file_map[filtername] = filename
 
-
     def getFilterNames(self):
         """Returns the names of the filters"""
         return self.__name_list
-
 
     def getFilterTransmission(self, name):
         """Provides the transmission curve of the filter with the given name.
@@ -134,14 +131,13 @@ class ListFileFilterProvider(FilterProviderInterface):
             return self.__data_map[name]
 
         # Here we need to read the data from the file
-        if not name in self.__file_map:
+        if name not in self.__file_map:
             raise UnknownNameException('Unknown filter:' + name)
 
-        from astropy.table import Table
         table = Table.read(self.__file_map[name], format='ascii')
         data = np.ndarray((len(table), 2), dtype='float32')
-        data[:,0] = table.columns[0]
-        data[:,1] = table.columns[1]
+        data[:, 0] = table.columns[0]
+        data[:, 1] = table.columns[1]
 
         self.__data_map[name] = data
         return data

@@ -22,17 +22,22 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-
 from nnpz.weights import WeightCalculatorInterface
 
 
 class InverseChi2Weight(WeightCalculatorInterface):
+    """
+    Compute the weight as the inverse of the $\\chi^2$ distance.
+    For two identical points, this will be infinity since their distance is 0.
+    This distance should only be used as a fall-back for whenever the likelihood of all
+    neighbors become too small.
+    """
 
     def __call__(self, obj_1, obj_2, flags):
-        v1 = obj_1[:, 0]
-        e1 = obj_1[:, 1]
-        v2 = obj_2[:, 0]
-        e2 = obj_2[:, 1]
+        val_1 = obj_1[:, 0]
+        err_1 = obj_1[:, 1]
+        val_2 = obj_2[:, 0]
+        err_2 = obj_2[:, 1]
 
-        chi2 = np.sum(((v1 - v2) * (v1 - v2)) / ((e1 * e1) + (e2 * e2)))
+        chi2 = np.sum(((val_1 - val_2) * (val_1 - val_2)) / ((err_1 * err_1) + (err_2 * err_2)))
         return 1. / chi2

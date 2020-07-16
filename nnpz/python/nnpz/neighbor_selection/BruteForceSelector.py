@@ -23,8 +23,8 @@ from __future__ import division, print_function
 
 import abc
 import numpy as np
+from nnpz.exceptions import WrongTypeException
 
-from nnpz.exceptions import *
 from nnpz.neighbor_selection import NeighborSelectorInterface
 
 
@@ -34,7 +34,6 @@ class BruteForceSelector(NeighborSelectorInterface):
     The distance computation and the neighbor selection methods are delegated
     to encapsulated interfaces.
     """
-
 
     class DistanceMethodInterface(object):
         """Interface for computing the reference distances for a coordinate"""
@@ -65,7 +64,6 @@ class BruteForceSelector(NeighborSelectorInterface):
             """
             return
 
-
     class SelectionMethodInterface(object):
         """Interface for selecting the neighbors based on the distances"""
         __metaclass__ = abc.ABCMeta
@@ -83,7 +81,6 @@ class BruteForceSelector(NeighborSelectorInterface):
             """
             return
 
-
     def __init__(self, distance_method, selection_method, scaling_method=None):
         """Creates a new instance of BruteForceSelector
 
@@ -100,14 +97,15 @@ class BruteForceSelector(NeighborSelectorInterface):
         """
         super(BruteForceSelector, self).__init__()
         if not isinstance(distance_method, BruteForceSelector.DistanceMethodInterface):
-            raise WrongTypeException('The distance_method must implement the DistanceMethodInterface')
+            raise WrongTypeException(
+                'The distance_method must implement the DistanceMethodInterface')
         if not isinstance(selection_method, BruteForceSelector.SelectionMethodInterface):
-            raise WrongTypeException('The selection_method must implement the SelectionMethodInterface')
+            raise WrongTypeException(
+                'The selection_method must implement the SelectionMethodInterface')
 
         self.__distance = distance_method
         self.__selection = selection_method
         self.__scaling = scaling_method
-
 
     def _initializeImpl(self, ref_data):
         """Initializes the selector with the given data.
@@ -117,7 +115,6 @@ class BruteForceSelector(NeighborSelectorInterface):
 
         self.__ref_data_values = ref_data[:, :, 0]
         self.__ref_data_errors = ref_data[:, :, 1]
-
 
     def _findNeighborsImpl(self, coordinate, flags):
         """Returns the neighbors of the given coordinate in the reference sample.
@@ -137,16 +134,17 @@ class BruteForceSelector(NeighborSelectorInterface):
 
         # Compute the scaling
         if self.__scaling:
-            a = self.__scaling(self.__ref_data_values[:, not_nan], self.__ref_data_errors[:, not_nan],
-                               obj_values[not_nan], obj_errors[not_nan])
+            scale = self.__scaling(self.__ref_data_values[:, not_nan],
+                                   self.__ref_data_errors[:, not_nan],
+                                   obj_values[not_nan], obj_errors[not_nan])
         else:
-            a = np.ones((len(self.__ref_data_values)))
+            scale = np.ones((len(self.__ref_data_values)))
 
-        distances = self.__distance(a[:, np.newaxis] * self.__ref_data_values[:, not_nan],
-                                    a[:, np.newaxis] * self.__ref_data_errors[:, not_nan],
+        distances = self.__distance(scale[:, np.newaxis] * self.__ref_data_values[:, not_nan],
+                                    scale[:, np.newaxis] * self.__ref_data_errors[:, not_nan],
                                     obj_values[not_nan], obj_errors[not_nan])
         neighbor_ids = self.__selection(distances)
         neighbor_distances = distances[neighbor_ids]
-        neighbor_scales = a[neighbor_ids]
+        neighbor_scales = scale[neighbor_ids]
 
         return neighbor_ids, neighbor_distances, neighbor_scales

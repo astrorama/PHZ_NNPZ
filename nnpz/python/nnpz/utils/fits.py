@@ -25,18 +25,27 @@ from astropy.io import fits
 
 
 def npDtype2FitsTForm(data):
+    """
+        Generate a FITS format code appropriate for the type of this type of data.
+    Args:
+        data: numpy.array
+
+    Returns: str
+
+    """
     if data.dtype.kind in ('S', 'U'):
-        format = "{}A".format(data.dtype.itemsize)
+        fmt = "{}A".format(data.dtype.itemsize)
     else:
         dt = data.dtype.kind + str(data.dtype.alignment)
-        format = fits.column.NUMPY2FITS[dt]
+        fmt = fits.column.NUMPY2FITS[dt]
         if len(data.shape) > 1:
-            format = "{}{}".format(data.shape[1], format)
-    return format
+            fmt = "{}{}".format(data.shape[1], fmt)
+    return fmt
 
 
 def tableToHdu(table):
-    """Converts an astropy Table object to a BinTableHDU.
+    """
+    Convert an astropy Table object to a BinTableHDU.
 
     This method is a helper method for using astropy versions before 2.0. For
     newer versions of astropy the BinTableHDU constructor can be used directly.
@@ -44,8 +53,8 @@ def tableToHdu(table):
     columns = []
     for name in table.colnames:
         data = table[name].data
-        format = npDtype2FitsTForm(data)
-        columns.append(fits.Column(name=name, array=data, format=format))
+        fmt = npDtype2FitsTForm(data)
+        columns.append(fits.Column(name=name, array=data, format=fmt))
     hdu = fits.BinTableHDU.from_columns(columns)
     for key, value in table.meta.items():
         if key == 'COMMENT':
@@ -55,9 +64,12 @@ def tableToHdu(table):
 
 
 def columnsToFitsColumn(columns):
+    """
+    Converts a list of astropy Table Columns to fits.Column
+    """
     fits_cols = []
     for col in columns:
         data = col.data
-        format = npDtype2FitsTForm(data)
-        fits_cols.append(fits.Column(name=col.name, array=data, format=format))
+        fmt = npDtype2FitsTForm(data)
+        fits_cols.append(fits.Column(name=col.name, array=data, format=fmt))
     return fits_cols

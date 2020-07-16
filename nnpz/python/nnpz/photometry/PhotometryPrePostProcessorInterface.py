@@ -27,7 +27,6 @@ import abc
 class PhotometryPrePostProcessorInterface(object):
     """Interface defining the pre and post processing steps of the photometry calculation"""
 
-
     @abc.abstractmethod
     def preProcess(self, sed):
         """Pre-processes an SED.
@@ -44,7 +43,6 @@ class PhotometryPrePostProcessorInterface(object):
             format as the input.
         """
         return
-
 
     @abc.abstractmethod
     def postProcess(self, intensity, filter_name, filter_trans):

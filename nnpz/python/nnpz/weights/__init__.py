@@ -14,6 +14,10 @@
 # MA 02110-1301 USA
 #
 
+"""
+Weighting strategies
+"""
+
 from .WeightPhotometryProvider import WeightPhotometryProvider
 from .CopiedPhotometry import CopiedPhotometry
 from .WeightCalculatorInterface import WeightCalculatorInterface

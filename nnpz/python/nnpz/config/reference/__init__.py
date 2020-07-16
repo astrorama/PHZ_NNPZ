@@ -14,6 +14,10 @@
 # MA 02110-1301 USA
 #
 
+"""
+Configuration classes for the reference sample/catalog
+"""
+
 from .ReferenceSampleConfig import ReferenceSampleConfig
 from .ReferenceSamplePhotometryConfig import ReferenceSamplePhotometryConfig
 from .ReferenceCatalogConfig import ReferenceCatalogConfig

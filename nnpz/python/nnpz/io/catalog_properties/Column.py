@@ -23,19 +23,17 @@ from __future__ import division, print_function
 
 import numpy as np
 
-from nnpz.exceptions import *
+from nnpz.exceptions import UnknownNameException
 from nnpz.io import CatalogReader
 
 
 class Column(CatalogReader.CatalogPropertyInterface):
     """Catalog property for retrieving a column of the catalog"""
 
-
     def __init__(self, col_name, dtype=np.float32):
         """Creates a new instance with the given column name"""
         self.__col_name = col_name
         self.__dtype = dtype
-
 
     def __call__(self, catalog):
         """Returns the values of the column.
@@ -49,6 +47,6 @@ class Column(CatalogReader.CatalogPropertyInterface):
         Raises:
             UnknownNameException: If the catalog does not contain the column
         """
-        if not self.__col_name in catalog.colnames:
+        if self.__col_name not in catalog.colnames:
             raise UnknownNameException('Missing column {}'.format(self.__col_name))
         return np.asarray(catalog[self.__col_name], dtype=self.__dtype)

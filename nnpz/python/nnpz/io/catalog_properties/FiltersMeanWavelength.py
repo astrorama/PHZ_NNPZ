@@ -30,7 +30,7 @@ from nnpz.io import CatalogReader
 class FiltersMeanWavelength(CatalogReader.CatalogPropertyInterface):
     """Catalog property to retrieve the mean of the filter transmissions"""
 
-    def __init__(self, filter_dict, nan_flags=[]):
+    def __init__(self, filter_dict, nan_flags=None):
         """
         Constructor
 
@@ -41,7 +41,7 @@ class FiltersMeanWavelength(CatalogReader.CatalogPropertyInterface):
                 columns are replaced with NaN.
         """
         self.__filter_dict = filter_dict
-        self.__nan_flags = nan_flags
+        self.__nan_flags = nan_flags if nan_flags else []
 
     def __call__(self, catalog):
         """

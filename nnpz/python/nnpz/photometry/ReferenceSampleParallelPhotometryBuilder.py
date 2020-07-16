@@ -29,7 +29,9 @@ logger = Logging.getLogger('BuildPhotometry')
 
 
 class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder):
-    """Class for creating photometry from a reference sample using multiple cores"""
+    """
+    Class for creating photometry from a reference sample using multiple cores
+    """
 
     def __init__(self, filter_provider, pre_post_processor, ncores=None):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
@@ -48,7 +50,8 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
             WrongTypeException: If the pre_post_processor is not an
                 implementation of PhotometryPrePostProcessorInterface
         """
-        super(ReferenceSamplePhotometryParallelBuilder, self).__init__(filter_provider, pre_post_processor)
+        super(ReferenceSamplePhotometryParallelBuilder, self).__init__(
+            filter_provider, pre_post_processor)
         self.__ncores = os.cpu_count() if not ncores else ncores
 
     def buildPhotometry(self, sample_iter, progress_listener=None):
@@ -82,7 +85,7 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
         for f in self._filter_map:
             photo_list_map[f] = []
 
-        logger.info('Computing photometries using {} processes'.format(self.__ncores))
+        logger.info('Computing photometries using %d processes', self.__ncores)
         with multiprocessing.Pool(self.__ncores) as pool:
             elements = pool.imap(calculator, [o.sed for o in sample_iter], chunksize=20)
             for progress, photo in enumerate(elements):

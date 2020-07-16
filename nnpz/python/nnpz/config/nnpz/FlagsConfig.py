@@ -28,6 +28,9 @@ import nnpz.io.output_column_providers as ocp
 
 
 class FlagsConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the format of the flag columns: one per flag, or a single one with a bit per flag
+    """
 
     def __init__(self):
         self.__flag_list = None

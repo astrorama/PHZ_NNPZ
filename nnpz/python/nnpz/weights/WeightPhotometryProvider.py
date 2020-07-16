@@ -25,8 +25,10 @@ import abc
 
 
 class WeightPhotometryProvider(object):
+    """
+    Interface definition for methods that provide a new photometry to the weight methods
+    """
     __metaclass__ = abc.ABCMeta
-
 
     @abc.abstractmethod
     def __call__(self, ref_i, cat_i, flags):

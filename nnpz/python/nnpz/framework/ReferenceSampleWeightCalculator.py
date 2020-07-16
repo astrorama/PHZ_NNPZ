@@ -36,6 +36,9 @@ def _apply_weight_calculator(fcalculator, target_list, ref_obj, target_data, res
 
 
 class ReferenceSampleWeightCalculator(object):
+    """
+    Compute the weights of the reference objects
+    """
 
     def __init__(self, weight_phot_provider, weight_calculator, weight_calculator_alt, scaling):
         """
@@ -85,7 +88,8 @@ class ReferenceSampleWeightCalculator(object):
             target_list = affected[ref_i]
 
             # Get the reference sample object photometry to use for the weight calculation
-            # This array has one row per target object, with one column for the target ID, plus one column per band
+            # This array has one row per target object, with one column for the target ID,
+            # plus one column per band
             ref_photometry = np.ndarray((len(target_list),) + filters_shape, dtype=np.float32)
             for i, target in enumerate(target_list):
                 flag = result_flags[target.index]
@@ -118,7 +122,8 @@ class ReferenceSampleWeightCalculator(object):
                     ref_obj for ref_obj, target_obj in zip(ref_photometry, target_list) if target_obj.weight == 0
                 ]
                 new_weights = _apply_weight_calculator(
-                    self._weight_calculator_alt, target_zero_weights, ref_obj_zero_weights, target_data, result_flags
+                    self._weight_calculator_alt, target_zero_weights, ref_obj_zero_weights,
+                    target_data, result_flags
                 )
                 for target, w in zip(target_zero_weights, new_weights):
                     alt_weights[(ref_i, target.index)] = w
@@ -131,7 +136,8 @@ class ReferenceSampleWeightCalculator(object):
         all_zero_i = np.arange(len(weight_sum_per_target))[all_zero_mask]
 
         if len(all_zero_i) > 0:
-            log.debug('{} objects with all weights set to 0, using alternative weight'.format(len(all_zero_i)))
+            log.debug('%d objects with all weights set to 0, using alternative weight',
+                      len(all_zero_i))
             log.debug(all_zero_i)
 
         for target_i in all_zero_i:

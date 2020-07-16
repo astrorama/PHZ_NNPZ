@@ -25,24 +25,21 @@ import numpy as np
 
 from nnpz.photometry import PhotometryPrePostProcessorInterface
 
+# The speed of light in Angstrom/s
+C = 299792458E10
+
 
 class FnuPrePostProcessor(PhotometryPrePostProcessorInterface):
     """Pre/Post processor for producing  photometry in erg/s/cm^2/Hz"""
 
-
     def __init__(self):
         self.__filter_norm = {}
 
-
     def preProcess(self, sed):
-        #switching to the photon equation
-        #"""Returns the SED unmodified"""
-        #return sed
         """Multiply the SED with the wavelength"""
         res = sed.copy()
-        res[:,1] = res[:,1] * res[:,0]
+        res[:, 1] = res[:, 1] * res[:, 0]
         return res
-
 
     def postProcess(self, intensity, filter_name, filter_trans):
         """Converts the intensity to flux density by normalizing for the filter.
@@ -65,18 +62,16 @@ class FnuPrePostProcessor(PhotometryPrePostProcessorInterface):
         The filter integration is performed using the trapezoidal rule.
         """
 
-        # The speed of light in Angstrom/s
-        c = 299792458E10
-
         # First get the filter normalization. We cache the factors to avoid
         # recomputing them when the processor is used for multiple SEDs.
-        if not filter_name in self.__filter_norm:
+        if filter_name not in self.__filter_norm:
             lambda_gt_0 = filter_trans[:, 0] > 0.
-            if np.any(filter_trans[:, 1][lambda_gt_0 == False] != 0.):
-                raise ValueError('There is a transmission value for a lambda less than or equal to 0!')
-            l = filter_trans[:, 0][lambda_gt_0]
-            norm_f = filter_trans[:, 1][lambda_gt_0] / l  # switching to the photon equation: remove the second / l
-            self.__filter_norm[filter_name] = c * np.trapz(norm_f, x=l)
+            if np.any(filter_trans[:, 1][~lambda_gt_0] != 0.):
+                raise ValueError(
+                    'There is a transmission value for a lambda less than or equal to 0!')
+            lambd = filter_trans[:, 0][lambda_gt_0]
+            norm_f = filter_trans[:, 1][lambda_gt_0] / lambd
+            self.__filter_norm[filter_name] = C * np.trapz(norm_f, x=lambd)
         norm = self.__filter_norm[filter_name]
 
         return intensity / norm

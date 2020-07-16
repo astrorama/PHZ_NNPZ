@@ -14,8 +14,12 @@
 # MA 02110-1301 USA
 #
 
-from .ID import ID
-from .Photometry import Photometry
+"""
+Target catalog input columns
+"""
+
 from .Column import Column
 from .EBV import EBV
 from .FiltersMeanWavelength import FiltersMeanWavelength
+from .ID import ID
+from .Photometry import Photometry

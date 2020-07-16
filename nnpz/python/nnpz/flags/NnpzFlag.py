@@ -34,36 +34,46 @@ if len(_flag_names) != len(set(_flag_names)):
 # The flag info keys are tuples containing the following:
 # - The index of the flag byte in the array
 # - A byte with the flag bit set
-_flag_info_map = {name : (i//8, 1 << (i-(i//8)*8)) for i, name in enumerate(_flag_names)}
+_flag_info_map = {name: (i // 8, 1 << (i - (i // 8) * 8)) for i, name in enumerate(_flag_names)}
 
-_array_size = max([x for x,_ in _flag_info_map.values()]) + 1
+_array_size = max([x for x, _ in _flag_info_map.values()]) + 1
 
 
 class _NnpzFlagType(type):
     """The metaclass of the NnpzFlag class. It adds to the class one attribute
     per available flag"""
 
-    def __getattribute__(self, name):
+    def __getattribute__(cls, name):
         """Overriden to return a new instance of NnpzFlag when the name is a valid
         flag name. We need to create a new instance because the flags are mutable."""
         if name in _flag_info_map:
             return NnpzFlag(name)
-        else:
-            return super(_NnpzFlagType, self).__getattribute__(name)
+        return super(_NnpzFlagType, cls).__getattribute__(name)
 
-    def __dir__(self):
+    def __dir__(cls):
         """Implemented to support autocomplete"""
         return ['getFlagNames()'] + _flag_names
 
 
 class NnpzFlag(with_metaclass(_NnpzFlagType, object)):
+    """
+    Wraps all flags that can be set for a target object
+    """
 
     @staticmethod
     def getFlagNames():
+        """
+        Returns: list
+            List of known flag names
+        """
         return _flag_names
 
     @staticmethod
     def getArraySize():
+        """
+        Returns: int
+            Required array size so all flags can be stored
+        """
         return _array_size
 
     def __init__(self, *flag_list):
@@ -78,9 +88,9 @@ class NnpzFlag(with_metaclass(_NnpzFlagType, object)):
     def __str__(self):
         res = '['
         res += '.'.join(['{:08b}'.format(x) for x in self.__array])
-        for f in _flag_names:
-            if not (self & NnpzFlag(f)).isClear():
-                res += ', ' + f
+        for flag in _flag_names:
+            if not (self & NnpzFlag(flag)).isClear():
+                res += ', ' + flag
         res += ']'
         return res
 
@@ -121,6 +131,10 @@ class NnpzFlag(with_metaclass(_NnpzFlagType, object)):
         return self
 
     def isClear(self):
+        """
+        Returns: bool
+            True if no flag is set
+        """
         return bool(np.all(self.__array == 0))
 
     def __bool__(self):
@@ -130,7 +144,17 @@ class NnpzFlag(with_metaclass(_NnpzFlagType, object)):
         return self.__bool__()
 
     def isSet(self, flag):
+        """
+        Args:
+            flag: NnpzFlag
+        Returns: bool
+            True if the flags inside `flag` are set within self
+        """
         return not (self & flag).isClear()
 
     def asArray(self):
+        """
+        Returns: numpy.array
+            Array with the flag values
+        """
         return self.__array.copy()

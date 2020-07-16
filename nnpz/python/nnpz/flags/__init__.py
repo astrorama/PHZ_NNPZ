@@ -14,4 +14,8 @@
 # MA 02110-1301 USA
 #
 
+"""
+Handling of flags for the target object
+"""
+
 from .NnpzFlag import NnpzFlag

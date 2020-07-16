@@ -31,6 +31,9 @@ logger = Logging.getLogger('Configuration')
 
 
 class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
+    """
+    Configure a reference *catalog*: a table with the set of reference objects
+    """
 
     def __init__(self):
         self.__ref_ids = None
@@ -50,7 +53,7 @@ class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
             self._checkParameterExists('reference_catalog_redshift', args)
             ref_z_col = args['reference_catalog_redshift']
 
-            logger.info('Reading reference catalog from {}...'.format(self.__ref_cat))
+            logger.info('Reading reference catalog from %s...', self.__ref_cat)
             ref_reader = CatalogReader(self.__ref_cat)
             self.__ref_ids = ref_reader.get(prop.ID)
             self.__ref_phot_data = ref_reader.get(prop.Photometry(ref_filters))
@@ -59,7 +62,9 @@ class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
             # The redshift column is a PDZ instead of a point estimate
             if len(self.__ref_z.shape) > 1:
                 self._checkParameterExists('reference_catalog_redshift_bins_hdu', args)
-                bins_reader = CatalogReader(self.__ref_cat, hdu=args['reference_catalog_redshift_bins_hdu'])
+                bins_reader = CatalogReader(
+                    self.__ref_cat, hdu=args['reference_catalog_redshift_bins_hdu']
+                )
                 self.__ref_z_bins = bins_reader.get(
                     prop.Column(args.get('reference_catalog_redshift_bins_col', 'BINS_PDF'))
                 )

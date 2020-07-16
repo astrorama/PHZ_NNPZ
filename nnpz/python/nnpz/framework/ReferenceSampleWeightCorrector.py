@@ -34,7 +34,7 @@ class ReferenceSampleWeightCorrector(object):
             absolute_weights: A list, or numpy array, with the weights corresponding to *each* entry
                 in the reference catalog
         """
-        assert type(wrapped) == ReferenceSampleWeightCalculator
+        assert isinstance(wrapped, ReferenceSampleWeightCalculator)
         self.__wrapped = wrapped
         self.__absolute_weights = absolute_weights
 
@@ -51,8 +51,10 @@ class ReferenceSampleWeightCorrector(object):
             and values are lists of the computed weight of the reference sample object per each
             object in the target catalog
         """
-        weights = self.__wrapped.computeWeights(affected, target_data, result_flags, progress_listener)
-        for w in weights.keys():
-            for i in range(len(weights[w])):
-                weights[w][i] *= self.__absolute_weights[w]
+        weights = self.__wrapped.computeWeights(
+            affected, target_data, result_flags, progress_listener
+        )
+        for weight in weights.keys():
+            for i in range(len(weights[weight])):
+                weights[weight][i] *= self.__absolute_weights[weight]
         return weights

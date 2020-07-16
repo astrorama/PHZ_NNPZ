@@ -14,7 +14,11 @@
 # MA 02110-1301 USA
 #
 
+"""
+Classes used for the wiring of different parts of the algorithm
+"""
+
 from .AffectedSourcesFinder import AffectedSourcesFinder
+from .AffectedSourcesReconstructor import AffectedSourcesReconstructor
 from .ProgressListener import ProgressListener
 from .ReferenceSampleWeightCalculator import ReferenceSampleWeightCalculator
-from .AffectedSourcesReconstructor import AffectedSourcesReconstructor

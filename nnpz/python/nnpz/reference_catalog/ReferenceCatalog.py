@@ -78,6 +78,6 @@ class ReferenceCatalog(object):
         pdz = self.__pdz[self.__ids == obj_id]
         if len(pdz) == 0:
             raise IdMismatchException()
-        elif len(pdz) > 1:
+        if len(pdz) > 1:
             raise CorruptedFileException()
         return np.stack([self.__bins, pdz[0]]).T

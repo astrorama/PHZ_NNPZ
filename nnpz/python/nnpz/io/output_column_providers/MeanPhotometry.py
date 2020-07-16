@@ -23,18 +23,17 @@ from __future__ import division, print_function
 
 import numpy as np
 from astropy.table import Column
-
-from nnpz.exceptions import *
+from nnpz.exceptions import InvalidDimensionsException
 from nnpz.io import OutputHandler
 
 
 class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
     """
     Generate a list of columns with the mean photometry from the matching reference objects.
-    The photometry coming from the reference objects are assumed to be on the reference color space
-    (no reddening in the case of a reference sample).
-    Reddening is optionally applied (photometry moved to the target color space) *after* the mean photometry
-    is computed entirely on the reference color space.
+    The photometry coming from the reference objects are assumed to be on the reference
+    color space (no reddening in the case of a reference sample).
+    Reddening is optionally applied (photometry moved to the target color space)
+    *after* the mean photometry is computed entirely on the reference color space.
     """
 
     def __init__(self, catalog_size, filter_names, data, unreddener, target_ebv):
@@ -76,7 +75,8 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
         errors = (np.sqrt(self.__total_errors).T / self.__total_weights).T
 
         if self.__unreddener:
-            reddened = self.__unreddener.redden_data(np.stack([values, errors], axis=2), self.__target_ebv)
+            photometry = np.stack([values, errors], axis=2)
+            reddened = self.__unreddener.redden_data(photometry, self.__target_ebv)
             values[:, :] = reddened[:, :, 0]
             errors[:, :] = reddened[:, :, 1]
 

@@ -23,7 +23,7 @@ from __future__ import division, print_function
 
 import numpy as np
 
-from nnpz.exceptions import *
+from nnpz.exceptions import UnknownNameException
 from nnpz.io import CatalogReader
 
 
@@ -37,7 +37,7 @@ class Photometry(CatalogReader.CatalogPropertyInterface):
         for flag in self.__nan_flags:
             data[data == flag] = np.nan
 
-    def __init__(self, column_list, nan_flags=[]):
+    def __init__(self, column_list, nan_flags=None):
         """Creates a new instance for the given column names.
 
         Args:
@@ -56,7 +56,7 @@ class Photometry(CatalogReader.CatalogPropertyInterface):
             self.__column_list = column_list
         else:
             self.__column_list = list(map(lambda t: t + (None,), column_list))
-        self.__nan_flags = nan_flags
+        self.__nan_flags = nan_flags if nan_flags else []
 
     def __call__(self, catalog):
         """Returns the photometry of the catalog.

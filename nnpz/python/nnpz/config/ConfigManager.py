@@ -31,25 +31,65 @@ _handler_map = {}
 
 
 class ConfigManager(object):
+    """
+    The ConfigManager handles the lifetime and interdependency of the different classes that model
+    the configuration of NNPZ.
+    Each individual component (input, output, search, scaling, weighting) should have
+    its own associated configuration class.
+    These classes must inherit from ConfigManager.ConfigHandler, and, in order to register
+    them, call `ConfigManager.addHandler(ConfigClass)` at the end of the module
+    where they are defined.
+
+    Args:
+        config_file: str
+            Path to the configuration file. If None, it will default to 'nnpz.conf' under
+            any of the known configuration paths (See Elements documentation to know how this is
+            resolved)
+        extra_arguments: list of str
+            List of additional arguments, as strings. They will be evaluated as Python
+            expressions, so you could use 'range(10)', for instance.
+    """
+
     class ConfigHandler(object):
+        """
+        Configuration classes must implement this interface
+        """
         __metaclass__ = abc.ABCMeta
 
-        def _checkParameterExists(self, param, args):
+        @staticmethod
+        def _checkParameterExists(param, args):
             if param not in args:
-                logger.error('Missing parameter: {}'.format(param))
+                logger.error('Missing parameter: %s', param)
                 exit(-1)
 
         @abc.abstractmethod
         def parseArgs(self, args):
-            pass
+            """
+            Parse the arguments the class knows about. Ignore any others.
+            Args:
+                args: dict
+                    A dictionary with the configuration key/values
+            """
 
     @staticmethod
     def addHandler(handler_type):
+        """
+        Register a configuration handler
+        Args:
+            handler_type: A *type* that inherits from ConfigHandler
+        """
         assert issubclass(handler_type, ConfigManager.ConfigHandler)
         _handler_map[handler_type] = handler_type()
 
     @staticmethod
     def getHandler(handler_type):
+        """
+        Get the instance (singleton) of a given configuration handler
+        Args:
+            handler_type: A *type* that inherits from ConfigHandler
+        Returns: handler_type
+            The registered instance of handler_type
+        """
         return _handler_map.get(handler_type)
 
     def __init__(self, config_file, extra_arguments):
@@ -57,15 +97,17 @@ class ConfigManager(object):
         if not config_file:
             config_file = Configuration.getConfigurationPath('nnpz.conf', True)
         args = {}
+        # pylint: disable=exec-used
         exec(open(config_file).read(), args)
 
-        self.parseExtraArgs(args, extra_arguments)
+        self._parseExtraArgs(args, extra_arguments)
 
         self.__objects = {}
         for handler in _handler_map.values():
             self.__objects.update(handler.parseArgs(args))
 
-    def parseExtraArgs(self, args, extra_arguments):
+    @staticmethod
+    def _parseExtraArgs(args, extra_arguments):
         """
         Overload/add new key/values to args from additional command-line arguments
         Args:
@@ -89,15 +131,27 @@ class ConfigManager(object):
                 value = extra_arguments[i]
 
             try:
+                # pylint: disable=eval-used
                 args[key] = eval(value)
-            except Exception:
+            except SyntaxError:
                 # If the evaluation failed use the argument as a string
                 args[key] = value
 
             i += 1
 
     def getAvailableObjectList(self):
-        return self.__objects.keys()
+        """
+        Returns: list of str
+            Known configuration keys
+        """
+        return list(self.__objects.keys())
 
     def getObject(self, name):
+        """
+        Args:
+            name: str
+                Configuration key
+        Returns: object
+            Configuration value
+        """
         return self.__objects[name]

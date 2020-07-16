@@ -24,9 +24,10 @@ from __future__ import division, print_function
 import abc
 import os
 import inspect
-from astropy.table import Table
 
-from nnpz.exceptions import *
+from astropy.io.registry import IORegistryError
+from astropy.table import Table
+from nnpz.exceptions import FileNotFoundException, WrongFormatException, WrongTypeException
 
 
 class CatalogReader(object):
@@ -58,7 +59,6 @@ class CatalogReader(object):
             """
             return
 
-
     def __init__(self, filename, hdu=1):
         """Creates a new instance of CatalogReader.
 
@@ -76,18 +76,17 @@ class CatalogReader(object):
 
         try:
             self.__catalog = Table.read(filename, hdu=hdu)
-        except:
+        except (IORegistryError, ValueError):
             try:
                 self.__catalog = Table.read(filename, format='ascii')
-            except:
+            except ValueError:
                 raise WrongFormatException('Failed to read catalog {}'.format(filename))
 
-
-    def get(self, property):
+    def get(self, prop):
         """Returns the requested property of the catalog.
 
         Args:
-            property: The property to return
+            prop: The property to return
 
         Returns:
             The requested property
@@ -104,14 +103,13 @@ class CatalogReader(object):
         """
 
         # If we got the class create the instance using the default constructor
-        if inspect.isclass(property):
-            property = property()
+        if inspect.isclass(prop):
+            prop = prop()
 
-        if not isinstance(property, CatalogReader.CatalogPropertyInterface):
+        if not isinstance(prop, CatalogReader.CatalogPropertyInterface):
             raise WrongTypeException('property must implement the CatalogPropertyInterface')
 
-        return property(self.__catalog)
-
+        return prop(self.__catalog)
 
     def getAsAstropyTable(self):
         """Returns the underlying astropy table"""

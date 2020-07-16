@@ -21,8 +21,8 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-import nnpz.io.output_column_providers as ocp
 from ElementsKernel import Logging
+import nnpz.io.output_column_providers as ocp
 from nnpz.config import ConfigManager
 from nnpz.config.nnpz import OutputHandlerConfig, TargetCatalogConfig, GalacticUnreddenerConfig
 from nnpz.config.reference import ReferenceConfig
@@ -31,6 +31,9 @@ logger = Logging.getLogger('Configuration')
 
 
 class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the output columns where to store the (weighted) mean photometry
+    """
 
     def __init__(self):
         self.__added = False
@@ -41,17 +44,19 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
             ref_options = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
             if 'out_mean_phot_filters' in ref_options:
                 target_options = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
+                output_options = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)
                 self.__redden = args.get('redden_mean_phot', False)
                 target_ids = target_options['target_ids']
                 out_mean_phot_filters = ref_options['out_mean_phot_filters']
                 out_mean_phot_data = ref_options['out_mean_phot_data']
-                output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
+                output = output_options['output_handler']
 
                 if self.__redden:
                     unredden_config = ConfigManager.getHandler(GalacticUnreddenerConfig).parseArgs(args)
                     unreddener = unredden_config['galactic_absorption_unreddener']
                     if not unreddener:
-                        logger.error('Galactic un-reddening must be configured for using the reddening on the output')
+                        logger.error('Galactic un-reddening must be configured for using the'
+                                     'reddening on the output')
                     target_ebv = target_options['target_ebv']
                 else:
                     unreddener = None
@@ -59,7 +64,8 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
 
                 output.addColumnProvider(
                     ocp.MeanPhotometry(
-                        len(target_ids), out_mean_phot_filters, out_mean_phot_data, unreddener, target_ebv
+                        len(target_ids), out_mean_phot_filters, out_mean_phot_data,
+                        unreddener, target_ebv
                     )
                 )
 

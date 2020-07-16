@@ -33,14 +33,17 @@ class ArgumentParserWrapper(object):
         self.__parser = argparse.ArgumentParser(*args, **kwargs)
 
     def add_argument_group(self, *args, **kwargs):
+        """
+        Forwarded to argparse.ArgumentParser.add_argument_group
+        """
         return self.__parser.add_argument_group(*args, **kwargs)
 
     def parse_known_args(self, *args, **kwargs):
         """
         One of the places where we trick Elements: we intercept the --config-file, and let Element
         parse /dev/null.
-        We can not pass the actual config file, because otherwise Elements is going to convert every line to
-        an argument
+        We can not pass the actual config file, because otherwise Elements is going to convert
+        every line to an argument
         """
         args, extra = self.__parser.parse_known_args(*args, **kwargs)
         args.config_file = '/dev/null'
@@ -49,9 +52,10 @@ class ArgumentParserWrapper(object):
     @property
     def _actions(self):
         """
-        Second place for the trick: we return a dummy action that will say it knows about any argument.
-        Additional arguments are evaluated as Python code as well (suppressing the --), so we can not use the
-        regular argument parser to do this.
+        Second place for the trick: we return a dummy action that will say it knows about any
+        argument.
+        Additional arguments are evaluated as Python code as well (suppressing the --), so
+        we can not use the regular argument parser to do this.
         """
         class DummyAction:
             @property

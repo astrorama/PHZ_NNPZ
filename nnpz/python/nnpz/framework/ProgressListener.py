@@ -25,23 +25,45 @@ import sys
 
 
 class ProgressListener(object):
+    """
+    Listen for progress changes, and logs into the terminal at least every 1%
 
+    Args:
+        total: int
+            Expected number of items to process
+        prefix:
+            Message to prefix when logging progress changes
+        logger:
+            Logger to use for writing the output
+    """
+
+    # noinspection PyMethodMayBeStatic
     class DefaultLogger(object):
+        """
+        Wrapper for writing directly into stdout
+        """
 
-        def info(self, m):
-            print('\r{}'.format(' ' * (len(m) + 3)), end='')
-            print('\r{}'.format(m), end='')
+        # pylint: disable=no-self-use
+        def info(self, msg):
+            """
+            Log a message into the standard output
+            """
+            print('\r{}'.format(' ' * (len(msg) + 3)), end='')
+            print('\r{}'.format(msg), end='')
             sys.stdout.flush()
 
+        # pylint: disable=no-self-use
         def finalize(self):
+            """
+            Print a new line
+            """
             print('')
-
 
     def __init__(self, total, prefix='', logger=None):
         self.__current = -1
         self.__total = total
         self.__prefix = prefix
-        if not logger is None:
+        if logger is not None:
             self.__logger = logger
         else:
             self.__logger = ProgressListener.DefaultLogger()

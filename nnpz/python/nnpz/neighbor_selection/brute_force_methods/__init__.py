@@ -14,6 +14,10 @@
 # MA 02110-1301 USA
 #
 
+"""
+Methods to use with the Brute Force strategy
+"""
+
 from .Chi2Distance import Chi2Distance
 from .EuclideanDistance import EuclideanDistance
 from .DirectedDistance import DirectedDistance

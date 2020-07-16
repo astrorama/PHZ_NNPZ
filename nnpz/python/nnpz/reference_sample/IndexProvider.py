@@ -23,14 +23,12 @@ from __future__ import division, print_function
 
 import os
 import numpy as np
-
-from nnpz.exceptions import *
+from nnpz.exceptions import InvalidPositionException, FileNotFoundException, \
+    CorruptedFileException, IdMismatchException, DuplicateIdException, AlreadySetException
 
 
 class IndexProvider(object):
     """Class for handling the index table of the NNPZ format"""
-
-
 
     def __checkPositionValidity(self, pos_list, name):
 
@@ -47,13 +45,13 @@ class IndexProvider(object):
         # If we have a -1 entry check that all the next values are also -1 and trim them away
         if len(null_indices) > 0:
             if len(null_indices) < len(pos_list) - null_indices[0]:
-                raise InvalidPositionException('Positive ' + name + 'position values after first -1')
+                raise InvalidPositionException(
+                    'Positive {} position values after first -1'.format(name))
             pos_list = pos_list[:null_indices[0]]
 
         # Now that we have removed the -1 values, check that it is strictly increasing
         if np.any(pos_list[:-1] >= pos_list[1:]):
             raise InvalidPositionException(name + ' positions are not strictly increasing')
-
 
     def __init__(self, filename):
         """Creates a new instance for handling the given file.
@@ -74,7 +72,6 @@ class IndexProvider(object):
         if not os.path.getsize(filename) % 28 == 0:
             raise CorruptedFileException(filename)
 
-
         # Read the data from the file. We first read the full file in an array
         # of bytes, to speed up I/O.
         buffer = np.fromfile(filename, dtype=np.byte)
@@ -89,15 +86,25 @@ class IndexProvider(object):
         file_size = os.path.getsize(filename)
         buf_pos = 0
         while buf_pos < file_size:
-            self.__id_list.append(np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.int64)[0])
+            self.__id_list.append(
+                np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.int64)[0]
+            )
             buf_pos += 8
-            self.__sed_file_list.append(np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.uint16)[0])
+            self.__sed_file_list.append(
+                np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.uint16)[0]
+            )
             buf_pos += 2
-            self.__sed_pos_list.append(np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.int64)[0])
+            self.__sed_pos_list.append(
+                np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.int64)[0]
+            )
             buf_pos += 8
-            self.__pdz_file_list.append(np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.uint16)[0])
+            self.__pdz_file_list.append(
+                np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.uint16)[0]
+            )
             buf_pos += 2
-            self.__pdz_pos_list.append(np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.int64)[0])
+            self.__pdz_pos_list.append(
+                np.frombuffer(buffer, count=1, offset=buf_pos, dtype=np.int64)[0]
+            )
             buf_pos += 8
 
         # Check that the SED and PDZ positions are valid
@@ -117,36 +124,29 @@ class IndexProvider(object):
                 raise IdMismatchException('Duplicate ID ' + str(obj_id))
             self.__index_map[obj_id] = [i, sed_file, sed_pos, pdz_file, pdz_pos]
 
-
     def size(self):
         """Returns the number of objects in the index"""
         return len(self.__id_list)
-
 
     def getIdList(self):
         """Returns a list of long integers with the IDs"""
         return self.__id_list
 
-
     def getSedFileList(self):
         """Returns a list of short unsigned integers with the SED file indices"""
         return self.__sed_file_list
-
 
     def getSedPositionList(self):
         """Returns a list of long integers with the positions in the SED data file"""
         return self.__sed_pos_list
 
-
     def getPdzFileList(self):
         """Returns a list of short unsigned integers with the PDZ file indices"""
         return self.__pdz_file_list
 
-
     def getPdzPositionList(self):
         """Returns a list of long integers with the positions in the PDZs data file"""
         return self.__pdz_pos_list
-
 
     def getFilesAndPositions(self, obj_id):
         """Returns the SED and PDZ file indices and positions for a given ID.
@@ -164,11 +164,10 @@ class IndexProvider(object):
         Raises:
             IdMismatchException: If there is no such ID in the index
         """
-        if not obj_id in self.__index_map:
+        if obj_id not in self.__index_map:
             raise IdMismatchException('Index does not contain ID ' + str(obj_id))
         obj_info = self.__index_map[obj_id]
-        return (obj_info[1], obj_info[2], obj_info[3], obj_info[4])
-
+        return obj_info[1], obj_info[2], obj_info[3], obj_info[4]
 
     def appendId(self, new_id):
         """Appends the given ID in the index, with 0 as the SED and PDZ file
@@ -188,10 +187,10 @@ class IndexProvider(object):
         # Write the values in the end of the file
         with open(self.__filename, 'ab') as f:
             np.asarray([new_id], dtype=np.int64).tofile(f)
-            np.asarray([0], dtype=np.uint16).tofile(f) # SED file
-            np.asarray([-1], dtype=np.int64).tofile(f) # SED position
-            np.asarray([0], dtype=np.uint16).tofile(f) # PHZ file
-            np.asarray([-1], dtype=np.int64).tofile(f) # PHZ position
+            np.asarray([0], dtype=np.uint16).tofile(f)  # SED file
+            np.asarray([-1], dtype=np.int64).tofile(f)  # SED position
+            np.asarray([0], dtype=np.uint16).tofile(f)  # PHZ file
+            np.asarray([-1], dtype=np.int64).tofile(f)  # PHZ position
 
         # Update the lists and the map
         self.__id_list.append(new_id)
@@ -199,8 +198,7 @@ class IndexProvider(object):
         self.__sed_pos_list.append(-1)
         self.__pdz_file_list.append(0)
         self.__pdz_pos_list.append(-1)
-        self.__index_map[new_id] = [len(self.__id_list)-1, 0, -1, 0, -1]
-
+        self.__index_map[new_id] = [len(self.__id_list) - 1, 0, -1, 0, -1]
 
     def setSedFileAndPosition(self, obj_id, file_index, pos):
         """Sets the SED data file and position for the given object.
@@ -222,20 +220,20 @@ class IndexProvider(object):
 
         # Check that the position is not yet set
         if old_sed_pos != -1:
-            raise AlreadySetException('SED position for ID {} is already set to {}'.format(obj_id, old_sed_pos))
+            raise AlreadySetException(
+                'SED position for ID {} is already set to {}'.format(obj_id, old_sed_pos))
 
         # Update the info in the index file
         with open(self.__filename, 'rb+') as f:
-            f.seek(i * 28 + 8) # Skip the ID
-            np.asarray([file_index], dtype=np.int16).tofile(f) # Write the file index
-            np.asarray([pos], dtype=np.int64).tofile(f) # Write the position
+            f.seek(i * 28 + 8)  # Skip the ID
+            np.asarray([file_index], dtype=np.int16).tofile(f)  # Write the file index
+            np.asarray([pos], dtype=np.int64).tofile(f)  # Write the position
 
-        #Update the list and the map
+        # Update the list and the map
         self.__sed_file_list[i] = file_index
         self.__sed_pos_list[i] = pos
         self.__index_map[obj_id][1] = file_index
         self.__index_map[obj_id][2] = pos
-
 
     def setPdzFileAndPosition(self, obj_id, file_index, pos):
         """Sets the PDZ data file and position for the given object.
@@ -257,20 +255,20 @@ class IndexProvider(object):
 
         # Check that the position is not yet set
         if old_pdz_pos != -1:
-            raise AlreadySetException('PDZ position for ID {} is already set to {}'.format(obj_id, old_pdz_pos))
+            raise AlreadySetException(
+                'PDZ position for ID {} is already set to {}'.format(obj_id, old_pdz_pos))
 
         # Update the info in the index file
         with open(self.__filename, 'rb+') as f:
             f.seek(i * 28 + 18)  # Skip the ID, SED file and SED position
-            np.asarray([file_index], dtype=np.int16).tofile(f) # Write the file index
-            np.asarray([pos], dtype=np.int64).tofile(f) # Write the position
+            np.asarray([file_index], dtype=np.int16).tofile(f)  # Write the file index
+            np.asarray([pos], dtype=np.int64).tofile(f)  # Write the position
 
-        #Update the list and the map
+        # Update the list and the map
         self.__pdz_file_list[i] = file_index
         self.__pdz_pos_list[i] = pos
         self.__index_map[obj_id][3] = file_index
         self.__index_map[obj_id][4] = pos
-
 
     def missingSedList(self):
         """Returns a list with the IDs of the objects for which the SED data have not been set"""
@@ -279,7 +277,6 @@ class IndexProvider(object):
             if pos == -1:
                 result.append(obj_id)
         return result
-
 
     def missingPdzList(self):
         """Returns a list with the IDs of the objects for which the PDZ data have not been set"""

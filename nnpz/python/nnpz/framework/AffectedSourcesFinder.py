@@ -68,8 +68,8 @@ class AffectedSourcesFinder(object):
             if progress_listener:
                 progress_listener(i + 1)
             neighbor_indices, distances, scales = self.__selector.findNeighbors(in_data, flags)
-            for ref_i, d, s in zip(neighbor_indices, distances, scales):
+            for ref_i, distance, scale in zip(neighbor_indices, distances, scales):
                 if ref_i not in result:
                     result[ref_i] = NeighborSet()
-                result[ref_i].append(i, distance=d, scale=s)
+                result[ref_i].append(i, distance=distance, scale=scale)
         return result

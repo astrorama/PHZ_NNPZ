@@ -29,6 +29,16 @@ import numpy as np
 
 
 class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
+    """
+    Compute point estimates from the PDZ
+
+    Args:
+        pdf_provider: OutputColumnProviderInterface
+            Must implement the methods getPdzBins and getColumns
+            (i.e. CoaddedPdz or TrueRedshiftPdz)
+        estimates: list of str
+            Point estimates to compute: from median, mean and mode
+    """
 
     def __init__(self, pdf_provider, estimates):
         self.__estimate_impl = {}
@@ -60,7 +70,7 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
         pdfs = self.__pdf_provider.getColumns()[0]
         bins = self.__pdf_provider.getPdzBins()
         columns = []
-        for e in self.__estimates:
-            get_impl = getattr(self, 'getEstimate' + e.capitalize())
+        for estimate in self.__estimates:
+            get_impl = getattr(self, 'getEstimate' + estimate.capitalize())
             columns.extend(get_impl(bins, pdfs))
         return columns

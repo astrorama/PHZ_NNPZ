@@ -47,8 +47,8 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
     batch.
     """
 
-
-    def __init__(self, neighbors_no, brute_force_batch_size=10000, balanced_tree=True, distance_method=Chi2Distance()):
+    def __init__(self, neighbors_no, brute_force_batch_size=10000, balanced_tree=True,
+                 distance_method=Chi2Distance()):
         """Create a new instance of EuclideanRegionBruteForceSelector.
 
         Args:
@@ -62,9 +62,9 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         self.__neighbors_no = neighbors_no
         self.__brute_force_batch_size = brute_force_batch_size
         self.__balanced_tree = balanced_tree
-
         self.__distance = distance_method
-
+        self.__kdtree = None
+        self.__ref_data = None
 
     def _initializeImpl(self, ref_data):
         """Initializes the selector with the given data.
@@ -78,8 +78,8 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
                 )
             )
         self.__ref_data = ref_data
-        self.__kdtree = KDTreeSelector(self.__brute_force_batch_size, self.__balanced_tree).initialize(ref_data)
-
+        self.__kdtree = KDTreeSelector(self.__brute_force_batch_size,
+                                       self.__balanced_tree).initialize(ref_data)
 
     def _findNeighborsImpl(self, coordinate, flags):
         """Returns te n closest neighbors to the given coordinate.
@@ -99,10 +99,12 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
             batch, _, _ = self.__kdtree.findNeighbors(coordinate, flags)
 
         # Get the slice of the reference data which covers the batch
-        batch_data = self.__ref_data[batch,:,:]
+        batch_data = self.__ref_data[batch, :, :]
 
         # Now use a BruteForceSelector to find the chi2 neighbors in the batch
-        brute_force = BruteForceSelector(self.__distance, SmallestSelector(self.__neighbors_no)).initialize(batch_data)
+        brute_force = BruteForceSelector(
+            self.__distance, SmallestSelector(self.__neighbors_no)
+        ).initialize(batch_data)
         bf_ids, chi2, scales = brute_force.findNeighbors(coordinate, flags)
 
         # Retrieve the IDs of the objects in the full reference sample

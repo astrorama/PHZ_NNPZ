@@ -27,26 +27,35 @@ from astropy.table import Column
 
 from nnpz.io import OutputHandler
 
+
 class PdfSampling(OutputHandler.OutputColumnProviderInterface,
                   OutputHandler.HeaderProviderInterface):
+    """
+    Generate a set of samples from a PDF
 
+    Args:
+        pdf_provider: OutputColumnProviderInterface
+            Must implement the methods getPdzBins and getColumns
+            (i.e. CoaddedPdz or TrueRedshiftPdz)
+        quantiles: list of float
+            Quantiles to compute (between 0 and 1)
+        mc_samples:
+            How many Montecarlo samples to generate
+    """
 
     def __sample(self, pdf, bins, quantiles):
         cum_prob = np.zeros(len(bins))
         cum_prob[1:] = np.cumsum(np.diff(bins) * ((pdf[:-1] + pdf[1:]) / 2.))
-        inv_cum = interpolate.interp1d(cum_prob/max(cum_prob), bins, kind='linear')
+        inv_cum = interpolate.interp1d(cum_prob / max(cum_prob), bins, kind='linear')
         return inv_cum(quantiles)
 
-
-    def __init__(self, pdf_provider, quantiles=[], mc_samples=0):
+    def __init__(self, pdf_provider, quantiles=None, mc_samples=0):
         self.__pdf_provider = pdf_provider
-        self.__qs = quantiles
+        self.__qs = quantiles if quantiles else []
         self.__mc_no = mc_samples
-
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         pass
-
 
     def getColumns(self):
         bins = self.__pdf_provider.getPdzBins()
@@ -55,19 +64,20 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
         cols = []
 
         if self.__qs:
-            fixed_probs = np.asarray([self.__sample(pdf, bins, self.__qs) for pdf in pdfs], dtype=np.float32)
+            fixed_probs = np.asarray([self.__sample(pdf, bins, self.__qs) for pdf in pdfs],
+                                     dtype=np.float32)
             cols.append(Column(fixed_probs, "REDSHIFT_PDF_QUANTILES"))
 
         if self.__mc_no > 0:
-            mc_vals = np.asarray([self.__sample(pdf, bins, np.random.rand(self.__mc_no)) for pdf in pdfs], dtype=np.float32)
+            samples = np.random.rand(self.__mc_no)
+            mc_vals = np.asarray([self.__sample(pdf, bins, samples) for pdf in pdfs],
+                                 dtype=np.float32)
             cols.append(Column(mc_vals, "REDSHIFT_PDF_MC"))
 
         return cols
 
-
     def getHeaderKeywords(self):
         keys = {}
         if self.__qs:
-            keys["PDFQUAN"] =' '.join([str(q) for q in self.__qs])
+            keys["PDFQUAN"] = ' '.join([str(q) for q in self.__qs])
         return keys
-

@@ -21,19 +21,34 @@ Author: Nikolaos Apostolakos
 
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
-from nnpz.framework import *
+from nnpz.framework import AffectedSourcesFinder, ProgressListener
 from nnpz.program.ArgumentParserWrapper import ArgumentParserWrapper
 
 # Trigger the configuration of the NNPZ pipeline
+# noinspection PyUnresolvedReferences
+# pylint: disable=unused-import
 import nnpz.config.nnpz
+# noinspection PyUnresolvedReferences
+# pylint: disable=unused-import
 import nnpz.config.reference
 
 
 def defineSpecificProgramOptions():
+    """
+    Program options. Returns a ArgumentParserWrapper that tricks Elements so we can
+    capture anything extra and do the evaluation ourselves: NNPZ interpret flags
+    as Python code
+    """
     return ArgumentParserWrapper(description='Nearest Neighbor Photo-Z')
 
 
 def mainMethod(args):
+    """
+    Entry point for NNPZ
+
+    Args:
+        args: argparse.Namespace or similar
+    """
     logger = Logging.getLogger('NNPZ')
 
     # Create the object which handles the user parameters
@@ -56,20 +71,26 @@ def mainMethod(args):
     if conf_manager.getObject('apply_galactic_absorption'):
         logger.info('Using Galactic reddening correction.')
         # Get the instance for de-redden the targets
-        galacticAbsorptionCorrector = conf_manager.getObject('galactic_absorption_unreddener')
+        galactic_absorption_corrector = conf_manager.getObject('galactic_absorption_unreddener')
 
         # Get de-reddened data
-        de_reddened_target_data = galacticAbsorptionCorrector.de_redden_data(target_data, target_ebv)
+        de_reddened_target_data = galactic_absorption_corrector.de_redden_data(
+            target_data, target_ebv
+        )
     else:
         de_reddened_target_data = target_data
 
     # Construct the neighbor finder and build the affected sources map
     finder = AffectedSourcesFinder(selector)
-    progress_listener = ProgressListener(len(target_data), 'Finding neighbors... ', logger=logger)
+    progress_listener = ProgressListener(
+        len(target_data), 'Finding neighbors... ', logger=logger
+    )
     affected = finder.findAffected(de_reddened_target_data, result_flags, progress_listener)
 
     # Compute the weights
-    progress_listener = ProgressListener(len(affected), 'Computing neighbor weights...', logger=logger)
+    progress_listener = ProgressListener(
+        len(affected), 'Computing neighbor weights...', logger=logger
+    )
 
     weight_calculator = conf_manager.getObject('weight_calculator')
     weight_calculator.computeWeights(affected, target_data, result_flags, progress_listener)
@@ -81,7 +102,9 @@ def mainMethod(args):
     # Note that we iterate the affected map in increasing order of the reference
     # sample indices. This is done to use as much the cache of the disk, by accessing
     # the PDZs sequentially.
-    progress_listener = ProgressListener(len(affected) - 1, 'Adding contributions to output...', logger=logger)
+    progress_listener = ProgressListener(
+        len(affected) - 1, 'Adding contributions to output...', logger=logger
+    )
     for progress, ref_i in enumerate(sorted(affected)):
         progress_listener(progress)
         for target in affected[ref_i]:
@@ -90,4 +113,5 @@ def mainMethod(args):
     # Create the output catalog
     output_file = conf_manager.getObject('output_file')
     output.save(output_file)
-    logger.info('Created file {}'.format(output_file))
+    logger.info('Created file %s', output_file)
+    return 0

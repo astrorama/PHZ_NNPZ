@@ -21,6 +21,8 @@ Author: Alejandro Alvarez Ayllon
 
 from __future__ import division, print_function
 
+import sys
+
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.config.nnpz import TargetCatalogConfig
@@ -31,13 +33,16 @@ logger = Logging.getLogger('Configuration')
 
 
 class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the weighting strategy
+    """
 
     def __init__(self):
         self.__photometry_provider = None
 
     def __createCopiedPhotometry(self, args):
-        ref_phot_data = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)['reference_phot_data']
-
+        ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
+        ref_phot_data = ref_config['reference_phot_data']
         self.__photometry_provider = CopiedPhotometry(ref_phot_data)
 
     def __createRecomputedPhotometry(self, args):
@@ -50,8 +55,9 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
                 or reference_config['reference_sample'] is None \
                 or not hasattr(reference_config['reference_sample'], 'getSedData'):
             logger.error('CONFIGURATION ERROR:')
-            logger.error('target_catalog_gal_ebv and target_catalog_filters_mean are only supported when reference_sample_dir is used')
-            exit(1)
+            logger.error('Target_catalog_gal_ebv and target_catalog_filters_mean are only '
+                         'supported when reference_sample_dir is used')
+            sys.exit(1)
 
         ref_sample = reference_config['reference_sample']
         filter_order = args['reference_sample_phot_filters']

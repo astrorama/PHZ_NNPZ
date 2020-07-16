@@ -30,9 +30,19 @@ class SourceIndependantGalacticUnReddening(object):
     """
     Source independent galactic absorption un-reddening and reddening.
 
-    it apply the source independent galactic absorption correction on the
-    fluxes following the equation 23 & 24 of
-    J. Coupon private communication 9/07/2018
+    For performance reasons, instead of reddening the reference objects to match
+    the extinction that affected the target object, an approximate de-reddening
+    is applied instead to the later.
+
+    The procedure is described in Schlegel et al. (1998)
+    who provided a recipe to compute a global correction per filter, given an extinction
+    law, a filter curve and a reference spectrum.
+
+    The basic idea is to compute $K_X$, the normalised to E(B-V) correction where $X$ is
+    the given filter, and correct the observed fluxes
+
+    See the NNPZ IB document, appendix B, for the equations.
+    https://www.overleaf.com/read/tbbdxyxbfntw
     """
 
     __fp = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
@@ -92,30 +102,35 @@ class SourceIndependantGalacticUnReddening(object):
             galactic_reddening_curve[:, 0], ref_sed[:, 0], ref_sed[:, 1], left=0, right=0
         )
 
-        self._k_x = self._compute_ks(filter_map, ref_galactic_sed_ressampled, galactic_reddening_curve, ebv_0)
+        self._k_x = self._compute_ks(filter_map, ref_galactic_sed_ressampled,
+                                     galactic_reddening_curve, ebv_0)
         self._filter_order = filter_order
         self._output_filter_order = out_filter_order
 
-    def _compute_ks(self,filter_map,ref_galactic_sed,reddening_curve,ebv_0):
-        ks={}
+    def _compute_ks(self, filter_map, ref_galactic_sed, reddening_curve, ebv_0):
+        ks = {}
         for filter_name in filter_map:
-            filter_transmission=filter_map[filter_name]
-            filter_transmission_ressampled=np.array(reddening_curve)
-            filter_transmission_ressampled[:,1]=np.interp(reddening_curve[:,0], filter_transmission[:,0], filter_transmission[:,1], left=0, right=0)
-            ks[filter_name]=self._compute_k_x(ref_galactic_sed,
-                             reddening_curve,
-                             filter_transmission_ressampled,
-                             ebv_0)
+            filter_transmission = filter_map[filter_name]
+            filter_transmission_ressampled = np.array(reddening_curve)
+            filter_transmission_ressampled[:, 1] = np.interp(reddening_curve[:, 0],
+                                                             filter_transmission[:, 0],
+                                                             filter_transmission[:, 1], left=0,
+                                                             right=0)
+            ks[filter_name] = self._compute_k_x(ref_galactic_sed,
+                                                reddening_curve,
+                                                filter_transmission_ressampled,
+                                                ebv_0)
         return ks
 
-    def _compute_k_x(self,sed,reddening,filter_curve,ebv_0):
-        f_r_lambda = sed[:,1]*filter_curve[:,1]
-        denominator=np.trapz(f_r_lambda, x=reddening[:,0])
+    @staticmethod
+    def _compute_k_x(sed, reddening, filter_curve, ebv_0):
+        f_r_lambda = sed[:, 1] * filter_curve[:, 1]
+        denominator = np.trapz(f_r_lambda, x=reddening[:, 0])
 
-        f_k_r_lambda = np.power(10,-ebv_0*reddening[:,1]/2.5)*f_r_lambda
-        numerator=np.trapz(f_k_r_lambda, x=reddening[:,0])
+        f_k_r_lambda = np.power(10, -ebv_0 * reddening[:, 1] / 2.5) * f_r_lambda
+        numerator = np.trapz(f_k_r_lambda, x=reddening[:, 0])
 
-        k_x=-2.5*np.log10(numerator/denominator)/ebv_0
+        k_x = -2.5 * np.log10(numerator / denominator) / ebv_0
         return k_x
 
     def _unapply_reddening(self, f_x_obs, filter_name, ebv):
@@ -125,7 +140,8 @@ class SourceIndependantGalacticUnReddening(object):
         return f_x / 10 ** (+self._k_x[filter_name] * ebv / 2.5)
 
     def de_redden_data(self, target_data, target_ebv):
-        """Returns a data structure with unereddened fluxes .
+        """
+        Returns a data structure with unereddened fluxes .
         """
         data = np.zeros(target_data.shape, dtype=np.float32)
 
@@ -133,11 +149,12 @@ class SourceIndependantGalacticUnReddening(object):
         data[:, :, 1] = target_data[:, :, 1]
 
         for source_id in range(target_data.shape[0]):
-            ebv=target_ebv[source_id]
+            ebv = target_ebv[source_id]
 
             for filter_id in range(len(self._filter_order)):
                 filter_name = self._filter_order[filter_id]
-                data[source_id,filter_id,0]=self._unapply_reddening(target_data[source_id,filter_id,0],filter_name,ebv)
+                data[source_id, filter_id, 0] = self._unapply_reddening(
+                    target_data[source_id, filter_id, 0], filter_name, ebv)
         return data
 
     def redden_data(self, target_data, target_ebv):
@@ -152,6 +169,7 @@ class SourceIndependantGalacticUnReddening(object):
 
             for filter_id in range(len(self._output_filter_order)):
                 filter_name = self._output_filter_order[filter_id]
-                data[source_id, filter_id, 0] = self._apply_reddening(target_data[source_id, filter_id, 0],
-                                                                      filter_name, ebv)
+                data[source_id, filter_id, 0] = self._apply_reddening(
+                    target_data[source_id, filter_id, 0],
+                    filter_name, ebv)
         return data

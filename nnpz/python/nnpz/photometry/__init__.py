@@ -13,3 +13,7 @@ from .ReferenceSampleParallelPhotometryBuilder import ReferenceSamplePhotometryP
 from .PhotometryProvider import PhotometryProvider
 from .GalacticReddeningPrePostProcessor import GalacticReddeningPrePostProcessor
 from .PhotometryTypeMap import PhotometryTypeMap
+
+"""
+Photometry related functionality
+"""

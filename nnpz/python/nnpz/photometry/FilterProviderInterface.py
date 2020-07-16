@@ -27,7 +27,6 @@ import abc
 class FilterProviderInterface(object):
     """Interface providing the filter transmissions"""
 
-
     @abc.abstractmethod
     def getFilterNames(self):
         """Provides a list with the names of the filters.
@@ -36,7 +35,6 @@ class FilterProviderInterface(object):
             A python list with the names of the filters as strings
         """
         return
-
 
     @abc.abstractmethod
     def getFilterTransmission(self, name):

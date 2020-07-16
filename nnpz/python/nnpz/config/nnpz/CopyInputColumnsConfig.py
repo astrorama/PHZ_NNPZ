@@ -27,11 +27,15 @@ import nnpz.io.output_column_providers as ocp
 
 
 class CopyInputColumnsConfig(ConfigManager.ConfigHandler):
+    """
+    Copy into the output catalog columns from the input
+    """
 
     def __init__(self):
         self.__added = False
 
-    def __addColumnProvider(self, args):
+    @staticmethod
+    def __addColumnProvider(args):
         target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
         cat_to_copy = target_config['target_astropy_table']
         output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
@@ -42,7 +46,6 @@ class CopyInputColumnsConfig(ConfigManager.ConfigHandler):
         else:
             id_column = target_config['target_id_column']
             output.addColumnProvider(ocp.CatalogCopy(cat_to_copy, [id_column]))
-
 
     def parseArgs(self, args):
         if not self.__added:

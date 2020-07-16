@@ -14,4 +14,8 @@
 # MA 02110-1301 USA
 #
 
+"""
+Scaling strategies
+"""
+
 from .Chi2Scaling import Chi2Scaling

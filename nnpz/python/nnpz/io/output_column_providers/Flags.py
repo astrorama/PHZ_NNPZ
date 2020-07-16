@@ -29,6 +29,16 @@ from nnpz import NnpzFlag
 
 
 class Flags(OutputHandler.OutputColumnProviderInterface):
+    """
+    Generate the output column(s) with the flag values.
+
+    Args:
+        flag_list: list of NnpzFlag
+        separate_columns: bool
+            If True, each flag will be stored into an individual boolean column.
+            Otherwise, they will be merged into a single integer column where each bit
+            maps to a flag.
+    """
 
     def __init__(self, flag_list, separate_columns=False):
         self.__flag_list = flag_list
@@ -40,20 +50,19 @@ class Flags(OutputHandler.OutputColumnProviderInterface):
     def _separateColumns(self):
         columns = []
         for name in NnpzFlag.getFlagNames():
-            columns.append(Column(np.asarray([f.isSet(NnpzFlag(name)) for f in self.__flag_list], dtype=np.bool), name))
+            data = np.asarray([f.isSet(NnpzFlag(name)) for f in self.__flag_list], dtype=np.bool)
+            columns.append(Column(data, name))
         return columns
 
     def _byteColumns(self):
         flag_list_as_arrays = [f.asArray() for f in self.__flag_list]
         columns = []
         for i in range(NnpzFlag.getArraySize()):
-            columns.append(Column(np.asarray([f[i] for f in flag_list_as_arrays], dtype=np.uint8), 'FLAGS_{}'.format(i+1)))
+            data = np.asarray([flag[i] for flag in flag_list_as_arrays], dtype=np.uint8)
+            columns.append(Column(data, 'FLAGS_{}'.format(i + 1)))
         return columns
 
     def getColumns(self):
         if self.__separate_columns:
             return self._separateColumns()
-        else:
-            return self._byteColumns()
-
-
+        return self._byteColumns()

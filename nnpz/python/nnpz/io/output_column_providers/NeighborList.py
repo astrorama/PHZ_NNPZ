@@ -31,6 +31,10 @@ NEIGHBOR_SCALES_COLNAME = 'NEIGHBOR_SCALING'
 
 
 class NeighborList(OutputHandler.OutputColumnProviderInterface):
+    """
+    Generate three columns with information about the neighbors: ids, weights and the
+    applied scaling
+    """
 
     def __init__(self, catalog_size, ref_ids):
         self.__neighbors = [[] for i in range(catalog_size)]

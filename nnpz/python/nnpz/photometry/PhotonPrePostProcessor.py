@@ -27,7 +27,9 @@ from nnpz.photometry import PhotometryPrePostProcessorInterface
 
 
 class PhotonPrePostProcessor(PhotometryPrePostProcessorInterface):
-    """Pre/Post processor for producing photometry values in photon/cm^2/s"""
+    """
+    Pre/Post processor for producing photometry values in photon/cm^2/s
+    """
 
     def preProcess(self, sed):
         """Converts the given SED from ergs/cm^2/s/A to photon/cm^2/s/A.

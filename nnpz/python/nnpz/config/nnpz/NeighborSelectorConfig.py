@@ -24,7 +24,6 @@ from __future__ import division, print_function
 import os.path
 
 import nnpz.neighbor_selection.brute_force_methods as bfm
-import numpy as np
 from ElementsKernel import Logging
 from astropy.table import Table
 from nnpz.config import ConfigManager
@@ -39,12 +38,16 @@ logger = Logging.getLogger('Configuration')
 
 
 class NeighborSelectorConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the search strategy for finding neighbors
+    """
 
     def __init__(self):
         self.__selector = None
         self.__scaling = None
 
-    def __getPrior(self, prior):
+    @staticmethod
+    def __getPrior(prior):
         if hasattr(prior, '__call__'):
             return prior
         elif prior == 'uniform':
@@ -55,7 +58,6 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         raise Exception('Unknown prior')
 
     def __createSelector(self, args):
-
         self._checkParameterExists('neighbor_method', args)
         neighbor_method = args['neighbor_method']
         self._checkParameterExists('neighbors_no', args)
@@ -84,7 +86,7 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
                 neighbors_no, args['batch_size'], balanced_tree=args.get('balanced_kdtree', True)
             )
         else:
-            logger.error('Invalid neighbor_method option: {}'.format(neighbor_method))
+            logger.error('Invalid neighbor_method option: %s', neighbor_method)
             exit(-1)
 
         if use_adaptive_bands:

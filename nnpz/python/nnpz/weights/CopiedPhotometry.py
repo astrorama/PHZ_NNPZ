@@ -19,12 +19,14 @@ Created on: 08/02/18
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
-
 from nnpz.weights import WeightPhotometryProvider
 
 
 class CopiedPhotometry(WeightPhotometryProvider):
+    """
+    Dummy implementation of a WeightPhotometryProvider: The photometry used for the
+    weighting are exactly those used for the K-NN search.
+    """
 
     def __init__(self, ref_phot):
         self.__ref_phot = ref_phot

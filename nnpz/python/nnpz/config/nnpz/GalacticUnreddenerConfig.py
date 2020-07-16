@@ -24,21 +24,26 @@ from __future__ import division, print_function
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.config.reference import ReferenceConfig
-from nnpz.photometry.SourceIndependantGalacticUnReddening import SourceIndependantGalacticUnReddening
+from nnpz.photometry.SourceIndependantGalacticUnReddening import \
+    SourceIndependantGalacticUnReddening
 
 logger = Logging.getLogger('Configuration')
 
 
 class GalacticUnreddenerConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the un-reddening: remove the reddening effect of the galactic plane so
+    the object photometry is more within the reference color space
+    """
 
     def __init__(self):
         self.__galactic_absorption_unreddener = None
-        self.__apply=False
-        self.__parsed=False
+        self.__apply = False
+        self.__parsed = False
 
     def __createGalacticUnreddener(self, args):
         if 'target_catalog_gal_ebv' in args:
-            self.__apply=True
+            self.__apply = True
 
             self._checkParameterExists('reference_sample_phot_filters', args)
 
@@ -52,13 +57,16 @@ class GalacticUnreddenerConfig(ConfigManager.ConfigHandler):
                 filter_order,
                 out_filter_order
             )
-        self.__parsed=True
+        self.__parsed = True
 
 
     def parseArgs(self, args):
         if not self.__parsed:
             self.__createGalacticUnreddener(args)
-        return {'apply_galactic_absorption':self.__apply,'galactic_absorption_unreddener': self.__galactic_absorption_unreddener}
+        return {
+            'apply_galactic_absorption': self.__apply,
+            'galactic_absorption_unreddener': self.__galactic_absorption_unreddener
+        }
 
 
 ConfigManager.addHandler(GalacticUnreddenerConfig)

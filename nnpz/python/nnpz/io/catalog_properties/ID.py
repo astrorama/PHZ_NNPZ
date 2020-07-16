@@ -23,7 +23,7 @@ from __future__ import division, print_function
 
 import numpy as np
 
-from nnpz.exceptions import *
+from nnpz.exceptions import UnknownNameException
 from nnpz.io import CatalogReader
 
 
@@ -46,6 +46,6 @@ class ID(CatalogReader.CatalogPropertyInterface):
         Raises:
             UnknownNameException: If the catalog does not contain the ID column
         """
-        if not self.__col_name in catalog.colnames:
+        if self.__col_name not in catalog.colnames:
             raise UnknownNameException('Missing column {}'.format(self.__col_name))
         return np.asarray(catalog[self.__col_name], dtype=np.int64)

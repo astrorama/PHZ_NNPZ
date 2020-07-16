@@ -14,6 +14,14 @@
 # MA 02110-1301 USA
 #
 
+"""
+Implements scaling based on the chi^2 distance:
+
+A first approximation is computed directly, ignoring errors from the reference sample.
+A minimization is done later, taking into account all errors, looking for the scale factor
+that minimizes the chi^2 distance between reference an target object.
+"""
+
 from __future__ import division, print_function
 
 import numpy as np
@@ -23,6 +31,9 @@ from scipy.optimize import newton
 
 # Chi2
 def chi2(a, refval, referr, coordval, coorderr):
+    """
+    chi2 distance
+    """
     nom = (refval * a[:, np.newaxis] - coordval) ** 2
     den = (referr * a[:, np.newaxis]) ** 2 + coorderr ** 2
     return np.sum(nom / den, axis=1)
@@ -48,10 +59,14 @@ class Chi2Scaling(object):
         assert hasattr(prior, '__call__')
         self.prior = prior
         # Find the min and max from the prior itself
-        self.__a_s = np.sort(np.append(np.arange(1, np.floor(a_max) + 1),
-                                       np.exp(np.linspace(np.log(a_min), np.log(a_max), n_samples))))
-        pv = prior(self.__a_s)
-        gt0 = pv > 0.
+        self.__a_s = np.sort(
+            np.append(
+                np.arange(1, np.floor(a_max) + 1),
+                np.exp(np.linspace(np.log(a_min), np.log(a_max), n_samples))
+            )
+        )
+        prior_values = prior(self.__a_s)
+        gt0 = prior_values > 0.
         self.a_min = self.__a_s[np.argmax(gt0)]
         self.a_max = np.flip(self.__a_s)[np.argmax(np.flip(gt0))]
         self.__batch_size = batch_size
@@ -66,24 +81,29 @@ class Chi2Scaling(object):
         """
 
         # Target function to be minimized
-        def chi2_prior(a, *args):
-            return chi2(a, *args)/2 - np.log(self.prior(a))
+        def chi2_prior(scale, *args):
+            # pylint: disable=no-value-for-parameter
+            return chi2(scale, *args) / 2 - np.log(self.prior(scale))
 
-        # Use newtown method to optimize all within in one go
+        # Use Newton method to optimize all within in one go
         # Implies looking for a 0 on the derivative
-        def chi2_prior_da(a, *args):
-            return (chi2_prior(a + self.__epsilon, *args) - chi2_prior(a - self.__epsilon, *args)) / self.__epsilon * 2
+        def chi2_prior_da(scale, *args):
+            # pylint: disable=no-value-for-parameter
+            prior_plus = chi2_prior(scale + self.__epsilon, *args)
+            # pylint: disable=no-value-for-parameter
+            prior_minus = chi2_prior(scale - self.__epsilon, *args)
+            return (prior_plus - prior_minus) / self.__epsilon * 2
 
         # Do an informed guess
         nom = ref_values * coord_values / coord_errors ** 2
         den = ref_values ** 2 / coord_errors ** 2
-        a = np.sum(nom, axis=1) / np.sum(den, axis=1)
+        scale = np.sum(nom, axis=1) / np.sum(den, axis=1)
 
         # Clip those outside the bounds
-        ge_min = a >= self.a_min
-        le_max = a <= self.a_max
-        a[np.logical_not(ge_min)] = self.a_min
-        a[np.logical_not(le_max)] = self.a_max
+        ge_min = scale >= self.a_min
+        le_max = scale <= self.a_max
+        scale[np.logical_not(ge_min)] = self.a_min
+        scale[np.logical_not(le_max)] = self.a_max
 
         reference_mask = np.logical_and(ge_min, le_max)
 
@@ -91,8 +111,8 @@ class Chi2Scaling(object):
             # Compute chi2 with the guessed scaling
             distances = np.full(len(reference_mask), np.inf)
             distances[reference_mask] = chi2(
-                a[reference_mask], ref_values[reference_mask, :], ref_errors[reference_mask, :], coord_values,
-                coord_errors
+                scale[reference_mask], ref_values[reference_mask, :], ref_errors[reference_mask, :],
+                coord_values, coord_errors
             )
 
             # Prune objects that are far away
@@ -100,16 +120,17 @@ class Chi2Scaling(object):
             reference_mask[prune_idx] = False
 
             try:
-                new_a = newton(
-                    chi2_prior_da, a[reference_mask], args=(
-                        ref_values[reference_mask, :], ref_errors[reference_mask, :], coord_values, coord_errors
+                new_scale = newton(
+                    chi2_prior_da, scale[reference_mask], args=(
+                        ref_values[reference_mask, :], ref_errors[reference_mask, :],
+                        coord_values, coord_errors
                     ),
                     maxiter=self.__max_iter, rtol=self.__rtol, disp=False
                 )
-                not_nan = np.isnan(new_a) == False
+                not_nan = np.isfinite(new_scale)
                 reference_mask[reference_mask] = not_nan
-                a[reference_mask] = new_a[not_nan]
+                scale[reference_mask] = new_scale[not_nan]
             except RuntimeError:
                 pass
 
-        return a
+        return scale

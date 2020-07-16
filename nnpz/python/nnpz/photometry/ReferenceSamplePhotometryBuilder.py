@@ -22,14 +22,16 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
+from nnpz.exceptions import WrongTypeException
 
-from nnpz.exceptions import *
-from nnpz.photometry import FilterProviderInterface, PhotometryPrePostProcessorInterface, PhotometryCalculator
+from nnpz.photometry import FilterProviderInterface, PhotometryPrePostProcessorInterface, \
+    PhotometryCalculator
 
 
 class ReferenceSamplePhotometryBuilder(object):
-    """Class for creating photometry from a reference sample"""
-
+    """
+    Class for creating photometry from a reference sample
+    """
 
     def __init__(self, filter_provider, pre_post_processor):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
@@ -73,11 +75,9 @@ class ReferenceSamplePhotometryBuilder(object):
         Note that if this method is not called at all, the default behavior is
         to build the photometry for all filters available.
         """
-
         self._filter_map = {}
         for f in filter_list:
             self._filter_map[f] = self._filter_provider.getFilterTransmission(f)
-
 
     def buildPhotometry(self, sample_iter, progress_listener=None):
         """Computes the photometry of the SEDs the given iterator traverses.

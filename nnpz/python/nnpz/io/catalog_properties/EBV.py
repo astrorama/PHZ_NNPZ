@@ -23,15 +23,14 @@ from __future__ import division, print_function
 
 import numpy as np
 
-from nnpz.exceptions import *
+from nnpz.exceptions import UnknownNameException
 from nnpz.io import CatalogReader
 
 
 class EBV(CatalogReader.CatalogPropertyInterface):
     """Catalog property to retrieve the galactic extinction"""
 
-
-    def __init__(self, ebv_column, nan_flags=[]):
+    def __init__(self, ebv_column, nan_flags=None):
         """Creates a new instance for the given column names.
 
         Args:
@@ -40,8 +39,7 @@ class EBV(CatalogReader.CatalogPropertyInterface):
 
         """
         self.__ebv_column = ebv_column
-        self.__nan_flags = nan_flags
-
+        self.__nan_flags = nan_flags if nan_flags else []
 
     def __call__(self, catalog):
         """Returns the values of the extinction

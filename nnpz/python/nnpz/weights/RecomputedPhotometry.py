@@ -41,10 +41,11 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         GalacticReddeningPrePostProcessor loads these files *each time* it is instantiated
         unless we give them to it. So we pre-load them here if needed.
         """
-        fp = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
-        self.__reddening_curve = fp.getFilterTransmission('extinction_curve')
+        provider = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
+        self.__reddening_curve = provider.getFilterTransmission('extinction_curve')
 
-    def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None, filter_trans_mean_lists=None):
+    def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None,
+                 filter_trans_mean_lists=None):
         """
         Constructor.
         Args:
@@ -52,9 +53,10 @@ class RecomputedPhotometry(WeightPhotometryProvider):
             filter_order: A list with the filters in the order they are expected to be returned
             filter_trans_map: A map filter_name => [average filter transmissions]
             phot_type: Photometry type
-            ebv_list: None, or a 1D array with the (E(B-V) corresponding to each entry in the target catalog
-            filter_trans_mean_list: A map with the filter_name as key, and a list/array with the filter mean
-                corresponding to each entry in the target catalog
+            ebv_list: None, or a 1D array with the (E(B-V) corresponding to each entry in the
+                target catalog
+            filter_trans_mean_list: A map with the filter_name as key, and a list/array with the
+                filter mean corresponding to each entry in the target catalog
         """
         self.__ref_sample = ref_sample
         self.__filter_order = filter_order
@@ -70,17 +72,18 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         self.__filter_shifts = dict(itertools.product(self.__filter_trans_map.keys(), [None]))
         if filter_trans_mean_lists is not None:
             for filter_name, transmissions in self.__filter_trans_map.items():
-                transmission_mean = np.average(transmissions[:, 0], weights=transmissions[:, 1])
+                trans_mean = np.average(transmissions[:, 0], weights=transmissions[:, 1])
                 if filter_name in filter_trans_mean_lists:
-                    source_transmission_mean = filter_trans_mean_lists[filter_name]
-                    not_nan_mean = np.isnan(source_transmission_mean) == False
-                    self.__filter_shifts[filter_name] = np.zeros(source_transmission_mean.shape)
-                    self.__filter_shifts[filter_name][not_nan_mean] = source_transmission_mean[not_nan_mean] - transmission_mean
+                    src_trans_mean = filter_trans_mean_lists[filter_name]
+                    not_nan_mean = np.isfinite(src_trans_mean)
+                    shifts = np.zeros(src_trans_mean.shape)
+                    shifts[not_nan_mean] = src_trans_mean[not_nan_mean] - trans_mean
+                    self.__filter_shifts[filter_name] = shifts
 
     def __call__(self, ref_i, cat_i, flags):
         """
-        Re-compute the photometry of the reference sample as if it were seen through the same part of the detector
-        as the target.
+        Re-compute the photometry of the reference sample as if it were seen through the same
+        part of the detector as the target.
         Args:
             ref_i: The index of the reference sample for which re-compute the photometry
             cat_i: The index of the target to use for the re-computation
@@ -104,7 +107,6 @@ class RecomputedPhotometry(WeightPhotometryProvider):
             if self.__filter_shifts[filter_name] is not None:
                 filter_map[filter_name][:, 0] += self.__filter_shifts[filter_name][cat_i]
 
-
         # Create the photometry provider
         pre_post_proc = self.__phot_pre_post()
         if self.__ebv_list is not None:
@@ -117,7 +119,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         # Compute the photometry
         phot_map = phot_calc.compute(self.__current_ref_sed)
         phot = np.zeros((len(self.__filter_order), 2), dtype=np.float32)
-        for i, f in enumerate(self.__filter_order):
-            phot[i][0] = phot_map[f]
+        for i, filter_name in enumerate(self.__filter_order):
+            phot[i][0] = phot_map[filter_name]
 
         return phot

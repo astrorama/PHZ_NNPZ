@@ -28,7 +28,7 @@ import scipy.spatial as spatial
 from ElementsKernel import Logging
 from nnpz.neighbor_selection import NeighborSelectorInterface
 
-log = Logging.getLogger('KDTreeSelector')
+logger = Logging.getLogger('KDTreeSelector')
 
 
 class KDTreeSelector(NeighborSelectorInterface):
@@ -43,7 +43,6 @@ class KDTreeSelector(NeighborSelectorInterface):
     closest neighbors using Euclidean distance.
     """
 
-
     def __init__(self, neighbors_no, balanced_tree=True):
         """Create a new instance of KDTreeSelector.
 
@@ -56,27 +55,29 @@ class KDTreeSelector(NeighborSelectorInterface):
         self.__neighbors_no = neighbors_no
         self.__balanced_tree = balanced_tree
 
-
     def _initializeImpl(self, ref_data):
         """Initializes the selector with the given data.
 
         For argument description see the interface documentation.
         """
+
         def _warn_long_execution():
-            log.warning('Building the KD-tree seems to be taking too long')
-            log.warning('Some particular cases can trigger a worse-case performance when building the tree')
-            log.warning('You can try disabling the creation of a balanced tree')
+            logger.warning('Building the KD-tree seems to be taking too long')
+            logger.warning(
+                'Some particular cases can trigger a worse-case performance when building the tree')
+            logger.warning('You can try disabling the creation of a balanced tree')
 
         # We ignore the errors
-        values = ref_data[:,:,0]
+        values = ref_data[:, :, 0]
         timer = threading.Timer(120, _warn_long_execution)
         timer.start()
+        # False positive of pylint
+        # pylint: disable=no-member
         self.__kdtree = spatial.cKDTree(values, balanced_tree=self.__balanced_tree)
         timer.cancel()
 
-
     def _findNeighborsImpl(self, coordinate, flags):
-        """Returns te n closest neighbors to the given coordinate.
+        """Returns the n closest neighbors to the given coordinate.
 
         For argument and return description see the interface documentation.
 
@@ -86,7 +87,9 @@ class KDTreeSelector(NeighborSelectorInterface):
         """
 
         # We ignore the errors
-        values = coordinate[:,0]
+        values = coordinate[:, 0]
         result = self.__kdtree.query(values, k = self.__neighbors_no)
 
-        return np.asarray(result[1], dtype=np.int64), np.asarray(result[0], dtype=np.float32), np.ones(result[0].shape)
+        neighbor_ids = np.asarray(result[1], dtype=np.int64)
+        neighbor_distances = np.asarray(result[0], dtype=np.float32)
+        return neighbor_ids, neighbor_distances, np.ones(result[0].shape)

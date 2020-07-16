@@ -18,7 +18,6 @@
 Created on: 19/04/2018
 Author: Alejandro Alvarez Ayllon
 """
-import numpy as np
 from astropy.table import Table
 
 from nnpz.io.OutputHandler import OutputHandler

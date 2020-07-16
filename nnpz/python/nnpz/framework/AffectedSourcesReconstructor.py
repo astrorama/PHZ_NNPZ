@@ -31,19 +31,22 @@ class AffectedSourcesReconstructor(object):
     def __init__(self):
         pass
 
-    def reconstruct(self, ref_ids, src_indexes, neighbors, weights, progress_listener):
+    @staticmethod
+    def reconstruct(ref_ids, src_indexes, neighbors, weights, progress_listener):
         """
 
         Args:
             ref_ids:
                 Reference sample IDS.
             src_indexes:
-                The indexes of the rows from the input catalog. Note that this is *not* the object ID,
-                but the row position within the table.
+                The indexes of the rows from the input catalog. Note that this is *not* the
+                object ID, but the row position within the table.
             neighbors:
-                An iterable object where each position holds the neighbors of each source in the catalog.
+                An iterable object where each position holds the neighbors of each source in
+                the catalog.
             weights:
-                An iterable object where each position holds the weights for the neighbors of each source in the catalog.
+                An iterable object where each position holds the weights for the neighbors of each
+                source in the catalog.
             progress_listener:
                 A callable that will be notified by the progress
         Returns:

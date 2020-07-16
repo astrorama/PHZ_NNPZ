@@ -23,18 +23,17 @@ from __future__ import division, print_function
 
 import abc
 
-from nnpz.exceptions import *
+from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 
 
 class NeighborSelectorInterface(object):
-    """Interface for selecting neighbors from a reference sample.
+    """
+    Interface for selecting neighbors from a reference sample.
     """
     __metaclass__ = abc.ABCMeta
 
-
     def __init__(self):
         self.__dimensionality = None
-
 
     @abc.abstractmethod
     def _initializeImpl(self, ref_data):
@@ -53,7 +52,6 @@ class NeighborSelectorInterface(object):
         The implementations do not need to perform any extra checks.
         """
         return
-
 
     def initialize(self, ref_data):
         """Initializes the selector with the given reference data.
@@ -87,7 +85,6 @@ class NeighborSelectorInterface(object):
 
         return self
 
-
     @abc.abstractmethod
     def _findNeighborsImpl(self, coordinate, flags):
         """Must be implemented to find the neighbors in the reference sample.
@@ -118,7 +115,6 @@ class NeighborSelectorInterface(object):
         correct dimensions and no extra validations need to be performed.
         """
         return
-
 
     def findNeighbors(self, coordinate, flags):
         """Returns the neighbors of the given coordinate in the reference sample.
@@ -157,8 +153,10 @@ class NeighborSelectorInterface(object):
         if coordinate.ndim != 2:
             raise InvalidDimensionsException('coordinate must have two dimensions')
         if coordinate.shape[0] != self.__dimensionality:
-            raise InvalidDimensionsException('Invalid parameter space size (' +
-                str(coordinate.shape[0]) + ' instead of ' + str(self.__dimensionality) + ')')
+            raise InvalidDimensionsException(
+                'Invalid parameter space size ({} instead of {})'.format(
+                    coordinate.shape[0], self.__dimensionality)
+            )
         if coordinate.shape[1] != 2:
             raise InvalidDimensionsException('coordinate second axis must have size 2')
 

@@ -25,15 +25,15 @@ import os
 import numpy as np
 import astropy.io.fits as fits
 from astropy.table import Table
-
-from nnpz.exceptions import *
+from nnpz.exceptions import FileNotFoundException, WrongFormatException, UnknownNameException, \
+    MissingDataException
 
 
 class PhotometryProvider(object):
     """This is a utility cass for handling NNPZ photometry FITS files"""
 
-
-    def __checkFileFormat(self, filename):
+    @staticmethod
+    def __checkFileFormat(filename):
         """Checks that the file exists and that it has the correct HDUs"""
 
         if not os.path.exists(filename):
@@ -41,16 +41,16 @@ class PhotometryProvider(object):
 
         try:
             hdus = fits.open(filename)
-        except:
+        except OSError:
             raise WrongFormatException('Failed to open {} as a FITS file'.format(filename))
 
         # Check that the first table is the NNPZ photometry
-        if not 'NNPZ_PHOTOMETRY' in hdus:
+        if 'NNPZ_PHOTOMETRY' not in hdus:
             raise WrongFormatException('File {} does not contain NNPZ photometry'.format(filename))
         return hdus
 
-
-    def __readFilterTransmissions(self, hdus, filter_list):
+    @staticmethod
+    def __readFilterTransmissions(hdus, filter_list):
         """Reads the filter transmissions from the hdus"""
 
         filter_data = {}
@@ -59,24 +59,23 @@ class PhotometryProvider(object):
                 filter_data[name] = None
             else:
                 t = Table(hdus[name].data)
-                trans = np.ndarray((len(t),2), dtype=np.float32)
-                trans[:,0] = t.columns[0]
-                trans[:,1] = t.columns[1]
+                trans = np.ndarray((len(t), 2), dtype=np.float32)
+                trans[:, 0] = t.columns[0]
+                trans[:, 1] = t.columns[1]
                 filter_data[name] = trans
         return filter_data
 
-
-    def __readPhotometryData(self, phot_table, filter_list):
+    @staticmethod
+    def __readPhotometryData(phot_table, filter_list):
         """Reads from the given table the photometry values for the given filters
         in a numpy array."""
 
         data = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
         for i, name in enumerate(filter_list):
-            data[:,i,0] = phot_table[name]
-            if name+'_ERR' in phot_table.colnames:
-                data[:,i,1] = phot_table[name+'_ERR']
+            data[:, i, 0] = phot_table[name]
+            if name + '_ERR' in phot_table.colnames:
+                data[:, i, 1] = phot_table[name + '_ERR']
         return data
-
 
     def __init__(self, filename):
         """Creates a new instance for accessing the given photometry file.
@@ -97,7 +96,8 @@ class PhotometryProvider(object):
 
         # Create a list with the filters in the file
         phot_table = Table(hdus['NNPZ_PHOTOMETRY'].data)
-        self.__filter_list = [c for c in phot_table.colnames if c != 'ID' and not c.endswith('_ERR')]
+        self.__filter_list = [c for c in phot_table.colnames if
+                              c != 'ID' and not c.endswith('_ERR')]
 
         # Read the filter transmissions from the extension HDUs
         self.__filter_data = self.__readFilterTransmissions(hdus, self.__filter_list)
@@ -107,7 +107,6 @@ class PhotometryProvider(object):
 
         # Read the photometry values
         self.__phot_data = self.__readPhotometryData(phot_table, self.__filter_list)
-
 
     def getType(self):
         """Returns the type of photometry in the file.
@@ -121,11 +120,9 @@ class PhotometryProvider(object):
         """
         return self.__type
 
-
     def getFilterList(self):
         """Returns a list with the available filter names"""
         return self.__filter_list
-
 
     def getFilterTransmission(self, filter):
         """Returns the transmission of the given filter.
@@ -145,17 +142,15 @@ class PhotometryProvider(object):
             MissingDataException: If the HDU for the given filter transmission
                 is missing
         """
-        if not filter in self.__filter_data:
+        if filter not in self.__filter_data:
             raise UnknownNameException('Unknown filter {}'.format(filter))
         if self.__filter_data[filter] is None:
             raise MissingDataException('File does not contain tranmission for {} filter'.format(filter))
         return self.__filter_data[filter]
 
-
     def getIds(self):
         """Returns the IDs of the objects there is photometry in the file"""
         return self.__ids
-
 
     def getData(self, *filter_list):
         """Returns an array with the photometry data for the given bands.
@@ -193,9 +188,9 @@ class PhotometryProvider(object):
             try:
                 local_i = self.__filter_list.index(name)
             except ValueError:
-                raise UnknownNameException('File does not contain photometry for {}', name)
+                raise UnknownNameException('File does not contain photometry for {}'.format(name))
 
             # Populate the result
-            result[:,user_i,:] = self.__phot_data[:,local_i,:]
+            result[:, user_i, :] = self.__phot_data[:, local_i, :]
 
         return result

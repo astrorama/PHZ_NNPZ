@@ -23,13 +23,12 @@ from __future__ import division, print_function
 
 import os
 import numpy as np
-
-from nnpz.exceptions import *
+from nnpz.exceptions import FileNotFoundException, AlreadySetException, InvalidDimensionsException, \
+    InvalidAxisException, UninitializedException
 
 
 class PdzDataProvider(object):
     """Class for handling the PDZ data file of NNPZ format"""
-
 
     def __init__(self, filename):
         """Creates a new instance for handling the given file.
@@ -49,7 +48,6 @@ class PdzDataProvider(object):
                 length = np.fromfile(f, count=1, dtype=np.uint32)[0]
                 self.__redshift_bins = np.fromfile(f, count=length, dtype=np.float32)
 
-
     def setRedshiftBins(self, bins):
         """Sets the redshift bins of the PDZs in the file.
 
@@ -64,7 +62,7 @@ class PdzDataProvider(object):
             AlreadySetException: If the redhsift bins of the file are already set
         """
 
-        if not self.__redshift_bins is None:
+        if self.__redshift_bins is not None:
             raise AlreadySetException('PDZ redshift bins are already set')
 
         if len(bins.shape) != 1:
@@ -78,7 +76,6 @@ class PdzDataProvider(object):
             np.asarray([len(self.__redshift_bins)], dtype=np.uint32).tofile(f)
             self.__redshift_bins.tofile(f)
 
-
     def getRedshiftBins(self):
         """Returns the redshift bins of the PDZs in the file.
 
@@ -86,7 +83,6 @@ class PdzDataProvider(object):
             bins or None if the redhsift bins are not set yet
         """
         return self.__redshift_bins
-
 
     def readPdz(self, pos):
         """Reads a PDZ from the given position.
@@ -113,7 +109,6 @@ class PdzDataProvider(object):
 
         return pdz_id, data
 
-
     def appendPdz(self, pdz_id, data):
         """Appends a PDZ to the end of the file.
 
@@ -133,7 +128,7 @@ class PdzDataProvider(object):
         if self.__redshift_bins is None:
             raise UninitializedException()
 
-        # Cnovert the data in a numpy array
+        # Convert the data in a numpy array
         data_arr = np.asarray(data, dtype=np.float32)
         if len(data_arr.shape) != 1:
             raise InvalidDimensionsException('PDZ data must be a 1D array')
@@ -146,7 +141,6 @@ class PdzDataProvider(object):
             data_arr.tofile(f)
 
         return pos
-
 
     def validate(self, id_list, pos_list):
         """Validates that the underlying file is consistent with the given IDs and positions.
@@ -184,22 +178,22 @@ class PdzDataProvider(object):
 
         # Check that all the given positions are smaller than the file size
         file_size = os.path.getsize(self.__filename)
-        for id, pos in zip(id_list, pos_list):
+        for obj_id, pos in zip(id_list, pos_list):
             if pos >= file_size:
-                return 'Position ({}) out of file for ID={}'.format(pos, id)
+                return 'Position ({}) out of file for ID={}'.format(pos, obj_id)
 
         with open(self.__filename, 'rb') as f:
-            for id, pos in zip(id_list, pos_list):
+            for obj_id, pos in zip(id_list, pos_list):
 
                 # Check that the ID given by the user are consistent with the file one
                 f.seek(pos)
                 file_id = np.fromfile(f, count=1, dtype='int64')[0]
-                if file_id != id:
-                    return 'Inconsistent IDs ({}, {})'.format(id, file_id)
+                if file_id != obj_id:
+                    return 'Inconsistent IDs ({}, {})'.format(obj_id, file_id)
 
                 # Check that the length of the PDZ is not going out of the file
                 pdz_end = pos + 8 + 4 * len(self.__redshift_bins)
                 if pdz_end > file_size:
-                    return 'Data length bigger than file for ID={}'.format(id)
+                    return 'Data length bigger than file for ID={}'.format(obj_id)
 
         return None

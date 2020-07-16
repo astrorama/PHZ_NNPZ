@@ -32,15 +32,24 @@ _output_handler = OutputHandler()
 
 
 class OutputHandlerConfig(ConfigManager.ConfigHandler):
+    """
+    Configuration of the output properties to enable
+    """
 
     def __init__(self):
         self.__added = False
 
     @staticmethod
     def addColumnProvider(column_provider):
+        """
+        Register a new column provider
+        Args:
+            column_provider: OutputHandler.OutputColumnProviderInterface
+        """
         _output_handler.addColumnProvider(column_provider)
 
-    def _addColumnProviders(self, args):
+    @staticmethod
+    def _addColumnProviders(args):
         nnpz_config = ConfigManager.getHandler(NnpzCatalogConfig).parseArgs(args)
         ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
         nnpz_cat = nnpz_config['nnpz_astropy_table']
@@ -72,7 +81,9 @@ class OutputHandlerConfig(ConfigManager.ConfigHandler):
 
         # Add point estimates
         if 'pdz_point_estimates' in args:
-            _output_handler.addColumnProvider(ocp.PdzPointEstimates(pdz_prov, args['pdz_point_estimates']))
+            _output_handler.addColumnProvider(
+                ocp.PdzPointEstimates(pdz_prov, args['pdz_point_estimates'])
+            )
 
         _output_handler.addExtensionTableProvider(PdzBins(pdz_prov))
 

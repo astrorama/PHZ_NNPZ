@@ -26,7 +26,11 @@ from nnpz.io import OutputHandler
 
 _output_handler = OutputHandler()
 
+
 class OutputHandlerConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the destination for the output catalog
+    """
 
     @staticmethod
     def addColumnProvider(column_provider):
@@ -34,8 +38,8 @@ class OutputHandlerConfig(ConfigManager.ConfigHandler):
 
     def parseArgs(self, args):
         self._checkParameterExists('output_file', args)
-        return {'output_handler' : _output_handler,
-                'output_file' : args['output_file']}
+        return {'output_handler': _output_handler,
+                'output_file': args['output_file']}
 
 
 ConfigManager.addHandler(OutputHandlerConfig)

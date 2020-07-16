@@ -47,25 +47,23 @@ class PhotometryCalculator(object):
 
         # Compute the ranges of the filters and the total range
         self.__filter_range_map = {}
-        for f in self.__filter_trans_map:
-            t = self.__filter_trans_map[f]
-            self.__filter_range_map[f] = (t[0][0], t[-1][0])
+        for f_name in self.__filter_trans_map:
+            transmission = self.__filter_trans_map[f_name]
+            self.__filter_range_map[f_name] = (transmission[0][0], transmission[-1][0])
 
         # Compute the total range of all filters
         ranges_arr = np.asarray(list(self.__filter_range_map.values()))
-        self.__total_range = (ranges_arr[:,0].min(), ranges_arr[:,1].max())
+        self.__total_range = (ranges_arr[:, 0].min(), ranges_arr[:, 1].max())
 
-
-    def __truncateSed(self, sed, range):
+    @staticmethod
+    def __truncateSed(sed, lambd_range):
         """Truncates the given SED at the given range"""
-
-        min_i = np.searchsorted(sed[:, 0], range[0])
+        min_i = np.searchsorted(sed[:, 0], lambd_range[0])
         if min_i > 0:
             min_i -= 1
-        max_i = np.searchsorted(sed[:, 0], range[1])
+        max_i = np.searchsorted(sed[:, 0], lambd_range[1])
         max_i += 1
         return sed[min_i:max_i+1, :]
-
 
     def compute(self, sed):
         """Computes the photometry for the given SED.
@@ -124,7 +122,8 @@ class PhotometryCalculator(object):
             interp_sed = np.interp(interp_grid, trunc_sed[:, 0], trunc_sed[:, 1], left=0, right=0)
 
             # Interpolate the filter
-            interp_filter = np.interp(interp_grid, filter_trans[:, 0], filter_trans[:, 1], left=0, right=0)
+            interp_filter = np.interp(interp_grid, filter_trans[:, 0], filter_trans[:, 1],
+                                      left=0, right=0)
 
             # Compute the SED through the filter
             filtered_sed = interp_sed * interp_filter
@@ -139,7 +138,6 @@ class PhotometryCalculator(object):
             photometry_map[filter_name] = photometry
 
         return photometry_map
-
 
     def __call__(self, sed):
         """

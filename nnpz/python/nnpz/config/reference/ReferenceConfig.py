@@ -27,6 +27,10 @@ from nnpz.config.reference import (ReferenceSampleConfig, ReferenceCatalogConfig
 
 
 class ReferenceConfig(ConfigManager.ConfigHandler):
+    """
+    Wraps the configuration of the reference sample and catalog, so they can be used
+    interchangeably
+    """
 
     def parseArgs(self, args):
         options = {}

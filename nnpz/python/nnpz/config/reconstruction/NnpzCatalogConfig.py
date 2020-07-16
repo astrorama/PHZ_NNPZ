@@ -26,7 +26,8 @@ from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.io import CatalogReader
 from nnpz.io.catalog_properties import Column
-from nnpz.io.output_column_providers.NeighborList import NEIGHBOR_IDS_COLNAME, NEIGHBOR_WEIGHTS_COLNAME
+from nnpz.io.output_column_providers.NeighborList import NEIGHBOR_IDS_COLNAME, \
+    NEIGHBOR_WEIGHTS_COLNAME
 
 logger = Logging.getLogger('Configuration')
 
@@ -38,12 +39,16 @@ class NnpzCatalogConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__added = False
+        self.__neighbors = None
+        self.__weights = None
+        self.__idxs = None
+        self.__astropy_table = None
 
     def _loadNnpzCatalog(self, args):
         self._checkParameterExists('nnpz_catalog', args)
         nnpz_cat = args['nnpz_catalog']
 
-        logger.info('Reading NNPZ catalog: {}'.format(nnpz_cat))
+        logger.info('Reading NNPZ catalog: %s', nnpz_cat)
         nnpz_reader = CatalogReader(nnpz_cat)
         self.__neighbors = nnpz_reader.get(Column(NEIGHBOR_IDS_COLNAME, dtype=np.int64))
         self.__weights = nnpz_reader.get(Column(NEIGHBOR_WEIGHTS_COLNAME, dtype=np.float64))

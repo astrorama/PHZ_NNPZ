@@ -14,5 +14,9 @@
 # MA 02110-1301 USA
 #
 
+"""
+Input/output primitive types
+"""
+
 from .CatalogReader import CatalogReader
 from .OutputHandler import OutputHandler

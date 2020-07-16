@@ -28,28 +28,37 @@ from nnpz.io import OutputHandler
 
 
 class MedianTrueRedshift(OutputHandler.OutputColumnProviderInterface):
+    """
+    Output a column with the redshift weighted median. Note that this
+    works only for reference catalogs with a point estimate for the redshift.
+    For reference samples we have a PDF for the redshift.
+
+    Args:
+            catalog_size: int
+                Number of target objects, for memory allocation
+            ref_true_redshift_list: list or np.array of float
+                True redshift for the reference objects.
+    """
 
     def __init__(self, catalog_size, ref_true_redshift_list):
         self.__ref_z = ref_true_redshift_list
         self.__zs = [[] for i in range(catalog_size)]
         self.__weights = [[] for i in range(catalog_size)]
 
-
     def addContribution(self, reference_sample_i, neighbor, flags):
-        z = self.__ref_z[reference_sample_i]
-        self.__zs[neighbor.index].append(z)
+        redshift = self.__ref_z[reference_sample_i]
+        self.__zs[neighbor.index].append(redshift)
         self.__weights[neighbor.index].append(neighbor.weight)
-
 
     def getColumns(self):
         median_z = np.zeros(len(self.__zs), dtype=np.float32)
-        for i, (z, w) in enumerate(zip(self.__zs, self.__weights)):
-            half = sum(w) / 2.
+        for i, (redshift, weight) in enumerate(zip(self.__zs, self.__weights)):
+            half = sum(weight) / 2.
             c = 0
-            for sort_i in np.argsort(z):
-                c += w[sort_i]
+            for sort_i in np.argsort(redshift):
+                c += weight[sort_i]
                 if c > half:
-                    median_z[i] = z[sort_i]
+                    median_z[i] = redshift[sort_i]
                     break
         col = Column(median_z, 'REDSHIFT_MEDIAN')
         return [col]

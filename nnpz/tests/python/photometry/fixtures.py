@@ -27,7 +27,7 @@ import numpy as np
 from astropy.table import Table, Column
 import astropy.io.fits as fits
 
-from nnpz.utils import Fits
+from nnpz.utils.fits import tableToHdu
 from ..fixtures.util_fixtures import temp_dir_fixture
 
 ##############################################################################
@@ -135,7 +135,7 @@ def photometry_file_fixture(temp_dir_fixture, photometry_ids_fixure, filters_fix
         if not np.all(photometry_data_fixture[:, i, 1] == 0):
             t[name+'_ERR'] = Column(photometry_data_fixture[:, i, 1])
 
-    hdus.append(Fits.tableToHdu(t))
+    hdus.append(tableToHdu(t))
 
     for name, data in filters_fixture:
         if name == filters_fixture[3][0]:
@@ -144,7 +144,7 @@ def photometry_file_fixture(temp_dir_fixture, photometry_ids_fixure, filters_fix
         t.meta['EXTNAME'] = name
         t['Wavelength'] = Column(data[:, 0])
         t['Transmission'] = Column(data[:, 1])
-        hdus.append(Fits.tableToHdu(t))
+        hdus.append(tableToHdu(t))
 
     filename = os.path.join(temp_dir_fixture, 'phot.fits')
     hdus.writeto(filename)

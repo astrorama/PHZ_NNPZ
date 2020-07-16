@@ -56,28 +56,32 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
         """
         self.__processor = pre_post_processor
         self.__p_14_ebv = p_14_ebv
-        self.__reddening_curve = self.__fp.getFilterTransmission('extinction_curve') if galactic_reddening_curve is None else galactic_reddening_curve
+        if galactic_reddening_curve is None:
+            self.__reddening_curve = self.__fp.getFilterTransmission('extinction_curve')
+        else:
+            self.__reddening_curve = galactic_reddening_curve
 
-
-    def _computeAbsorption(self,sed, reddening_curve, p_14_ebv ):
+    @staticmethod
+    def _computeAbsorption(sed, reddening_curve, p_14_ebv):
         # Compute A_lambda
-        interp_absorption = np.interp(sed[:,0], reddening_curve[:,0], reddening_curve[:,1], left=0, right=0)
-        a_lambda =  interp_absorption * p_14_ebv
-        absorption_factor = np.power(10, -0.4* a_lambda)
+        interp_absorption = np.interp(
+            sed[:, 0], reddening_curve[:, 0], reddening_curve[:, 1], left=0, right=0
+        )
+        a_lambda = interp_absorption * p_14_ebv
+        absorption_factor = np.power(10, -0.4 * a_lambda)
 
         # Compute the reddened sed: build an array with the same shape as the SED
         # with 1s in the first column and the absorption factor in the second,
         # so the element-wise multiplication do not affect the lambda
         mult = np.ones((absorption_factor.shape[0], 2))
-        mult[:,1]=absorption_factor
-        return np.multiply(sed,mult)
-
+        mult[:, 1] = absorption_factor
+        return np.multiply(sed, mult)
 
     def preProcess(self, sed):
         """Redden the SED according to the galactic absorption law and the
         E(B-V) parameter then redirects the call to the FnuPrePostProcessor
         """
-        reddened_sed = self._computeAbsorption(sed,self.__reddening_curve,self.__p_14_ebv)
+        reddened_sed = self._computeAbsorption(sed, self.__reddening_curve, self.__p_14_ebv)
 
         # apply pre-processing
         return self.__processor.preProcess(reddened_sed)

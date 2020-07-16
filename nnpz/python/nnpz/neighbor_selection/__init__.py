@@ -14,6 +14,10 @@
 # MA 02110-1301 USA
 #
 
+"""
+Neighbor selection strategies
+"""
+
 from .NeighborSelectorInterface import NeighborSelectorInterface
 from .BruteForceSelector import BruteForceSelector
 from .KDTreeSelector import KDTreeSelector

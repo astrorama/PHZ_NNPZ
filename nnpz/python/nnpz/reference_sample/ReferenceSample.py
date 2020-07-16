@@ -25,7 +25,8 @@ import os
 
 import numpy as np
 from ElementsKernel import Logging
-from nnpz.exceptions import *
+from nnpz.exceptions import FileNotFoundException, CorruptedFileException, AlreadySetException, \
+    InvalidDimensionsException, InvalidAxisException
 from nnpz.reference_sample import IndexProvider, PdzDataProvider, SedDataProvider
 
 logger = Logging.getLogger('ReferenceSample')
@@ -77,7 +78,6 @@ class ReferenceSample(object):
 
         return ReferenceSample(path, index_filename, sed_pattern, pdz_pattern)
 
-
     def __locate_existing_data_files(self, pattern):
         """Returns a set with the indices of the existing data files following the pattern"""
         result = set()
@@ -86,7 +86,6 @@ class ReferenceSample(object):
             result.add(i)
             i += 1
         return result
-
 
     def __init__(self, path, index_filename=None, sed_pattern=None, pdz_pattern=None):
         """Creates a new ReferenceSample instance, managing the given path.
@@ -135,8 +134,11 @@ class ReferenceSample(object):
         index_sed_files = set(self.__index.getSedFileList())
         index_sed_files.discard(0)  # We remove the zero, which means no file
         if not existing_sed_files.issuperset(index_sed_files):
-            missing_files = [self.__sed_path_pattern.format(i) for i in index_sed_files.difference(existing_sed_files)]
-            raise FileNotFoundException('Missing SED data files: {}'.format(', '.join(missing_files)))
+            missing_sed = index_sed_files.difference(existing_sed_files)
+            missing_files = list(map(self.__sed_path_pattern.format, missing_sed))
+            raise FileNotFoundException(
+                'Missing SED data files: {}'.format(', '.join(missing_files))
+            )
 
         # Go through the SED files and create handlers
         self.__sed_map = {}
@@ -148,25 +150,25 @@ class ReferenceSample(object):
         index_pdz_files = set(self.__index.getPdzFileList())
         index_pdz_files.discard(0) # We remove the zero, which means no file
         if not existing_pdz_files.issuperset(index_pdz_files):
-            missing_files = [self.__pdz_path_pattern.format(i) for i in index_pdz_files.difference(existing_pdz_files)]
-            raise FileNotFoundException('Missing PDZ data files: {}'.format(', '.join(missing_files)))
+            missing_pdz = index_pdz_files.difference(existing_pdz_files)
+            missing_files = list(map(self.__pdz_path_pattern.format, missing_pdz))
+            raise FileNotFoundException(
+                'Missing PDZ data files: {}'.format(', '.join(missing_files))
+            )
 
         # Go through the PDZ files and create handlers
         self.__pdz_map = {}
         for pdz_file in existing_pdz_files:
             self.__pdz_map[pdz_file] = PdzDataProvider(self.__pdz_path_pattern.format(pdz_file))
 
-
     def size(self):
         """Returns the number of objects in the reference sample"""
         return self.__index.size()
-
 
     def getIds(self):
         """Returns the IDs of the reference sample objects as a numpy array of
         double precision (8 bytes) integers"""
         return self.__index.getIdList()
-
 
     def getSedData(self, obj_id):
         """Returns the SED data for the given reference sample object.
@@ -200,8 +202,10 @@ class ReferenceSample(object):
 
         # Check that the index and the SED data file are consistent
         if file_id != obj_id:
-            raise CorruptedFileException('Corrupted files: Index file contains ' +
-                        ' the ID ' + str(obj_id) + ' and SED data file the ' + str(file_id))
+            raise CorruptedFileException(
+                'Corrupted files: Index file contains the ID {} and SED data file the {}'.format(
+                    obj_id, file_id)
+            )
 
         return sed_data
 
@@ -242,14 +246,15 @@ class ReferenceSample(object):
 
         # Check that the index and the PDZ data file are consistent
         if file_id != obj_id:
-            raise CorruptedFileException('Corrupted files: Index file contains ' +
-                        ' the ID ' + str(obj_id) + ' and PDZ data file the ' + str(file_id))
+            raise CorruptedFileException(
+                'Corrupted files: Index file contains the ID {} and PDZ data file the ID {}'.format(
+                    obj_id, file_id)
+            )
 
         result = np.ndarray((len(z_bins), 2), dtype=np.float32)
-        result[:,0] = z_bins
-        result[:,1] = pdz_data
+        result[:, 0] = z_bins
+        result[:, 1] = pdz_data
         return result
-
 
     def createObject(self, new_id):
         """Creates a new object in the reference sample.
@@ -266,7 +271,6 @@ class ReferenceSample(object):
         set using the addSedData() and addPdzData() methods.
         """
         self.__index.appendId(new_id)
-
 
     def addSedData(self, obj_id, data):
         """Adds the SED data of a reference sample object.
@@ -306,12 +310,10 @@ class ReferenceSample(object):
             open(filename, 'wb').close()
             self.__sed_map[new_sed_file] = SedDataProvider(filename)
 
-
     def missingSedList(self):
         """Returns a list with the IDs of the objects for which the SED data have
         not been set"""
         return self.__index.missingSedList()
-
 
     def addPdzData(self, obj_id, data):
         """Adds the PDZ data of a reference sample object.
@@ -347,14 +349,13 @@ class ReferenceSample(object):
         last_pdz_file = max(self.__pdz_map)
         existing_zs = self.__pdz_map[last_pdz_file].getRedshiftBins()
         if existing_zs is None:
-            self.__pdz_map[last_pdz_file].setRedshiftBins(data_arr[:,0])
-        else:
-            if not np.array_equal(data_arr[:,0], existing_zs):
-                raise InvalidAxisException('Given wavelengths are different than existing ones')
+            self.__pdz_map[last_pdz_file].setRedshiftBins(data_arr[:, 0])
+        elif not np.array_equal(data_arr[:, 0], existing_zs):
+            raise InvalidAxisException('Given wavelengths are different than existing ones')
 
         # Add the PDZ data in the last file, normalizing first
         integral = np.trapz(data_arr[:, 1], data_arr[:, 0])
-        new_pos = self.__pdz_map[last_pdz_file].appendPdz(obj_id, data_arr[:,1] / integral)
+        new_pos = self.__pdz_map[last_pdz_file].appendPdz(obj_id, data_arr[:, 1] / integral)
         self.__index.setPdzFileAndPosition(obj_id, last_pdz_file, new_pos)
 
         # Check if the last file exceeded the size limit and create a new one
@@ -363,14 +364,12 @@ class ReferenceSample(object):
             filename = self.__pdz_path_pattern.format(new_pdz_file)
             open(filename, 'wb').close()
             self.__pdz_map[new_pdz_file] = PdzDataProvider(filename)
-            self.__pdz_map[new_pdz_file].setRedshiftBins(data_arr[:,0])
-
+            self.__pdz_map[new_pdz_file].setRedshiftBins(data_arr[:, 0])
 
     def missingPdzList(self):
         """Returns a list with the IDs of the objects for which the PDZ data have
         not been set"""
         return self.__index.missingPdzList()
-
 
     def iterate(self):
         """Returns an iterable object over the reference sample objects.

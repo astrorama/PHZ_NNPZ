@@ -25,19 +25,24 @@ from nnpz.io import OutputHandler
 
 
 class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
+    """
+    Copy a list of columns from the target catalog to the output
+    Args:
+        catalog: astropy.table.Table
+            Target catalog
+        columns: list
+            List of column names to copy
+    """
 
-
-    def __init__(self, catalog, columns = None):
+    def __init__(self, catalog, columns=None):
         self.__catalog = catalog
         if columns is not None:
             self.__columns = columns
         else:
             self.__columns = self.__catalog.colnames
 
-
     def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
-
     def getColumns(self):
-        return [c for _,c in self.__catalog[self.__columns].columns.items()]
+        return [c for _, c in self.__catalog[self.__columns].columns.items()]

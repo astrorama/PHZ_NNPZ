@@ -28,11 +28,13 @@ import nnpz.io.output_column_providers as ocp
 
 
 class NeighborListOutputConfig(ConfigManager.ConfigHandler):
+    """
+    Enable or disable neighbor information on the output catalog
+    """
 
     def __init__(self):
         self.__added = False
         self.__neighbor_info_output = False
-
 
     def __addColumnProvider(self, args):
         self.__neighbor_info_output = args.get('neighbor_info_output', False)

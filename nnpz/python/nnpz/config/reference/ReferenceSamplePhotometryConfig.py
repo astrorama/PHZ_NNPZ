@@ -31,7 +31,10 @@ logger = Logging.getLogger('Configuration')
 
 
 class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
-
+    """
+    Configure the table containing the photometry of the reference objects, and
+    the bands to use for the search
+    """
 
     def __init__(self):
         self.__ref_phot_data = None
@@ -39,7 +42,7 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
         self.__out_mean_phot_filters = None
         self.__out_mean_phot_data = None
         self.__phot_file = None
-
+        self.__ref_phot_type = None
 
     def __createData(self, args):
 
@@ -51,27 +54,26 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
             self._checkParameterExists('reference_sample_phot_filters', args)
             phot_filters = args['reference_sample_phot_filters']
 
-            logger.info('Using reference sample photometry from {}'.format(self.__phot_file))
+            logger.info('Using reference sample photometry from %s', self.__phot_file)
             ref_phot_prov = PhotometryProvider(self.__phot_file)
             if np.any(ref_phot_prov.getIds() != ref_sample_dict['reference_ids']):
                 logger.error('ERROR: Reference sample photometry ID mismatch')
                 exit(-1)
 
-            logger.info('Reference sample photometric bands: {}'.format(phot_filters))
+            logger.info('Reference sample photometric bands: %s', phot_filters)
             self.__ref_phot_data = ref_phot_prov.getData(*phot_filters)
             self.__ref_phot_type = ref_phot_prov.getType()
             self.__ref_filters = {}
-            for filter_name in phot_filters:
-                self.__ref_filters[filter_name] = ref_phot_prov.getFilterTransmission(filter_name)
+            for f_name in phot_filters:
+                self.__ref_filters[f_name] = ref_phot_prov.getFilterTransmission(f_name)
 
             if 'reference_sample_out_mean_phot_filters' in args:
                 self.__out_mean_phot_filters = args['reference_sample_out_mean_phot_filters']
                 self.__out_mean_phot_data = ref_phot_prov.getData(*self.__out_mean_phot_filters)
 
-                for filter_name in self.__out_mean_phot_filters:
-                    if filter_name not in self.__ref_filters:
-                        self.__ref_filters[filter_name] = ref_phot_prov.getFilterTransmission(filter_name)
-
+                for f_name in self.__out_mean_phot_filters:
+                    if f_name not in self.__ref_filters:
+                        self.__ref_filters[f_name] = ref_phot_prov.getFilterTransmission(f_name)
 
     def parseArgs(self, args):
 

@@ -24,13 +24,14 @@ from __future__ import division, print_function
 import os
 
 import numpy as np
+from nnpz.exceptions import FileNotFoundException, InvalidPathException, UnknownNameException
 
 from nnpz.photometry import FilterProviderInterface
-from nnpz.exceptions import *
 
 
 class DirectoryFilterProvider(FilterProviderInterface):
-    """Implementation of the FilterProviderInterface reading files from a directory.
+    """
+    Implementation of the FilterProviderInterface reading files from a directory.
 
     The directory can contain filter transmissions as ASCII tables of
     two columns, the first of which represents the wavelength (expressed in
@@ -44,30 +45,32 @@ class DirectoryFilterProvider(FilterProviderInterface):
     the extension).
     """
 
-
-    def __parseFilterListFile(self, path, dir_contents):
-        """Parses the filter_list.txt in a list of (filtername, filename) pairs"""
+    @staticmethod
+    def __parseFilterListFile(path, dir_contents):
+        """
+        Parses the filter_list.txt in a list of (filtername, filename) pairs
+        """
 
         with open(os.path.join(path, 'filter_list.txt')) as f:
             lines = f.readlines()
 
         result = []
 
-        for l in lines:
+        for line in lines:
             # Remove any comments from the line
-            if '#' in l:
-                l = l[:l.index('#')]
-            l = l.strip()
-            if len(l) == 0:
+            if '#' in line:
+                line = line[:line.index('#')]
+            line = line.strip()
+            if len(line) == 0:
                 continue
 
             # Check if the user gave a name
-            if ':' in l:
-                filename, filtername = l.split(':')
+            if ':' in line:
+                filename, filtername = line.split(':')
                 filename = filename.strip()
                 filtername = filtername.strip()
             else:
-                filename = l.strip()
+                filename = line.strip()
                 filtername = os.path.splitext(filename)[0]
 
             if not os.path.exists(os.path.join(path, filename)):
@@ -75,7 +78,6 @@ class DirectoryFilterProvider(FilterProviderInterface):
             result.append((filtername, filename))
 
         return result
-
 
     def __init__(self, path):
         """Creates a new DirectoryFilterProvider for the given directory.
@@ -97,9 +99,10 @@ class DirectoryFilterProvider(FilterProviderInterface):
                 filter_path = os.path.join(root, fname) if root else fname
                 dir_contents.append(os.path.relpath(filter_path, path))
 
-        filter_file_pairs = (self.__parseFilterListFile(path, dir_contents)
-                 if ('filter_list.txt' in dir_contents)
-                 else [(os.path.splitext(f)[0], f) for f in dir_contents])
+        if 'filter_list.txt' in dir_contents:
+            filter_file_pairs = self.__parseFilterListFile(path, dir_contents)
+        else:
+            filter_file_pairs = [(os.path.splitext(f)[0], f) for f in dir_contents]
 
         # Populate the member variables
         self.__name_list = []
@@ -109,11 +112,9 @@ class DirectoryFilterProvider(FilterProviderInterface):
             self.__name_list.append(filtername)
             self.__file_map[filtername] = os.path.join(path, filename)
 
-
     def getFilterNames(self):
         """Returns the names of the filters"""
         return self.__name_list
-
 
     def getFilterTransmission(self, name):
         """Provides the transmission curve of the filter with the given name.
@@ -137,14 +138,14 @@ class DirectoryFilterProvider(FilterProviderInterface):
             return self.__data_map[name]
 
         # Here we need to read the data from the file
-        if not name in self.__file_map:
+        if name not in self.__file_map:
             raise UnknownNameException('Unknown filter:' + name)
 
         from astropy.table import Table
         table = Table.read(self.__file_map[name], format='ascii')
         data = np.ndarray((len(table), 2), dtype='float32')
-        data[:,0] = table.columns[0]
-        data[:,1] = table.columns[1]
+        data[:, 0] = table.columns[0]
+        data[:, 1] = table.columns[1]
 
         self.__data_map[name] = data
         return data

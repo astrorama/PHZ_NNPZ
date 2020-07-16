@@ -63,4 +63,8 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         ]
 
     def getPdzBins(self):
+        """
+        Returns: np.array
+            PDZ bins
+        """
         return self.__pdz_bins

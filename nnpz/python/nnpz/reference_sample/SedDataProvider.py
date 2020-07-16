@@ -23,13 +23,11 @@ from __future__ import division, print_function
 
 import os
 import numpy as np
-
-from nnpz.exceptions import *
+from nnpz.exceptions import FileNotFoundException, InvalidDimensionsException, InvalidAxisException
 
 
 class SedDataProvider(object):
     """Class for handling the SED data file of NNPZ format"""
-
 
     def __init__(self, filename):
         """Creates a new instance for handling the given file.
@@ -38,10 +36,8 @@ class SedDataProvider(object):
             FileNotFoundException: If the file does not exist
         """
         self.__filename = filename
-
         if not os.path.exists(filename):
             raise FileNotFoundException(filename)
-
 
     def readSed(self, pos):
         """Reads the data of an SED.
@@ -57,7 +53,6 @@ class SedDataProvider(object):
                 equal to two, with the first element representing the wavelength
                 and the second the energy value.
         """
-
         with open(self.__filename, 'rb') as f:
             # Move where the SED is
             f.seek(pos)
@@ -67,11 +62,10 @@ class SedDataProvider(object):
 
             # Read the data
             length = np.fromfile(f, count=1, dtype='uint32')[0]
-            data = np.fromfile(f, count=2*length, dtype='float32')
+            data = np.fromfile(f, count=2 * length, dtype='float32')
             data = data.reshape((length, 2))
 
             return sed_id, data
-
 
     def appendSed(self, sed_id, data):
         """Appends an SED to the end of the file.
@@ -98,14 +92,18 @@ class SedDataProvider(object):
 
         # Check the dimensions
         if len(data_arr.shape) != 2:
-            raise InvalidDimensionsException('data must be a two dimensional array' +
-                ' but it had ' + str(len(data_arr.shape)) + ' dimensions')
+            raise InvalidDimensionsException(
+                'data must be a two dimensional array but it had {} dimensions'.format(
+                    len(data_arr.shape)
+                )
+            )
         if data_arr.shape[1] != 2:
-            raise InvalidDimensionsException('data second dimension must be of size' +
-                ' 2 but was ' + str(data_arr.shape[1]))
+            raise InvalidDimensionsException(
+                'data second dimension must be of size 2 but was {}'.format(data_arr.shape[1])
+            )
 
         # Check that the wavelength axis does not have decreasing values
-        if not np.all(data_arr[:-1,0] <= data_arr[1:,0]):
+        if not np.all(data_arr[:-1, 0] <= data_arr[1:, 0]):
             raise InvalidAxisException('Wavelength axis must no have decreasing values')
 
         # The position of the new data will be the current size of the file
@@ -123,7 +121,6 @@ class SedDataProvider(object):
             data_arr.flatten().tofile(f)
 
         return sed_pos
-
 
     def validate(self, id_list, pos_list):
         """Validates that the underlying file is consistent the given IDs and positions.
@@ -157,23 +154,23 @@ class SedDataProvider(object):
 
         # Check that all the given positions are smaller than the file size
         file_size = os.path.getsize(self.__filename)
-        for id, pos in zip(id_list, pos_list):
+        for obj_id, pos in zip(id_list, pos_list):
             if pos >= file_size:
-                return 'Position ({}) out of file for ID={}'.format(pos, id)
+                return 'Position ({}) out of file for ID={}'.format(pos, obj_id)
 
         with open(self.__filename, 'rb') as f:
-            for id, pos in zip(id_list, pos_list):
+            for obj_id, pos in zip(id_list, pos_list):
 
                 # Check that the ID given by the user are consistent with the file one
                 f.seek(pos)
                 file_id = np.fromfile(f, count=1, dtype='int64')[0]
-                if file_id != id:
-                    return 'Inconsistent IDs ({}, {})'.format(id, file_id)
+                if file_id != obj_id:
+                    return 'Inconsistent IDs ({}, {})'.format(obj_id, file_id)
 
                 # Check that the length of the SED is not going out of the file
                 length = np.fromfile(f, count=1, dtype=np.uint32)[0]
                 sed_end = pos + 8 + 4 + (4 * 2 * length)
                 if sed_end > file_size:
-                    return 'Data length bigger than file for ID={}'.format(id)
+                    return 'Data length bigger than file for ID={}'.format(obj_id)
 
         return None
