@@ -13,3 +13,30 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Created on: 09/02/18
+Author: Nikolaos Apostolakos
+"""
+
+from __future__ import division, print_function
+
+import numpy as np
+from nnpz.weights import WeightCalculatorInterface
+
+
+class LikelihoodWeight(WeightCalculatorInterface):
+    """
+    Compute the weight as the likelihood of the chi2: $L = e^{-\\chi^2/2}$
+    Note that the maximum weight can be 1 (when $\\chi^2 == 0$), and it gets
+    asymptotically close to 0 as $\\chi^2$ grows.
+    """
+
+    def __call__(self, obj_1, obj_2, flags):
+        val_1 = obj_1[:, 0]
+        err_1 = obj_1[:, 1]
+        val_2 = obj_2[:, 0]
+        err_2 = obj_2[:, 1]
+
+        chi2 = np.sum(((val_1 - val_2) * (val_1 - val_2)) / ((err_1 * err_1) + (err_2 * err_2)))
+        return np.exp(-0.5 * chi2)

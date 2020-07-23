@@ -13,3 +13,13 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Target catalog input columns
+"""
+
+from .Column import Column
+from .EBV import EBV
+from .FiltersMeanWavelength import FiltersMeanWavelength
+from .ID import ID
+from .Photometry import Photometry

@@ -13,3 +13,10 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Input/output primitive types
+"""
+
+from .CatalogReader import CatalogReader
+from .OutputHandler import OutputHandler

@@ -13,3 +13,11 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+NNPZ (Nearest-Neighbor Photometric Redshift) is a machine-learning algorithm,
+which consists in a k-nearest neighbor method in photometric space, designed to
+produce a Probability Density Function of the Redshift (Z).
+"""
+from .flags import NnpzFlag
+from .reference_sample.ReferenceSample import ReferenceSample

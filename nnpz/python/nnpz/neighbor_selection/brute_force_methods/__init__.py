@@ -13,3 +13,14 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Methods to use with the Brute Force strategy
+"""
+
+from .Chi2Distance import Chi2Distance
+from .EuclideanDistance import EuclideanDistance
+from .DirectedDistance import DirectedDistance
+from .AngularDistance import AngularDistance
+from .SmallestSelector import SmallestSelector
+from .LessThanSelector import LessThanSelector

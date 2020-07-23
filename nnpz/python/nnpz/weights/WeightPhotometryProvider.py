@@ -13,3 +13,23 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Created on: 08/02/18
+Author: Nikolaos Apostolakos
+"""
+
+from __future__ import division, print_function
+
+import abc
+
+
+class WeightPhotometryProvider(object):
+    """
+    Interface definition for methods that provide a new photometry to the weight methods
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def __call__(self, ref_i, cat_i, flags):
+        return

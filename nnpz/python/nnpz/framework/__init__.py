@@ -13,3 +13,12 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Classes used for the wiring of different parts of the algorithm
+"""
+
+from .AffectedSourcesFinder import AffectedSourcesFinder
+from .AffectedSourcesReconstructor import AffectedSourcesReconstructor
+from .ProgressListener import ProgressListener
+from .ReferenceSampleWeightCalculator import ReferenceSampleWeightCalculator

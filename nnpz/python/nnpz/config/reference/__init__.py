@@ -13,3 +13,13 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Configuration classes for the reference sample/catalog
+"""
+
+from .ReferenceSampleConfig import ReferenceSampleConfig
+from .ReferenceSamplePhotometryConfig import ReferenceSamplePhotometryConfig
+from .ReferenceCatalogConfig import ReferenceCatalogConfig
+from .ReferenceConfig import ReferenceConfig
+from .ReferenceUniqueConfig import ReferenceUniqueConfig

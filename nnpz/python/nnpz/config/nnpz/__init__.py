@@ -13,3 +13,19 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Configuration classes for the K-NN stage
+"""
+
+from .TargetCatalogConfig import TargetCatalogConfig
+from .NeighborSelectorConfig import NeighborSelectorConfig
+from .OutputHandlerConfig import OutputHandlerConfig
+from .CopyInputColumnsConfig import CopyInputColumnsConfig
+from .NeighborListOutputConfig import NeighborListOutputConfig
+from .PdzOutputConfig import PdzOutputConfig
+from .FlagsConfig import FlagsConfig
+from .WeightPhotometryProviderConfig import WeightPhotometryProviderConfig
+from .WeightCalculatorConfig import WeightCalculatorConfig
+from .GalacticUnreddenerConfig import GalacticUnreddenerConfig
+from .MeanPhotOutputConfig import MeanPhotOutputConfig

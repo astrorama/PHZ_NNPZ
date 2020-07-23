@@ -1,2 +1,0 @@
-from .NnpzCatalogConfig import NnpzCatalogConfig
-from .OutputHandlerConfig import OutputHandlerConfig

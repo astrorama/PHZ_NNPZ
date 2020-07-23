@@ -13,3 +13,21 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Created on: 09/02/18
+Author: Nikolaos Apostolakos
+"""
+
+import abc
+
+
+class WeightCalculatorInterface(object):
+    """
+    Interface to be implemented by different weight strategies
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def __call__(self, obj_1, obj_2, flags):
+        return

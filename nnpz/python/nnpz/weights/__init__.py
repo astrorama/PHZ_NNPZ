@@ -13,3 +13,15 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Weighting strategies
+"""
+
+from .WeightPhotometryProvider import WeightPhotometryProvider
+from .CopiedPhotometry import CopiedPhotometry
+from .WeightCalculatorInterface import WeightCalculatorInterface
+from .LikelihoodWeight import LikelihoodWeight
+from .RecomputedPhotometry import RecomputedPhotometry
+from .InverseChi2Weight import InverseChi2Weight
+from .InverseEuclideanWeight import InverseEuclideanWeight

@@ -13,3 +13,13 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+"""
+Neighbor selection strategies
+"""
+
+from .NeighborSelectorInterface import NeighborSelectorInterface
+from .BruteForceSelector import BruteForceSelector
+from .KDTreeSelector import KDTreeSelector
+from .EuclideanRegionBruteForceSelector import EuclideanRegionBruteForceSelector
+from .AdaptiveSelector import AdaptiveSelector
