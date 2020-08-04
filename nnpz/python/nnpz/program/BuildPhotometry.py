@@ -123,8 +123,8 @@ def mainMethod(args):
     # Use the builder to compute the photometries and check if they were computed
     # for the full sample
     phot_map = phot_builder.buildPhotometry(sample.iterate(),
-                                            ProgressListener(sample.size(), logger=logger))
-    if len(phot_map[filter_name_list[0]]) != sample.size():
+                                            ProgressListener(len(sample), logger=logger))
+    if len(phot_map[filter_name_list[0]]) != len(sample):
         logger.warning('Stopped because of reference sample object with missing SED')
     logger.info(
         'Successfully computed photometry for %d objects',
