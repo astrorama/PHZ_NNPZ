@@ -284,3 +284,24 @@ def test_appendPdz_wrongDimensionality(pdz_data_files_fixture, redshift_bins_fix
     # Then
     with pytest.raises(InvalidDimensionsException):
         provider.appendPdz(bad_data)
+
+
+###############################################################################
+
+def test_appendBulkPdz(pdz_data_files_fixture, redshift_bins_fixture):
+    """
+    Test that appendPdz() can append multiple pdz at once
+    """
+
+    # Given
+    new_pdz = np.random.rand(5, len(redshift_bins_fixture))
+
+    # When
+    provider = PdzDataProvider(pdz_data_files_fixture[1])
+
+    # Then
+    offsets = provider.appendPdz(new_pdz)
+    assert len(offsets) == len(new_pdz)
+    for i, o in enumerate(offsets):
+        pdz = provider.readPdz(o)
+        assert np.allclose(new_pdz[i, :], pdz)

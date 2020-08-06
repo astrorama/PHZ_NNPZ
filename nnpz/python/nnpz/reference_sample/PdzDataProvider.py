@@ -23,7 +23,7 @@ from __future__ import division, print_function
 
 import os
 import pathlib
-from typing import Union
+from typing import Union, Iterable
 
 import numpy as np
 from nnpz.exceptions import AlreadySetException, InvalidDimensionsException, \
@@ -129,7 +129,7 @@ class PdzDataProvider(object):
             raise UninitializedException()
         return self.__data[pos, :]
 
-    def appendPdz(self, data: Union[np.ndarray, list]) -> int:
+    def appendPdz(self, data: Union[np.ndarray, list]) -> Union[int, Iterable]:
         """
         Appends a PDZ to the end of the file.
 
@@ -137,7 +137,7 @@ class PdzDataProvider(object):
             data: The PDZ data as a single dimensional object
 
         Returns:
-            Te position in the file where the PDZ was added
+            The position in the file where the PDZ was added
 
         Raises:
             InvalidDimensionsException: If the dimensions of the given data object are incorrect
@@ -149,11 +149,16 @@ class PdzDataProvider(object):
 
         # Convert the data in a numpy array
         data_arr = np.asarray(data, dtype=np.float32)
-        if len(data_arr.shape) != 1:
-            raise InvalidDimensionsException('PDZ data must be a 1D array')
-        if len(data_arr) != len(self.__redshift_bins):
+        if len(data_arr.shape) > 2:
+            raise InvalidDimensionsException('PDZ data must be a 1D or 2D array')
+        elif len(data_arr.shape) == 1:
+            data_arr = data_arr.reshape(1, -1)
+
+        if data_arr.shape[1] != len(self.__redshift_bins):
             raise InvalidDimensionsException(
                 'PDZ data length differs from the redshift bins length')
 
-        self.__data = np.concatenate([self.__data, data_arr.reshape(1, -1)], axis=0)
-        return len(self.__data) - 1
+        self.__data = np.concatenate([self.__data, data_arr], axis=0)
+        if data_arr.shape[0] == 1:
+            return len(self.__data) - 1
+        return len(self.__data) - np.arange(data_arr.shape[0], 0, -1, dtype=np.int64)

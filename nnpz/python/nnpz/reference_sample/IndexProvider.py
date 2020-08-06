@@ -58,8 +58,10 @@ class IndexProvider(object):
             except ValueError:
                 raise CorruptedFileException()
         else:
-            self.__data = np.zeros(shape=(0, 3))
+            self.__data = np.zeros(shape=(0, 3), dtype=np.int64)
 
+        if self.__data.dtype != np.int64:
+            raise CorruptedFileException('Expected 64 bits integers')
         if len(self.__data.shape) != 2:
             raise CorruptedFileException('Expected an array with two dimensions')
         if self.__data.shape[1] != 3:
@@ -81,6 +83,7 @@ class IndexProvider(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not isinstance(self.__data, np.memmap):
+            assert self.__data.dtype == np.int64
             np.save(self.__filename, self.__data)
 
     def flush(self):
@@ -108,7 +111,7 @@ class IndexProvider(object):
         """
         Returns a list of long integers with the IDs
         """
-        return list(self.__index_map.keys())
+        return self.__data[:, 0]
 
     def getFiles(self) -> set:
         """
@@ -149,3 +152,13 @@ class IndexProvider(object):
         self.__files.add(location.file)
         entry = np.array([[obj_id, location.file, location.offset]], dtype=np.int64)
         self.__data = np.concatenate([self.__data, entry], axis=0)
+
+    def bulkAdd(self, other: np.ndarray):
+        """
+        Concatenate a whole other index
+        """
+        if np.any(np.in1d(other[:, 0], self.__data[:, 0])):
+            raise DuplicateIdException()
+        self.__data = np.concatenate([self.__data, other], axis=0)
+        for row in other:
+            self.__index_map[row[0]] = IndexProvider.ObjectLocation(row[1], row[2])

@@ -130,23 +130,30 @@ class SedDataProvider(object):
         data_arr = np.asarray(data, dtype='float32')
 
         # Check the dimensions
-        if len(data_arr.shape) != 2:
+        if len(data_arr.shape) not in (2, 3):
             raise InvalidDimensionsException(
-                'data must be a two dimensional array but it had {} dimensions'.format(
+                'SED data must be a two or three dimensional array but it had {} dimensions'.format(
                     len(data_arr.shape)
                 )
             )
-        if data_arr.shape[1] != 2:
+
+        if data_arr.shape[-1] != 2:
             raise InvalidDimensionsException(
-                'data second dimension must be of size 2 but was {}'.format(data_arr.shape[1])
+                'SED data last dimension must be of size 2 but was {}'.format(data_arr.shape[1])
             )
 
+        if len(data_arr.shape) == 2:
+            data_arr = data_arr.reshape(1, -1, 2)
+
         # Check that the wavelength axis does not have decreasing values
-        if not np.all(data_arr[:-1, 0] <= data_arr[1:, 0]):
+        if not np.all(data_arr[:, :-1, 0] <= data_arr[:, 1:, 0]):
             raise InvalidAxisException('Wavelength axis must no have decreasing values')
 
         if self.__data is not None:
-            self.__data = np.concatenate([self.__data, data_arr.reshape(1, -1, 2)], axis=0)
+            self.__data = np.concatenate([self.__data, data_arr], axis=0)
         else:
-            self.__data = np.array(data_arr.reshape(1, -1, 2), copy=True)
-        return len(self.__data) - 1
+            self.__data = np.array(data_arr, copy=True)
+
+        if data_arr.shape[0] == 1:
+            return len(self.__data) - 1
+        return len(self.__data) - np.arange(data_arr.shape[0], 0, -1, dtype=np.int64)

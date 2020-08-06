@@ -113,7 +113,7 @@ def test_appendSed_invalidDataDimension(sed_data_files_fixture):
     """
 
     # Given
-    three_dim_data = np.zeros((100, 2, 2), dtype=np.float32)
+    four_dim_data = np.zeros((100, 2, 2, 8), dtype=np.float32)
     wrong_second_dimension = np.zeros((100, 3), dtype=np.float32)
 
     # When
@@ -121,7 +121,7 @@ def test_appendSed_invalidDataDimension(sed_data_files_fixture):
 
     # Then
     with pytest.raises(InvalidDimensionsException):
-        provider.appendSed(three_dim_data)
+        provider.appendSed(four_dim_data)
     with pytest.raises(InvalidDimensionsException):
         provider.appendSed(wrong_second_dimension)
 
@@ -142,3 +142,28 @@ def test_appendSed_nonIncreasingWavelength(sed_data_files_fixture):
     # Then
     with pytest.raises(InvalidAxisException):
         provider.appendSed(wrong_wavelength)
+
+
+###############################################################################
+
+
+def test_appendBulkSed(sed_data_files_fixture):
+    """
+    Test that appendSed() can append multiple sed at once
+    """
+
+    # Given
+    new_sed = np.asarray([
+        [(1., 100.), (1.5, 168.3),],
+        [(1., 400.), (1.5, 700.),],
+    ])
+
+    # When
+    provider = SedDataProvider(sed_data_files_fixture[1])
+
+    # Then
+    offsets = provider.appendSed(new_sed)
+    assert len(offsets) == len(new_sed)
+    for i, o in enumerate(offsets):
+        sed = provider.readSed(o)
+        assert np.allclose(new_sed[i], sed)

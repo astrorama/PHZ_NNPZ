@@ -258,3 +258,43 @@ def test_size(temp_dir_fixture, index_data):
 
     # Then
     assert s == 4
+
+###############################################################################
+
+def test_bulkAppend(temp_dir_fixture, index_data):
+    """
+    Test doing a bulk import
+    """
+
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'index.npy')
+    np.save(filename, index_data)
+    expected = np.array([[10, 4, 0], [11, 4, 1], [12, 5, 3], [13, 5, 4]])
+
+    # When
+    with IndexProvider(filename) as provider:
+        provider.bulkAdd(expected)
+
+    # Then
+    provider = IndexProvider(filename)
+    assert len(provider) == 8
+
+
+###############################################################################
+
+def test_bulkAppendDuplicate(temp_dir_fixture, index_data):
+    """
+    Test doing a bulk import with a duplicate ID
+    """
+
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'index.npy')
+    np.save(filename, index_data)
+    new_data = np.array([[10, 4, 0], [11, 4, 1], [2, 5, 3], [3, 5, 4]])
+
+    # When
+    provider = IndexProvider(filename)
+
+    # Then
+    with pytest.raises(DuplicateIdException):
+        provider.bulkAdd(new_data)

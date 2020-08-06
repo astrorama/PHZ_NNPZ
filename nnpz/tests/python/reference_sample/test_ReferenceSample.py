@@ -20,6 +20,7 @@ Author: Nikolaos Apostolakos
 """
 
 from __future__ import division, print_function
+import tempfile
 
 from nnpz import ReferenceSample
 from nnpz.exceptions import *
@@ -785,4 +786,23 @@ def test_normalizePdz(reference_sample_dir_fixture):
     assert np.trapz(stored_pdz[:, 1], stored_pdz[:, 0]) == 1
     assert pdzEqual(stored_pdz, original_pdz_data)
 
+
 ###############################################################################
+
+def test_importRefSample(reference_sample_dir_fixture):
+    """
+    Test the import of another reference sample
+    """
+    new_ref_dir = tempfile.mkdtemp(prefix='nnpz_test_new_ref')
+
+    new_ref = ReferenceSample(new_ref_dir)
+    new_ref.importDirectory(reference_sample_dir_fixture)
+
+    old_ref = ReferenceSample(reference_sample_dir_fixture)
+    assert len(old_ref) == len(new_ref)
+
+    for obj_id in old_ref.getIds():
+        nsed = new_ref.getSedData(obj_id)
+        npdz = new_ref.getPdzData(obj_id)
+        assert np.array_equal(nsed, old_ref.getSedData(obj_id))
+        assert np.array_equal(npdz, old_ref.getPdzData(obj_id))

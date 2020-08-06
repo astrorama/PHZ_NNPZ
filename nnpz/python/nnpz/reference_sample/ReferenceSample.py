@@ -259,12 +259,7 @@ class ReferenceSample(object):
         if loc is not None:
             raise AlreadySetException('SED for ID ' + str(obj_id) + ' is already set')
 
-        knots = data.shape[0]
-        if knots not in self.__sed_prov_for_size \
-                or self.__sed_map[self.__sed_prov_for_size[knots]].size() >= self.__data_file_limit:
-            self.__sed_prov_for_size[knots] = self._createNewSedProvider()
-
-        current_prov = self.__sed_prov_for_size[knots]
+        current_prov = self._getCurrentSedProvider(data.shape[0])
         new_pos = self.__sed_map[current_prov].appendSed(data)
         self.__sed_index.add(obj_id, IndexProvider.ObjectLocation(current_prov, new_pos))
 
@@ -276,6 +271,15 @@ class ReferenceSample(object):
         filename = self.__sed_path_pattern.format(new_sed_file)
         self.__sed_map[new_sed_file] = SedDataProvider(filename)
         return new_sed_file
+
+    def _getCurrentSedProvider(self, knots):
+        """
+        Get the index of the active SED provider, create a new one if needed
+        """
+        if knots not in self.__sed_prov_for_size \
+            or self.__sed_map[self.__sed_prov_for_size[knots]].size() >= self.__data_file_limit:
+            self.__sed_prov_for_size[knots] = self._createNewSedProvider()
+        return self.__sed_prov_for_size[knots]
 
     def addPdzData(self, obj_id, data):
         """
@@ -306,23 +310,12 @@ class ReferenceSample(object):
         if len(data_arr.shape) != 2 or data_arr.shape[1] != 2:
             raise InvalidDimensionsException()
 
-        last_pdz_file = max(self.__pdz_map) if self.__pdz_map else self._createNewPdzProvider()
-
-        # Check if the last file exceeded the size limit and create a new one
-        if self.__pdz_map[last_pdz_file].size() >= self.__data_file_limit:
-            last_pdz_file = self._createNewPdzProvider()
-
-        # Handle the wavelength axis
-        existing_zs = self.__pdz_map[last_pdz_file].getRedshiftBins()
-        if existing_zs is None:
-            self.__pdz_map[last_pdz_file].setRedshiftBins(data_arr[:, 0])
-        elif not np.array_equal(data_arr[:, 0], existing_zs):
-            raise InvalidAxisException('Given wavelengths are different than existing ones')
+        pdz_file = self._getCurrentPdzProvider(data_arr[:, 0])
 
         # Add the PDZ data in the last file, normalizing first
         integral = np.trapz(data_arr[:, 1], data_arr[:, 0])
-        new_pos = self.__pdz_map[last_pdz_file].appendPdz(data_arr[:, 1] / integral)
-        self.__pdz_index.add(obj_id, IndexProvider.ObjectLocation(last_pdz_file, new_pos))
+        new_pos = self.__pdz_map[pdz_file].appendPdz(data_arr[:, 1] / integral)
+        self.__pdz_index.add(obj_id, IndexProvider.ObjectLocation(pdz_file, new_pos))
 
     def _createNewPdzProvider(self):
         """
@@ -332,6 +325,25 @@ class ReferenceSample(object):
         filename = self.__pdz_path_pattern.format(new_pdz_file)
         self.__pdz_map[new_pdz_file] = PdzDataProvider(filename)
         return new_pdz_file
+
+    def _getCurrentPdzProvider(self, binning):
+        """
+        Get the index of the active PDZ provider, create a new one if needed
+        """
+        last_pdz_file = max(self.__pdz_map) if self.__pdz_map else self._createNewPdzProvider()
+
+        # Check if the last file exceeded the size limit and create a new one
+        if self.__pdz_map[last_pdz_file].size() >= self.__data_file_limit:
+            last_pdz_file = self._createNewPdzProvider()
+
+        # Set, or crosscheck, the binning
+        existing_zs = self.__pdz_map[last_pdz_file].getRedshiftBins()
+        if existing_zs is None:
+            self.__pdz_map[last_pdz_file].setRedshiftBins(binning)
+        elif not np.array_equal(binning, existing_zs):
+            raise InvalidAxisException('Given wavelengths are different than existing ones')
+
+        return last_pdz_file
 
     def iterate(self) -> Iterable:
         """
@@ -368,3 +380,90 @@ class ReferenceSample(object):
                 return self.__ref_sample.getPdzData(self.id)
 
         return (Element(i, self) for i in self.getIds())
+
+    def importDirectory(self, other: Union[str, pathlib.Path]):
+        """
+        Bulk import of another reference sample
+
+        Notes:
+            The file patterns must be the same.
+            The implementation only deals with files that are smaller than (or equal to) the
+            limit for this reference sample.
+        """
+        pdz_pattern = os.path.join(other, os.path.basename(self.__pdz_path_pattern))
+        pdz_index = np.load(
+            os.path.join(other, os.path.basename(self.__pdz_index_path)),
+            mmap_mode='r'
+        )
+        sed_pattern = os.path.join(other, os.path.basename(self.__sed_path_pattern))
+        sed_index = np.load(
+            os.path.join(other, os.path.basename(self.__sed_index_path)),
+            mmap_mode='r'
+        )
+
+        self.importPdz(pdz_pattern, pdz_index)
+        self.importSed(sed_pattern, sed_index)
+
+    def importPdz(self, pdz_pattern: str, pdz_index: np.ndarray):
+        """
+        Import a set of PDZ files
+        """
+        pdz_files = sorted(self.__locate_existing_data_files(pdz_pattern))
+        for pdz_i in pdz_files:
+            pdz_file = pdz_pattern.format(pdz_i)
+            pdz_size = os.path.getsize(pdz_file)
+            pdz = np.load(pdz_file, mmap_mode='r')
+            pdz_index_pos = np.nonzero(pdz_index[:, 1] == pdz_i)[0]
+            assert len(pdz_index_pos) == len(pdz) - 1
+            updated_index = np.array(pdz_index[pdz_index_pos], copy=True)
+
+            pdz_provider_idx = self._getCurrentPdzProvider(pdz[0, :])
+            pdz_provider = self.__pdz_map[pdz_provider_idx]
+
+            # Fit whatever we can on the current file (approximately)
+            available_size = self.__data_file_limit - pdz_provider.size()
+            nfit = len(pdz) * min(np.ceil(available_size / pdz_size), 1)
+            updated_index[:nfit, 1] = pdz_provider_idx
+            updated_index[:nfit, 2] = pdz_provider.appendPdz(pdz[1:nfit])
+
+            # Create a new one and put in the rest
+            pdz_provider_idx = self._getCurrentPdzProvider(pdz[0, :])
+            pdz_provider = self.__pdz_map[pdz_provider_idx]
+            updated_index[nfit:, 1] = pdz_provider_idx
+            updated_index[nfit:, 2] = pdz_provider.appendPdz(pdz[nfit:])
+
+            # Update the index
+            assert pdz_index.dtype == np.int64
+            self.__pdz_index.bulkAdd(updated_index)
+
+    def importSed(self, sed_pattern: str, sed_index: np.ndarray):
+        """
+        Import a set of SED files
+        """
+        sed_files = sorted(self.__locate_existing_data_files(sed_pattern))
+        for sed_i in sed_files:
+            sed_file = sed_pattern.format(sed_i)
+            sed_size = os.path.getsize(sed_file)
+            sed = np.load(sed_file, mmap_mode='r')
+            sed_index_pos = np.where(sed_index[:, 1] == sed_i)[0]
+            assert len(sed_index_pos) == len(sed), f'{len(sed_index_pos)} vs {len(sed)}'
+            updated_index = np.array(sed_index[sed_index_pos], copy=True)
+
+            sed_provider_idx = self._getCurrentSedProvider(sed.shape[1])
+            sed_provider = self.__sed_map[sed_provider_idx]
+
+            # Fit whatever we can on the current file (approximately)
+            available_size = self.__data_file_limit - sed_provider.size()
+            nfit = len(sed) * min(np.ceil(available_size / sed_size), 1)
+            updated_index[:nfit, 1] = sed_provider_idx
+            updated_index[:nfit, 2] = sed_provider.appendSed(sed[:nfit])
+
+            # Create a new one and put in the rest
+            sed_provider_idx = self._getCurrentSedProvider(sed.shape[1])
+            sed_provider = self.__sed_map[sed_provider_idx]
+            updated_index[nfit:, 1] = sed_provider_idx
+            updated_index[nfit:, 2] = sed_provider.appendSed(sed[nfit:])
+
+            # Update the index
+            assert sed_index.dtype == np.int64
+            self.__sed_index.bulkAdd(updated_index)
