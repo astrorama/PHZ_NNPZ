@@ -262,8 +262,7 @@ class ReferenceSample(object):
         knots = data.shape[0]
         if knots not in self.__sed_prov_for_size \
                 or self.__sed_map[self.__sed_prov_for_size[knots]].size() >= self.__data_file_limit:
-            self._createNewSedProvider()
-            self.__sed_prov_for_size[knots] = max(self.__sed_map)
+            self.__sed_prov_for_size[knots] = self._createNewSedProvider()
 
         current_prov = self.__sed_prov_for_size[knots]
         new_pos = self.__sed_map[current_prov].appendSed(data)
@@ -273,9 +272,10 @@ class ReferenceSample(object):
         """
         Create a new SED provider
         """
-        new_sed_file = max(self.__sed_map) + 1 if self.__sed_map else 0
+        new_sed_file = max(self.__sed_map) + 1 if self.__sed_map else 1
         filename = self.__sed_path_pattern.format(new_sed_file)
         self.__sed_map[new_sed_file] = SedDataProvider(filename)
+        return new_sed_file
 
     def addPdzData(self, obj_id, data):
         """
@@ -306,25 +306,32 @@ class ReferenceSample(object):
         if len(data_arr.shape) != 2 or data_arr.shape[1] != 2:
             raise InvalidDimensionsException()
 
+        last_pdz_file = max(self.__pdz_map) if self.__pdz_map else self._createNewPdzProvider()
+
+        # Check if the last file exceeded the size limit and create a new one
+        if self.__pdz_map[last_pdz_file].size() >= self.__data_file_limit:
+            last_pdz_file = self._createNewPdzProvider()
+
         # Handle the wavelength axis
-        last_pdz_file = max(self.__pdz_map)
         existing_zs = self.__pdz_map[last_pdz_file].getRedshiftBins()
         if existing_zs is None:
             self.__pdz_map[last_pdz_file].setRedshiftBins(data_arr[:, 0])
         elif not np.array_equal(data_arr[:, 0], existing_zs):
             raise InvalidAxisException('Given wavelengths are different than existing ones')
 
-        # Check if the last file exceeded the size limit and create a new one
-        if self.__pdz_map[last_pdz_file].size() >= self.__data_file_limit:
-            last_pdz_file += 1
-            filename = self.__pdz_path_pattern.format(last_pdz_file)
-            self.__pdz_map[last_pdz_file] = PdzDataProvider(filename)
-            self.__pdz_map[last_pdz_file].setRedshiftBins(data_arr[:, 0])
-
         # Add the PDZ data in the last file, normalizing first
         integral = np.trapz(data_arr[:, 1], data_arr[:, 0])
         new_pos = self.__pdz_map[last_pdz_file].appendPdz(data_arr[:, 1] / integral)
         self.__pdz_index.add(obj_id, IndexProvider.ObjectLocation(last_pdz_file, new_pos))
+
+    def _createNewPdzProvider(self):
+        """
+        Create a new PDZ provider
+        """
+        new_pdz_file = max(self.__pdz_map) + 1 if self.__pdz_map else 1
+        filename = self.__pdz_path_pattern.format(new_pdz_file)
+        self.__pdz_map[new_pdz_file] = PdzDataProvider(filename)
+        return new_pdz_file
 
     def iterate(self) -> Iterable:
         """
