@@ -34,6 +34,9 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
     """
 
     class SedIter(object):
+        """
+        A generator for only the sed attribute of a reference object.
+        """
         def __init__(self, objects):
             self.__objects = objects
 

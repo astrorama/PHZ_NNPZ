@@ -27,8 +27,8 @@ from typing import Union, Iterable
 
 import numpy as np
 from ElementsKernel import Logging
-from nnpz.exceptions import FileNotFoundException, CorruptedFileException, AlreadySetException, \
-    InvalidDimensionsException, InvalidAxisException, IdMismatchException
+from nnpz.exceptions import FileNotFoundException, AlreadySetException, \
+    InvalidDimensionsException, InvalidAxisException
 from nnpz.reference_sample import IndexProvider, PdzDataProvider, SedDataProvider
 
 logger = Logging.getLogger('ReferenceSample')
@@ -205,8 +205,7 @@ class ReferenceSample(object):
         sed_loc = self.__sed_index.get(obj_id)
         if sed_loc:
             return self.__sed_map[sed_loc.file].readSed(sed_loc.offset)
-        else:
-            return None
+        return None
 
     def getPdzData(self, obj_id: int) -> np.ndarray:
         """
@@ -261,10 +260,8 @@ class ReferenceSample(object):
             raise AlreadySetException('SED for ID ' + str(obj_id) + ' is already set')
 
         knots = data.shape[0]
-        if knots not in self.__sed_prov_for_size:
-            self._createNewSedProvider()
-            self.__sed_prov_for_size[knots] = max(self.__sed_map)
-        elif self.__sed_map[self.__sed_prov_for_size[knots]].size() >= self.__data_file_limit:
+        if knots not in self.__sed_prov_for_size \
+                or self.__sed_map[self.__sed_prov_for_size[knots]].size() >= self.__data_file_limit:
             self._createNewSedProvider()
             self.__sed_prov_for_size[knots] = max(self.__sed_map)
 
@@ -276,7 +273,7 @@ class ReferenceSample(object):
         """
         Create a new SED provider
         """
-        new_sed_file = max(self.__sed_map) + 1 if len(self.__sed_map) else 0
+        new_sed_file = max(self.__sed_map) + 1 if self.__sed_map else 0
         filename = self.__sed_path_pattern.format(new_sed_file)
         self.__sed_map[new_sed_file] = SedDataProvider(filename)
 
