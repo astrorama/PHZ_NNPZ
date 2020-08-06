@@ -267,7 +267,12 @@ class ReferenceSample(object):
         """
         Create a new SED provider
         """
-        new_sed_file = max(self.__sed_map) + 1 if self.__sed_map else 1
+        if self.__sed_map:
+            last = max(self.__sed_map)
+            self.__sed_map[last].flush()
+            new_sed_file = last + 1
+        else:
+            new_sed_file = 1
         filename = self.__sed_path_pattern.format(new_sed_file)
         self.__sed_map[new_sed_file] = SedDataProvider(filename)
         return new_sed_file
@@ -321,7 +326,12 @@ class ReferenceSample(object):
         """
         Create a new PDZ provider
         """
-        new_pdz_file = max(self.__pdz_map) + 1 if self.__pdz_map else 1
+        if self.__pdz_map:
+            last = max(self.__pdz_map)
+            self.__pdz_map[last].flush()
+            new_pdz_file = last + 1
+        else:
+            new_pdz_file = 1
         filename = self.__pdz_path_pattern.format(new_pdz_file)
         self.__pdz_map[new_pdz_file] = PdzDataProvider(filename)
         return new_pdz_file
