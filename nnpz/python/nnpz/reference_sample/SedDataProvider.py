@@ -50,9 +50,10 @@ class SedDataProvider(object):
 
         if self.__data is not None:
             if len(self.__data.shape) != 3:
-                raise Exception('Expected an NdArray with three dimensions')
+                raise CorruptedFileException('Expected an NdArray with three dimensions')
             if self.__data.shape[2] != 2:
-                raise Exception('Expected an NdArray with the size of the last axis being 2')
+                raise CorruptedFileException(
+                    'Expected an NdArray with the size of the last axis being 2')
 
     def __enter__(self):
         return self

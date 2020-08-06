@@ -29,6 +29,43 @@ from .fixtures import *
 
 ###############################################################################
 
+def test_corrupted(temp_dir_fixture):
+    """
+    Test reading a corrupted SED file
+    """
+
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'sed_data_1.npy')
+    with open(filename, 'wt') as fd:
+        fd.write('1234')
+
+    # Then
+    with pytest.raises(CorruptedFileException):
+        SedDataProvider(filename)
+
+
+###############################################################################
+
+def test_bad_shape(temp_dir_fixture):
+    """
+    Test reading a SED file with the wrong shape
+    """
+    # Given
+    filename_01 = os.path.join(temp_dir_fixture, 'bad_shape_01.npy')
+    filename_02 = os.path.join(temp_dir_fixture, 'bad_shape_02.npy')
+    np.save(filename_01, np.arange(10))
+    np.save(filename_02, np.arange(60).reshape(5, 3, 4))
+
+    # When
+    with pytest.raises(CorruptedFileException):
+        SedDataProvider(filename_01)
+
+    with pytest.raises(CorruptedFileException):
+        SedDataProvider(filename_02)
+
+
+###############################################################################
+
 def test_readSed_success(sed_data_files_fixture, sed_list_fixture):
     """
     Tests successful call of readSed()
@@ -39,7 +76,6 @@ def test_readSed_success(sed_data_files_fixture, sed_list_fixture):
 
     pos = 0
     for _, expected_data in sed_list_fixture[1]:
-
         # When
         found_data = provider.readSed(pos)
 

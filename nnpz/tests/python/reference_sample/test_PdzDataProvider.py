@@ -29,6 +29,43 @@ from .fixtures import *
 
 ###############################################################################
 
+def test_corrupted(temp_dir_fixture):
+    """
+    Test reading a corrupted SED file
+    """
+
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'pdz_data_1.npy')
+    with open(filename, 'wt') as fd:
+        fd.write('1234')
+
+    # Then
+    with pytest.raises(CorruptedFileException):
+        PdzDataProvider(filename)
+
+
+###############################################################################
+
+def test_bad_shape(temp_dir_fixture):
+    """
+    Test reading a SED file with the wrong shape
+    """
+    # Given
+    filename_01 = os.path.join(temp_dir_fixture, 'bad_shape_01.npy')
+    filename_02 = os.path.join(temp_dir_fixture, 'bad_shape_02.npy')
+    np.save(filename_01, np.arange(10))
+    np.save(filename_02, np.arange(30).reshape(5, 3, 2))
+
+    # When
+    with pytest.raises(CorruptedFileException):
+        PdzDataProvider(filename_01)
+
+    with pytest.raises(CorruptedFileException):
+        PdzDataProvider(filename_02)
+
+
+###############################################################################
+
 def test_setRedshiftBins_notSetBefore(temp_dir_fixture):
     """
     Tests that if the file has no header the setRedshftBins() populates it correctly

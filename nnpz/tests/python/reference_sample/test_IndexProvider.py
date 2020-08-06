@@ -56,6 +56,27 @@ def test_constructor_malformed(temp_dir_fixture):
 
 ###############################################################################
 
+def test_constructor_bad_shape(temp_dir_fixture):
+    """
+    The index has the wrong shape
+    """
+
+    # Given
+    filename_01 = os.path.join(temp_dir_fixture, 'bad_shape_01.npy')
+    filename_02 = os.path.join(temp_dir_fixture, 'bad_shape_02.npy')
+    np.save(filename_01, np.arange(10))
+    np.save(filename_02, np.arange(10).reshape(5, 2))
+
+    # When
+    with pytest.raises(CorruptedFileException):
+        IndexProvider(filename_01)
+
+    with pytest.raises(CorruptedFileException):
+        IndexProvider(filename_02)
+
+
+###############################################################################
+
 def test_constructor_idMismatch(temp_dir_fixture):
     """
     Tests the case of a duplicate ID
@@ -180,6 +201,35 @@ def test_add_success(temp_dir_fixture, index_data):
     # When
     provider = IndexProvider(filename)
     provider.add(5, IndexProvider.ObjectLocation(expected_file, expected_pos))
+    info = provider.get(5)
+
+    # Then
+    assert info.file == expected_file
+    assert info.offset == expected_pos
+    for row in index_data:
+        info = provider.get(row[0])
+        assert info.file == row[1]
+        assert info.offset == row[2]
+
+
+###############################################################################
+
+def test_add_success_with(temp_dir_fixture, index_data):
+    """
+    Test successful call of the add() method
+    """
+
+    # Given
+    filename = os.path.join(temp_dir_fixture, 'index.npy')
+    np.save(filename, index_data)
+    expected_file = 2
+    expected_pos = 40
+
+    # When
+    with IndexProvider(filename) as provider:
+        provider.add(5, IndexProvider.ObjectLocation(expected_file, expected_pos))
+
+    provider = IndexProvider(filename)
     info = provider.get(5)
 
     # Then
