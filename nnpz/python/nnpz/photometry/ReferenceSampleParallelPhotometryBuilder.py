@@ -33,6 +33,14 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
     Class for creating photometry from a reference sample using multiple cores
     """
 
+    class SedIter(object):
+        def __init__(self, objects):
+            self.__objects = objects
+
+        def __iter__(self):
+            for o in self.__objects:
+                yield o.sed
+
     def __init__(self, filter_provider, pre_post_processor, ncores=None):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
 
@@ -87,11 +95,13 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
 
         logger.info('Computing photometries using %d processes', self.__ncores)
         with multiprocessing.Pool(self.__ncores) as pool:
-            elements = pool.imap(calculator, [o.sed for o in sample_iter], chunksize=20)
+            elements = pool.imap(calculator,
+                                 ReferenceSamplePhotometryParallelBuilder.SedIter(sample_iter),
+                                 chunksize=100)
             for progress, photo in enumerate(elements):
 
                 # Report the progress
-                if not progress_listener is None:
+                if progress_listener is not None:
                     progress_listener(progress)
 
                 # Update the photo_list_map
