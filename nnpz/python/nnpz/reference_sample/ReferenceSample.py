@@ -41,32 +41,26 @@ class ReferenceSample(object):
     SED_DEFAULT_INDEX = 'sed_index.npy'
     PDZ_DEFAULT_PATTERN = 'pdz_data_{}.npy'
     PDZ_DEFAULT_INDEX = 'pdz_index.npy'
+    PP_DEFAULT_PATTERN = 'pp_data_{}.npy'
+    PP_DEFAULT_INDEX = 'pp_index.npy'
 
     @staticmethod
-    def createNew(path: Union[str, pathlib.Path],
-                  sed_index: str = SED_DEFAULT_INDEX, sed_pattern: str = SED_DEFAULT_PATTERN,
-                  pdz_index: str = PDZ_DEFAULT_INDEX, pdz_pattern: str = PDZ_DEFAULT_PATTERN):
+    def createNew(path: Union[str, pathlib.Path], **kwargs):
         """
         Creates a new reference sample directory.
 
         Args:
             path:
                 The path to create the reference sample in
-            sed_index:
-                The name of the SED index file. Defaults to `sed_index.npy`
-            sed_pattern:
-                The pattern of the SED files. Defaults to `sed_data_{}.npy`
-            pdz_index:
-                The name of the PDZ index file. Defaults to `pdz_index.npy`
-            pdz_pattern:
-                The pattern of the PDZ files. Defaults to `pdz_data_{}.npy`
+            **kwargs:
+                Forwarded to the constructor
 
         Returns:
             An instance of the ReferenceSample class representing the new sample
         """
         logger.debug('Creating reference sample directory %s...', path)
         os.makedirs(path)
-        return ReferenceSample(path, sed_index, sed_pattern, pdz_index, pdz_pattern)
+        return ReferenceSample(path, **kwargs)
 
     @staticmethod
     def __locate_existing_data_files(pattern):
@@ -80,9 +74,40 @@ class ReferenceSample(object):
             i += 1
         return result
 
+    @staticmethod
+    def __validate_data_files(pattern: str, index: IndexProvider, label: str):
+        """
+        Cross-check the existing data files and those referenced by the index
+        """
+        existing_files = ReferenceSample.__locate_existing_data_files(pattern)
+        index_files = index.getFiles()
+        if not existing_files.issuperset(index_files):
+            missing_files = index_files.difference(existing_files)
+            missing_files = list(map(pattern.format, missing_files))
+            raise FileNotFoundException(
+                'Missing {} data files: {}'.format(label, ', '.join(missing_files))
+            )
+        return existing_files
+
+    @staticmethod
+    def __create_new_provider(provider_map: dict, pattern: str, class_: type):
+        """
+        Instantiate a new provider
+        """
+        if provider_map:
+            last = max(provider_map)
+            provider_map[last].flush()
+            new_file = last + 1
+        else:
+            new_file = 1
+        filename = pattern.format(new_file)
+        provider_map[new_file] = class_(filename)
+        return new_file
+
     def __init__(self, path: Union[str, pathlib.Path],
                  sed_index: str = SED_DEFAULT_INDEX, sed_pattern: str = SED_DEFAULT_PATTERN,
                  pdz_index: str = PDZ_DEFAULT_INDEX, pdz_pattern: str = PDZ_DEFAULT_PATTERN,
+                 pp_index: str = PP_DEFAULT_INDEX, pp_default_pattern: str = PP_DEFAULT_PATTERN,
                  max_file_size=2 ** 30):
         """Creates a new ReferenceSample instance, managing the given path.
 
@@ -97,6 +122,10 @@ class ReferenceSample(object):
                 The name of the PDZ index file. Defaults to `pdz_index.npy`
             pdz_pattern:
                 The pattern of the PDZ files. Defaults to `pdz_data_{}.npy`
+            pp_index:
+                The name of the Physical Parameters index file. Defaults to `pp_index.npy`
+            pp_default_pattern:
+                The pattern of the Physical Parameters files. Defaults to `pp_data_{}.npy`
             max_file_size:
                 In bytes, the maximum size for data files
         """
@@ -109,6 +138,8 @@ class ReferenceSample(object):
         self.__sed_path_pattern = os.path.join(self.__root_path, sed_pattern)
         self.__pdz_index_path = os.path.join(self.__root_path, pdz_index)
         self.__pdz_path_pattern = os.path.join(self.__root_path, pdz_pattern)
+        self.__pp_index_path = os.path.join(self.__root_path, pp_index)
+        self.__pp_path_pattern = os.path.join(self.__root_path, pp_default_pattern)
 
         # Check that the directory and the index file exist
         if not os.path.exists(self.__root_path):
@@ -119,38 +150,26 @@ class ReferenceSample(object):
         # Initialize the internal handler for the index
         self.__sed_index = IndexProvider(self.__sed_index_path)
         self.__pdz_index = IndexProvider(self.__pdz_index_path)
+        self.__pp_index = IndexProvider(self.__pp_index_path)
 
         # Check that all the SED files referred in the index exist
-        existing_sed_files = self.__locate_existing_data_files(self.__sed_path_pattern)
-        index_sed_files = self.__sed_index.getFiles()
-        if not existing_sed_files.issuperset(index_sed_files):
-            missing_sed = index_sed_files.difference(existing_sed_files)
-            missing_files = list(map(self.__sed_path_pattern.format, missing_sed))
-            raise FileNotFoundException(
-                'Missing SED data files: {}'.format(', '.join(missing_files))
-            )
+        sed_files = self.__validate_data_files(self.__sed_path_pattern, self.__sed_index, 'SED')
 
         # Go through the SED files and create handlers
         self.__sed_map = {}
         self.__sed_prov_for_size = {}
-        for sed_file in existing_sed_files:
+        for sed_file in sed_files:
             sed_prov = SedDataProvider(self.__sed_path_pattern.format(sed_file))
             self.__sed_map[sed_file] = sed_prov
             self.__sed_prov_for_size[sed_prov.getKnots()] = sed_file
 
         # Check that all the PDZ files referred in the index exist
-        existing_pdz_files = self.__locate_existing_data_files(self.__pdz_path_pattern)
-        index_pdz_files = self.__pdz_index.getFiles()
-        if not existing_pdz_files.issuperset(index_pdz_files):
-            missing_pdz = index_pdz_files.difference(existing_pdz_files)
-            missing_files = list(map(self.__pdz_path_pattern.format, missing_pdz))
-            raise FileNotFoundException(
-                'Missing PDZ data files: {}'.format(', '.join(missing_files))
-            )
+        pdz_files = ReferenceSample.__validate_data_files(
+            self.__pdz_path_pattern, self.__pdz_index, 'PDZ')
 
         # Go through the PDZ files and create handlers
         self.__pdz_map = {}
-        for pdz_file in existing_pdz_files:
+        for pdz_file in pdz_files:
             self.__pdz_map[pdz_file] = PdzDataProvider(self.__pdz_path_pattern.format(pdz_file))
 
     def __len__(self):
@@ -180,7 +199,9 @@ class ReferenceSample(object):
         """
         Returns the IDs of the reference sample objects as a numpy array of 64 bits integers
         """
-        return np.unique(np.concatenate([self.__sed_index.getIds(), self.__pdz_index.getIds()]))
+        return np.unique(np.concatenate([
+            self.__sed_index.getIds(), self.__pdz_index.getIds(), self.__pp_index.getIds()]
+        ))
 
     def getSedData(self, obj_id: int) -> np.ndarray:
         """
@@ -263,27 +284,15 @@ class ReferenceSample(object):
         new_pos = self.__sed_map[current_prov].appendSed(data)
         self.__sed_index.add(obj_id, IndexProvider.ObjectLocation(current_prov, new_pos))
 
-    def _createNewSedProvider(self):
-        """
-        Create a new SED provider
-        """
-        if self.__sed_map:
-            last = max(self.__sed_map)
-            self.__sed_map[last].flush()
-            new_sed_file = last + 1
-        else:
-            new_sed_file = 1
-        filename = self.__sed_path_pattern.format(new_sed_file)
-        self.__sed_map[new_sed_file] = SedDataProvider(filename)
-        return new_sed_file
-
     def _getCurrentSedProvider(self, knots):
         """
         Get the index of the active SED provider, create a new one if needed
         """
         if knots not in self.__sed_prov_for_size \
             or self.__sed_map[self.__sed_prov_for_size[knots]].size() >= self.__data_file_limit:
-            self.__sed_prov_for_size[knots] = self._createNewSedProvider()
+            self.__sed_prov_for_size[knots] = self.__create_new_provider(
+                self.__sed_map, self.__sed_path_pattern, SedDataProvider
+            )
         return self.__sed_prov_for_size[knots]
 
     def addPdzData(self, obj_id, data):
@@ -322,29 +331,22 @@ class ReferenceSample(object):
         new_pos = self.__pdz_map[pdz_file].appendPdz(data_arr[:, 1] / integral)
         self.__pdz_index.add(obj_id, IndexProvider.ObjectLocation(pdz_file, new_pos))
 
-    def _createNewPdzProvider(self):
-        """
-        Create a new PDZ provider
-        """
-        if self.__pdz_map:
-            last = max(self.__pdz_map)
-            self.__pdz_map[last].flush()
-            new_pdz_file = last + 1
-        else:
-            new_pdz_file = 1
-        filename = self.__pdz_path_pattern.format(new_pdz_file)
-        self.__pdz_map[new_pdz_file] = PdzDataProvider(filename)
-        return new_pdz_file
-
     def _getCurrentPdzProvider(self, binning):
         """
         Get the index of the active PDZ provider, create a new one if needed
         """
-        last_pdz_file = max(self.__pdz_map) if self.__pdz_map else self._createNewPdzProvider()
+        if self.__pdz_map:
+            last_pdz_file = max(self.__pdz_map)
+        else:
+            last_pdz_file = self.__create_new_provider(
+                self.__pdz_map, self.__pdz_path_pattern, PdzDataProvider
+            )
 
         # Check if the last file exceeded the size limit and create a new one
         if self.__pdz_map[last_pdz_file].size() >= self.__data_file_limit:
-            last_pdz_file = self._createNewPdzProvider()
+            last_pdz_file = self.__create_new_provider(
+                self.__pdz_map, self.__pdz_path_pattern, PdzDataProvider
+            )
 
         # Set, or crosscheck, the binning
         existing_zs = self.__pdz_map[last_pdz_file].getRedshiftBins()
@@ -354,6 +356,62 @@ class ReferenceSample(object):
             raise InvalidAxisException('Given wavelengths are different than existing ones')
 
         return last_pdz_file
+
+    def getPhysicalParameters(self, obj_id: int) -> np.ndarray:
+        """
+        Return the Physical Parameters data for the given reference sample object.
+
+        Args:
+            obj_id: The ID of the object to retrieve the data for
+
+        Returns:
+            None if the parameters are not set for the given object, otherwise the data
+            as a two dimensional numpy array of single precision floats.
+            The first dimension has size same as the number of samples,
+            and the second dimension always size equal to the dimensionality of the space.
+        """
+        pp_loc = self.__pp_index.get(obj_id)
+        if not pp_loc:
+            return None
+        return self.__pp_map[pp_loc.file].read(pp_loc.offset)
+
+    def addPhysicalParameters(self, obj_id: int, data: np.ndarray):
+        """
+        Add a new entry of Physical Parameters
+        Args:
+            obj_id: The ID of the object to store the data for
+            data
+
+        Raises:
+            AlreadySetException: If the data are already set for the given ID
+        """
+        # Check that the PDZ is not already set
+        loc = self.__pp_index.get(obj_id)
+        if loc is not None:
+            raise AlreadySetException('Physical parameters for ID {} already set'.format(obj_id))
+
+        pp_file = self._getCurrentPhysicalParameterProvider()
+        offset = self.__pp_map[pp_file].append(data)
+        self.__pp_index.add(obj_id, IndexProvider.ObjectLocation(pp_file, offset))
+
+    def _getCurrentPhysicalParameterProvider(self):
+        """
+        Get the index of the active PP provider, create a new one if needed
+        """
+        if self.__pp_map:
+            last_pp_file = max(self.__pp_map)
+        else:
+            last_pp_file = self.__create_new_provider(
+                self.__pp_map, self.__pp_path_pattern, PhysicalParameterProvider
+            )
+
+        # Check if the last file exceeded the size limit and create a new one
+        if self.__pp_map[last_pp_file].size() >= self.__data_file_limit:
+            last_pp_file = self.__create_new_provider(
+                self.__pp_map, self.__pp_path_pattern, PhysicalParameterProvider
+            )
+
+        return last_pp_file
 
     def iterate(self) -> Iterable:
         """
@@ -388,6 +446,10 @@ class ReferenceSample(object):
             @property
             def pdz(self):
                 return self.__ref_sample.getPdzData(self.id)
+
+            @property
+            def physical_params(self):
+                return self.__ref_sample.getPhysicalParameters(self.id)
 
         return (Element(i, self) for i in self.getIds())
 
