@@ -30,6 +30,7 @@ from nnpz.reference_sample.ReferenceSample import ReferenceSample
 
 from ..fixtures.util_fixtures import temp_dir_fixture
 
+
 @pytest.fixture()
 def reference_sample_fixture(temp_dir_fixture):
     """
@@ -44,16 +45,13 @@ def reference_sample_fixture(temp_dir_fixture):
 
     os.rmdir(temp_dir_fixture)
     ref_sample = ReferenceSample.createNew(temp_dir_fixture)
-    for id in range(1, n_references+1):
-        ref_sample.createObject(id)
-
+    for obj_id in range(1, n_references + 1):
         # Generate a SED shifted by a random Z
-        z = id
+        z = obj_id
         new_sed = np.ndarray(test_sed.shape)
         new_sed[:, 0] = test_sed[:, 0] * z
         new_sed[:, 1] = test_sed[:, 1] / z
-        ref_sample.addSedData(id, new_sed)
-
+        ref_sample.addSedData(obj_id, new_sed)
         # Can skip the PDZ for these tests
 
     return ref_sample
@@ -61,7 +59,9 @@ def reference_sample_fixture(temp_dir_fixture):
 
 @pytest.fixture()
 def filters_fixture():
-    """Returns the filters to be used for testing"""
+    """
+    Returns the filters to be used for testing
+    """
     filters = {}
     filters['vis'] = np.asarray([
         (1000, 0.1),
@@ -117,7 +117,7 @@ def target_fixture(filters_fixture):
 
     n_targets = len(filter_means['vis'])
     return {
-        'ID': np.arange(1, n_targets+1),
+        'ID': np.arange(1, n_targets + 1),
         'ebv': np.zeros(n_targets),
         'filter_means': filter_means,
     }

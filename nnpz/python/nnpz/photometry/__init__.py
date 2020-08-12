@@ -1,3 +1,7 @@
+"""
+Photometry related functionality
+"""
+
 from .FilterProviderInterface import FilterProviderInterface
 from .DirectoryFilterProvider import DirectoryFilterProvider
 from .ListFileFilterProvider import ListFileFilterProvider
@@ -13,7 +17,3 @@ from .ReferenceSampleParallelPhotometryBuilder import ReferenceSamplePhotometryP
 from .PhotometryProvider import PhotometryProvider
 from .GalacticReddeningPrePostProcessor import GalacticReddeningPrePostProcessor
 from .PhotometryTypeMap import PhotometryTypeMap
-
-"""
-Photometry related functionality
-"""

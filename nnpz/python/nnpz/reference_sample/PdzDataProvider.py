@@ -22,34 +22,62 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import os
+import pathlib
+from typing import Union, Iterable
+
 import numpy as np
-from nnpz.exceptions import FileNotFoundException, AlreadySetException, InvalidDimensionsException, \
-    InvalidAxisException, UninitializedException
+from nnpz.exceptions import AlreadySetException, InvalidDimensionsException, \
+    InvalidAxisException, UninitializedException, CorruptedFileException
 
 
 class PdzDataProvider(object):
     """Class for handling the PDZ data file of NNPZ format"""
 
-    def __init__(self, filename):
-        """Creates a new instance for handling the given file.
-
-        Raises:
-            FileNotFoundException: If the file does not exist
+    def __init__(self, filename: Union[str, pathlib.Path]):
+        """
+        Creates a new instance for handling the given file.
         """
         self.__filename = filename
-
-        if not os.path.exists(filename):
-            raise FileNotFoundException(filename)
+        try:
+            self.__data = np.load(filename, mmap_mode='r') if os.path.exists(filename) else None
+        except ValueError:
+            raise CorruptedFileException()
 
         # Read from the file the redshift beans, if the header is there
         self.__redshift_bins = None
-        if os.path.getsize(self.__filename) > 0:
-            with open(self.__filename, 'rb') as f:
-                length = np.fromfile(f, count=1, dtype=np.uint32)[0]
-                self.__redshift_bins = np.fromfile(f, count=length, dtype=np.float32)
+        if self.__data is not None:
+            if len(self.__data.shape) != 2:
+                raise CorruptedFileException('Expected an NdArray with two dimensions')
+            if len(self.__data) > 0:
+                self.__redshift_bins = self.__data[0, :]
 
-    def setRedshiftBins(self, bins):
-        """Sets the redshift bins of the PDZs in the file.
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not isinstance(self.__data, np.memmap):
+            np.save(self.__filename, self.__data)
+
+    def flush(self):
+        """
+        Write the changes to disk and re-load as a memory mapped file.
+        To be used when this provider is full
+        """
+        if isinstance(self.__data, np.memmap):
+            self.__data.flush()
+        else:
+            np.save(self.__filename, self.__data)
+            self.__data = np.load(self.__filename, mmap_mode='r')
+
+    def size(self) -> int:
+        """
+        Return the size on disk
+        """
+        return os.path.getsize(self.__filename) if os.path.exists(self.__filename) else 0
+
+    def setRedshiftBins(self, bins: np.ndarray):
+        """
+        Sets the redshift bins of the PDZs in the file.
 
         Args:
             bins: The redshift bins values as a 1D numpy array of single
@@ -68,60 +96,51 @@ class PdzDataProvider(object):
         if len(bins.shape) != 1:
             raise InvalidDimensionsException('The bins array must be 1D')
 
-        if (bins[:-1] >= bins[1:]).any():
+        if np.any(bins[:-1] >= bins[1:]):
             raise InvalidAxisException('Redshift bins must be strictly increasing')
 
         self.__redshift_bins = np.asarray(bins, dtype=np.float32)
-        with open(self.__filename, 'ab') as f:
-            np.asarray([len(self.__redshift_bins)], dtype=np.uint32).tofile(f)
-            self.__redshift_bins.tofile(f)
+        self.__data = self.__redshift_bins.reshape((1, -1))
 
-    def getRedshiftBins(self):
-        """Returns the redshift bins of the PDZs in the file.
+    def getRedshiftBins(self) -> np.ndarray:
+        """
+        Returns the redshift bins of the PDZs in the file.
 
         Returns: A 1D numpy array of single precision floats with the redshift
             bins or None if the redhsift bins are not set yet
         """
         return self.__redshift_bins
 
-    def readPdz(self, pos):
-        """Reads a PDZ from the given position.
+    def readPdz(self, pos: int) -> np.ndarray:
+        """
+        Reads a PDZ from the given position.
 
         Args:
             pos: The position of the PDZ in the file
 
         Returns: A tuple with the following:
-            - The ID of the PDZ
             - The data of the PDZ as a one dimensional numpy array of single
                 precision floats.
 
         Raises:
             UninitializedException: If the redshift bins are not set
         """
-
         if self.__redshift_bins is None:
             raise UninitializedException()
+        return self.__data[pos, :]
 
-        with open(self.__filename, 'rb') as f:
-            f.seek(pos)
-            pdz_id = np.fromfile(f, count=1, dtype=np.int64)[0]
-            data = np.fromfile(f, count=len(self.__redshift_bins), dtype=np.float32)
-
-        return pdz_id, data
-
-    def appendPdz(self, pdz_id, data):
-        """Appends a PDZ to the end of the file.
+    def appendPdz(self, data: Union[np.ndarray, list]) -> Union[int, Iterable]:
+        """
+        Appends a PDZ to the end of the file.
 
         Args:
-            pdz_id: The ID of the PDZ to append
             data: The PDZ data as a single dimensional object
 
         Returns:
-            Te position in the file where the PDZ was added
+            The position in the file where the PDZ was added
 
         Raises:
-            InvalidDimensionsException: If the dimensions of the given data
-                object are incorrect
+            InvalidDimensionsException: If the dimensions of the given data object are incorrect
             UninitializedException: If the redshift bins are not set
         """
 
@@ -130,70 +149,16 @@ class PdzDataProvider(object):
 
         # Convert the data in a numpy array
         data_arr = np.asarray(data, dtype=np.float32)
-        if len(data_arr.shape) != 1:
-            raise InvalidDimensionsException('PDZ data must be a 1D array')
-        if len(data_arr) != len(self.__redshift_bins):
-            raise InvalidDimensionsException('PDZ data length differs from the redshift bins length')
+        if len(data_arr.shape) > 2:
+            raise InvalidDimensionsException('PDZ data must be a 1D or 2D array')
+        elif len(data_arr.shape) == 1:
+            data_arr = data_arr.reshape(1, -1)
 
-        with open(self.__filename, 'ab') as f:
-            pos = f.tell()
-            np.asarray([pdz_id], dtype=np.int64).tofile(f)
-            data_arr.tofile(f)
+        if data_arr.shape[1] != len(self.__redshift_bins):
+            raise InvalidDimensionsException(
+                'PDZ data length differs from the redshift bins length')
 
-        return pos
-
-    def validate(self, id_list, pos_list):
-        """Validates that the underlying file is consistent with the given IDs and positions.
-
-        Args:
-            id_list: A list with the IDs of the reference sample objects
-            pos_list: A list with the positions of the PDZs in the file
-
-        Returns: None if the file is consistent with the given IDs and positions,
-            or a string message describing the first inconsistency.
-
-        Raises:
-            InvalidDimensionsException: If the ID and posision lists have
-                different length
-            UninitializedException: If the redshift bins are not set
-
-        The messages returned are for the following cases:
-        - Position out of file
-            A given position is bigger than the file size
-            Message: Position (_POS_) out of file for ID=_ID_
-        - Inconsistent ID
-            The ID stored in the file for the given position differs from the
-            ID given by the user
-            Message: Inconsistent IDs (_USER_ID_, _FILE_ID_)
-        - Exceeding file size
-            The length of a PDZ exceeds the file size
-            Message: Data length bigger than file for ID=_USER_ID_
-        """
-
-        if self.__redshift_bins is None:
-            raise UninitializedException()
-
-        if len(id_list) != len(pos_list):
-            raise InvalidDimensionsException('id_list and pos_list must have same length')
-
-        # Check that all the given positions are smaller than the file size
-        file_size = os.path.getsize(self.__filename)
-        for obj_id, pos in zip(id_list, pos_list):
-            if pos >= file_size:
-                return 'Position ({}) out of file for ID={}'.format(pos, obj_id)
-
-        with open(self.__filename, 'rb') as f:
-            for obj_id, pos in zip(id_list, pos_list):
-
-                # Check that the ID given by the user are consistent with the file one
-                f.seek(pos)
-                file_id = np.fromfile(f, count=1, dtype='int64')[0]
-                if file_id != obj_id:
-                    return 'Inconsistent IDs ({}, {})'.format(obj_id, file_id)
-
-                # Check that the length of the PDZ is not going out of the file
-                pdz_end = pos + 8 + 4 * len(self.__redshift_bins)
-                if pdz_end > file_size:
-                    return 'Data length bigger than file for ID={}'.format(obj_id)
-
-        return None
+        self.__data = np.concatenate([self.__data, data_arr], axis=0)
+        if data_arr.shape[0] == 1:
+            return len(self.__data) - 1
+        return len(self.__data) - np.arange(data_arr.shape[0], 0, -1, dtype=np.int64)
