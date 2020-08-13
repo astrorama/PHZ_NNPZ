@@ -21,12 +21,14 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+import json
 import os
 
 import numpy as np
 import pytest
 
 from ..fixtures.util_fixtures import temp_dir_fixture
+
 
 ##############################################################################
 
@@ -165,6 +167,17 @@ def reference_sample_dir_fixture(temp_dir_fixture, sed_data_files_fixture,
             pdz_index.append(np.array([[obj_id, file_index, pos + 1]]))
     pdz_index = np.concatenate(pdz_index, axis=0)
     np.save(pdz_index_filename, pdz_index)
+
+    # Create the json file
+    json_filename = os.path.join(temp_dir_fixture, 'providers.json')
+    config = {
+        'Providers': {
+            'PdzProvider': {'index': 'pdz_index.npy', 'data': 'pdz_data_{}.npy'},
+            'SedProvider': {'index': 'sed_index.npy', 'data': 'sed_data_{}.npy'},
+        }
+    }
+    with open(json_filename, 'wt') as fd:
+        json.dump(config, fd)
 
     return temp_dir_fixture
 

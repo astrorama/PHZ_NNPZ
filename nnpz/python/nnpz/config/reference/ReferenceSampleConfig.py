@@ -39,12 +39,7 @@ class ReferenceSampleConfig(ConfigManager.ConfigHandler):
             logger.info('Reading reference sample from {}...'.format(sample_dir))
             self.__sample = ReferenceSample(
                 sample_dir,
-                sed_index=args.get('reference_sample_sed_index', ReferenceSample.SED_DEFAULT_INDEX),
-                sed_pattern=args.get('reference_sample_sed_pattern',
-                                     ReferenceSample.SED_DEFAULT_PATTERN),
-                pdz_index=args.get('reference_sample_pdz_index', ReferenceSample.PDZ_DEFAULT_INDEX),
-                pdz_pattern=args.get('reference_sample_pdz_pattern',
-                                     ReferenceSample.PDZ_DEFAULT_PATTERN)
+                providers_file=args.get('reference_sample_providers', 'providers.json')
             )
             logger.info('Reading reference sample done')
 
