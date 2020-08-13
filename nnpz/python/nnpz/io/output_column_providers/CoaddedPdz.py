@@ -33,8 +33,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
     It generates two columns:
     - CoaddedPdz, with the PDZ values
     - CoaddedPdzBins, with the PDZ bins
-    It assumes all reference samples have the same PDZ bins. If not, it will raise
-    an assert error when a mismatch is found.
+    It assumes all reference samples have the same PDZ bins.
     """
 
     def __init__(self, catalog_size, reference_sample, ref_ids):
@@ -51,7 +50,8 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
             ref_id = self.__ref_ids[reference_sample_i]
             self.__current_ref_i = reference_sample_i
             self.__current_ref_pdz = np.array(self.__reference_sample.getPdzData(ref_id), dtype=np.float64)
-            assert (self.__current_ref_pdz[:, 0] == self.__pdz_bins).all()
+            if not (self.__current_ref_pdz[:, 0] == self.__pdz_bins).all():
+                raise ValueError('Invalid number of PDZ bins')
 
         self.__pdzs[neighbor.index] += self.__current_ref_pdz[:, 1] * neighbor.weight
 

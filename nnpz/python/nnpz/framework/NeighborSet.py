@@ -96,7 +96,6 @@ class Neighbor(object):
     identifies the target object
     """
     def __init__(self, neighbor_set, position):
-        assert isinstance(neighbor_set, NeighborSet)
         self.__set = neighbor_set
         self.__position = position
 

@@ -36,7 +36,10 @@ class AdaptiveSelector(NeighborSelectorInterface):
             target_phot: Photometries from the target catalog
             filter_names: For logging purposes
         """
-        assert isinstance(selector, NeighborSelectorInterface)
+        if not isinstance(selector, NeighborSelectorInterface):
+            raise TypeError(
+                'Expecting a NeighborSelectorInterface for selector, got {}'.format(type(selector))
+            )
         super(AdaptiveSelector, self).__init__()
         self.__selector = selector
         n_bands = target_phot.shape[1]

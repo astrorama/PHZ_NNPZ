@@ -83,7 +83,6 @@ class IndexProvider(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not isinstance(self.__data, np.memmap):
-            assert self.__data.dtype == np.int64
             np.save(self.__filename, self.__data)
 
     def flush(self):

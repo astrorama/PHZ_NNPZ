@@ -424,7 +424,6 @@ class ReferenceSample(object):
             pdz_size = os.path.getsize(pdz_file)
             pdz = np.load(pdz_file, mmap_mode='r')
             pdz_index_pos = np.nonzero(pdz_index[:, 1] == pdz_i)[0]
-            assert len(pdz_index_pos) == len(pdz) - 1
             updated_index = np.array(pdz_index[pdz_index_pos], copy=True)
 
             pdz_provider_idx = self._getCurrentPdzProvider(pdz[0, :])
@@ -443,7 +442,6 @@ class ReferenceSample(object):
             updated_index[nfit:, 2] = pdz_provider.appendPdz(pdz[nfit:])
 
             # Update the index
-            assert pdz_index.dtype == np.int64
             self.__pdz_index.bulkAdd(updated_index)
 
     def importSed(self, sed_pattern: str, sed_index: np.ndarray):
@@ -456,7 +454,6 @@ class ReferenceSample(object):
             sed_size = os.path.getsize(sed_file)
             sed = np.load(sed_file, mmap_mode='r')
             sed_index_pos = np.where(sed_index[:, 1] == sed_i)[0]
-            assert len(sed_index_pos) == len(sed), f'{len(sed_index_pos)} vs {len(sed)}'
             updated_index = np.array(sed_index[sed_index_pos], copy=True)
 
             sed_provider_idx = self._getCurrentSedProvider(sed.shape[1])
@@ -475,5 +472,4 @@ class ReferenceSample(object):
             updated_index[nfit:, 2] = sed_provider.appendSed(sed[nfit:])
 
             # Update the index
-            assert sed_index.dtype == np.int64
             self.__sed_index.bulkAdd(updated_index)

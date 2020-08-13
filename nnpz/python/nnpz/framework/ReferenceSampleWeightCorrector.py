@@ -34,7 +34,10 @@ class ReferenceSampleWeightCorrector(object):
             absolute_weights: A list, or numpy array, with the weights corresponding to *each* entry
                 in the reference catalog
         """
-        assert isinstance(wrapped, ReferenceSampleWeightCalculator)
+        if not isinstance(wrapped, ReferenceSampleWeightCalculator):
+            raise TypeError(
+                'Expected a ReferenceSampleWeightCalculator, got {}'.format(type(wrapped))
+            )
         self.__wrapped = wrapped
         self.__absolute_weights = absolute_weights
 

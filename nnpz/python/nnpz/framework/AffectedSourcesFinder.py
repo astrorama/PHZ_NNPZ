@@ -42,7 +42,10 @@ class AffectedSourcesFinder(object):
                 be used for finding the neighbors in the reference sample for
                 each input source.
         """
-        assert isinstance(neighbor_selector, NeighborSelectorInterface)
+        if not isinstance(neighbor_selector, NeighborSelectorInterface):
+            raise TypeError(
+                'Expected a NeighborSelectorInterface, got {}'.format(type(neighbor_selector))
+            )
         self.__selector = neighbor_selector
 
     def findAffected(self, input_coord_iter, flags_iter, progress_listener=None):

@@ -56,7 +56,8 @@ class Chi2Scaling(object):
             rtol: Relative tolerance for the stop condition
             epsilon: Epsilon used for the numeric derivative
         """
-        assert hasattr(prior, '__call__')
+        if not hasattr(prior, '__call__'):
+            raise TypeError('prior must be callable')
         self.prior = prior
         # Find the min and max from the prior itself
         self.__a_s = np.sort(

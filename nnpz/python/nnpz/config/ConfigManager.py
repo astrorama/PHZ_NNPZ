@@ -78,7 +78,8 @@ class ConfigManager(object):
         Args:
             handler_type: A *type* that inherits from ConfigHandler
         """
-        assert issubclass(handler_type, ConfigManager.ConfigHandler)
+        if not issubclass(handler_type, ConfigManager.ConfigHandler):
+            raise TypeError('Expected a ConfigHandler, got {}'.format(type(handler_type)))
         _handler_map[handler_type] = handler_type()
 
     @staticmethod
