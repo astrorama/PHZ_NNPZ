@@ -58,6 +58,11 @@ def defineSpecificProgramOptions():
                              'realizations of the PDZ')
     parser.add_argument('--mc-samples', dest='mc_samples', type=int, default=100,
                         help='Number of MC photometry samples to take')
+    parser.add_argument('--mc-photo-index', dest='mc_photo_index', type=str, default='ph_index.npy',
+                        help='MC Photometry index filename')
+    parser.add_argument('--mc-data-pattern', dest='mc_photo_data', type=str,
+                        default='ph_data_{}.npy',
+                        help='MC Photometry data filename pattern')
     parser.add_argument('--out-type', dest='type', type=str, metavar=' | '.join(PhotometryTypeMap),
                         required=True,
                         help='The type of the photometry to create')
@@ -115,7 +120,7 @@ def buildPhotometry(args, ref_sample):
 
     # Use the builder to compute the photometries and check if they were computed
     # for the full sample
-    phot_map = phot_builder.buildPhotometry(itertools.islice(ref_sample.iterate(), 100),
+    phot_map = phot_builder.buildPhotometry(ref_sample.iterate(),
                                             ProgressListener(len(ref_sample), logger=logger))
     n_phot = len(phot_map[filter_name_list[0]])
     if n_phot != len(ref_sample):
@@ -150,8 +155,10 @@ def buildMontecarloPhotometry(args, ref_sample):
     # Initialize the SED generator
     logger.info('Initializing MC SED generator')
     all_seds = SedGenerator()
-    for obj in itertools.islice(ref_sample.iterate(), 100):
+    obj_idx = []
+    for obj in ref_sample.iterate():
         pdz = obj.pdz
+        obj_idx.append(obj.id)
         redshifted_sed = obj.sed
         # Reference SED corresponds to the maximum value of the PDZ
         ref_z = pdz[:, 0][pdz[:, 1].argmax()]
@@ -177,10 +184,20 @@ def buildMontecarloPhotometry(args, ref_sample):
 
     means = dict()
     std = dict()
+    nd_photo = []
     for filter_name, phot in phot_map.items():
-        phot = phot.reshape(-1, args.mc_samples)
+        phot = phot.reshape(-1, args.mc_samples, 1)
+        nd_photo.append(phot)
         means[filter_name + '_mean'] = np.mean(phot, axis=1)
         std[filter_name + '_std'] = np.std(phot, axis=1)
+
+    # Merge all and generate the MC Provider
+    nd_photo = np.concatenate(nd_photo, axis=-1)
+    ref_sample.addProvider('MontecarloProvider', name='MontecarloPhotometry',
+                           index_name=args.mc_photo_index, data_pattern=args.mc_photo_data,
+                           object_ids=obj_idx, data=nd_photo,
+                           overwrite=True,
+                           extra=dict(names=filter_name_list))
 
     return n_phot, means, std, filter_map
 

@@ -156,6 +156,9 @@ class IndexProvider(object):
         """
         Concatenate a whole other index
         """
+        if other.dtype.type != np.int64:
+            raise ValueError('The index must be of type int64')
+
         if np.any(np.in1d(other[:, 0], self.__data[:, 0])):
             raise DuplicateIdException()
         self.__data = np.concatenate([self.__data, other], axis=0)

@@ -132,11 +132,11 @@ class ReferenceSample(object):
         self.__providers = self.__setupProviders(self.__providers_path)
 
         if len(self.__providers):
-            self.__all_ids = list(np.unique(np.concatenate(
+            self.__all_ids = set(np.concatenate(
                 [p.getIds() for p in self.__providers.values()]
-            )))
+            ))
         else:
-            self.__all_ids = []
+            self.__all_ids = set()
 
     def __len__(self):
         """
@@ -150,16 +150,18 @@ class ReferenceSample(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.flush()
 
+    def _flush_config(self):
+        providers_config = self._generateProviderConfig()
+        with open(self.__providers_path, 'wt') as fd:
+            json.dump(dict(Providers=providers_config), fd, indent=2)
+
     def flush(self):
         """
         Synchronize to disk
         """
-        providers_config = self._generateProviderConfig()
-
         for prov in self.__providers.values():
             prov.flush()
-        with open(self.__providers_path, 'wt') as fd:
-            json.dump(dict(Providers=providers_config), fd, indent=2)
+        self._flush_config()
 
     def _generateProviderConfig(self):
         providers_config = {}
@@ -168,6 +170,7 @@ class ReferenceSample(object):
             if provider_type_name not in providers_config:
                 providers_config[provider_type_name] = []
             config = dict(
+                name=provider_name,
                 index=os.path.basename(provider.index_path),
                 data=os.path.basename(provider.data_pattern),
             )
@@ -270,6 +273,12 @@ class ReferenceSample(object):
         self.__all_ids.append(obj_id)
         return self.__providers['PdzProvider'].addPdzData(obj_id, data)
 
+    def getData(self, name: str, obj_id: int):
+        return self.__providers[name].getData(obj_id)
+
+    def getProvider(self, name: str):
+        return self.__providers[name]
+
     def iterate(self) -> Iterable:
         """
         Returns an iterable object over the reference sample objects.
@@ -342,6 +351,43 @@ class ReferenceSample(object):
                 )
 
         # Update list of object IDs
-        self.__all_ids = list(np.unique(np.concatenate(
+        self.__all_ids = set(np.concatenate(
             [p.getIds() for p in self.__providers.values()]
-        )))
+        ))
+
+    def addProvider(self, type_name, name=None, index_name: str = None, data_pattern: str = None,
+                    object_ids: Iterable[int] = None, data: np.ndarray = None, extra: dict = None,
+                    overwrite: bool = False):
+        """
+
+        Args:
+            type_name:
+            name:
+            index_name:
+            data_pattern:
+            object_ids:
+            data:
+            extra:
+            overwrite:
+
+        Returns:
+
+        """
+        if name is None:
+            name = type_name
+
+        if not set(['name', 'index', 'data']).isdisjoint(extra.keys()):
+            raise KeyError('Extra metadata can not be one of name, index or data')
+
+        index_name = os.path.join(self.__root_path, index_name)
+        if overwrite and os.path.exists(index_name):
+            os.unlink(index_name)
+
+        provider = self.PROVIDER_MAP[type_name](
+            index_name, os.path.join(self.__root_path, data_pattern),
+            self.__data_file_limit, extra)
+        provider.initializeFromData(object_ids, data)
+        provider.flush()
+        self.__providers[name] = provider
+        self._flush_config()
+        self.__all_ids.update(object_ids)

@@ -98,7 +98,7 @@ class MontecarloDataProvider(object):
 
         if self.__data is None:
             self.__data = np.array(data, copy=True)
-            return
+            return np.arange(0, data.shape[0])
         if self.__data.shape[1:] != data.shape[1:]:
             raise InvalidDimensionsException(
                 f'Dimensionality mismatch: {self.__data.shape[1:]} vs {data.shape[1:]}'
