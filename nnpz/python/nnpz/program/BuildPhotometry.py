@@ -188,8 +188,8 @@ def buildMontecarloPhotometry(args, ref_sample):
     for filter_name, phot in phot_map.items():
         phot = phot.reshape(-1, args.mc_samples, 1)
         nd_photo.append(phot)
-        means[filter_name + '_mean'] = np.mean(phot, axis=1)
-        std[filter_name + '_std'] = np.std(phot, axis=1)
+        means[filter_name + '_MC'] = np.mean(phot, axis=1)
+        std[filter_name + '_MC_ERR'] = np.std(phot, axis=1)
 
     # Merge all and generate the MC Provider
     nd_photo = np.concatenate(nd_photo, axis=-1)
