@@ -74,6 +74,8 @@ def defineSpecificProgramOptions():
                         help='The E(B-V) value of the galactic absorption to apply to the SEDs')
     parser.add_argument('--parallel', dest='parallel', type=int, default=None,
                         help='Number of parallel processes to spawn')
+    parser.add_argument('--input-size', dest='input_size', type=int, default=None,
+                        help='Limit the computation to this many sources')
     return parser
 
 
@@ -120,10 +122,14 @@ def buildPhotometry(args, ref_sample):
 
     # Use the builder to compute the photometries and check if they were computed
     # for the full sample
-    phot_map = phot_builder.buildPhotometry(ref_sample.iterate(),
-                                            ProgressListener(len(ref_sample), logger=logger))
+    n_items = args.input_size if args.input_size is not None else len(ref_sample)
+    progress = ProgressListener(n_items, logger=logger)
+    phot_map = phot_builder.buildPhotometry(
+        itertools.islice(ref_sample.iterate(), args.input_size),
+        progress
+    )
     n_phot = len(phot_map[filter_name_list[0]])
-    if n_phot != len(ref_sample):
+    if n_phot != n_items:
         logger.warning('Stopped because of reference sample object with missing SED')
     logger.info('Successfully computed photometry for %d objects',
                 len(phot_map[filter_name_list[0]]))
@@ -148,15 +154,16 @@ def buildMontecarloPhotometry(args, ref_sample):
     logger.info('Successfully read filter transmissions')
 
     # Create the photometry builder to use for computing the photometry values
+    n_items = args.input_size if args.input_size is not None else len(ref_sample)
     phot_builder = createPhotometryBuilder(args.type, args.gal_ebv, args.parallel, filters_provider)
     n_phot = 0
-    progress_listener = ProgressListener(len(ref_sample), logger=logger)
+    progress_listener = ProgressListener(n_items, logger=logger)
 
     # Initialize the SED generator
     logger.info('Initializing MC SED generator')
     all_seds = SedGenerator()
     obj_idx = []
-    for obj in ref_sample.iterate():
+    for obj in itertools.islice(ref_sample.iterate(), args.input_size):
         pdz = obj.pdz
         obj_idx.append(obj.id)
         redshifted_sed = obj.sed
