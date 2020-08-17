@@ -21,8 +21,6 @@ Author: Alejandro Alvarez Ayllon
 
 from __future__ import division, print_function
 
-import json
-
 import numpy as np
 import os
 import pytest

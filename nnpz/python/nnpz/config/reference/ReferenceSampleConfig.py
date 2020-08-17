@@ -39,7 +39,7 @@ class ReferenceSampleConfig(ConfigManager.ConfigHandler):
             logger.info('Reading reference sample from {}...'.format(sample_dir))
             self.__sample = ReferenceSample(
                 sample_dir,
-                providers_file=args.get('reference_sample_providers', 'providers.json')
+                providers=args.get('reference_sample_providers', None)
             )
             logger.info('Reading reference sample done')
 

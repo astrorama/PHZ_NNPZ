@@ -21,7 +21,6 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-import json
 import os
 import pathlib
 from typing import Union, Iterable
@@ -39,8 +38,6 @@ logger = Logging.getLogger('ReferenceSample')
 class ReferenceSample(object):
     """Object for handling the reference sample format of NNPZ"""
 
-    PROVIDERS_FILE = 'providers.json'
-
     PROVIDER_MAP = dict(
         MontecarloProvider=MontecarloProvider,
         PdzProvider=PdzProvider,
@@ -53,22 +50,18 @@ class ReferenceSample(object):
     }
 
     @staticmethod
-    def createNew(path: Union[str, pathlib.Path], providers_file: str = PROVIDERS_FILE,
-                  max_file_size=2 ** 30, providers=None):
+    def createNew(path: Union[str, pathlib.Path], providers: dict = None,
+                  max_file_size=2 ** 30):
         """
         Creates a new reference sample directory.
 
         Args:
             path:
                 The path to create the reference sample in
-            providers_file:
-                The name of the providers file, a json with the list of data providers with their
-                file names. It can be either absolute, or relative to `path`
-            max_file_size:
-                In bytes, the maximum size for data files
             providers: dict
                 Set of provider configuration to initialize. Defaults to DEFAULT_PROVIDERS
-
+            max_file_size:
+                In bytes, the maximum size for data files
         Returns:
             An instance of the ReferenceSample class representing the new sample
         """
@@ -78,47 +71,41 @@ class ReferenceSample(object):
         if providers is None:
             providers = ReferenceSample.DEFAULT_PROVIDERS
 
-        with open(os.path.join(path, providers_file), 'wt') as fd:
-            json.dump(dict(Providers=providers), fd, indent=2)
+        return ReferenceSample(path, providers, max_file_size)
 
-        return ReferenceSample(path, providers_file, max_file_size)
-
-    def __setupProviders(self, providers_path):
-        if not os.path.exists(providers_path):
-            return {}
-
-        with open(providers_path, 'rt') as fd:
-            providers_json = json.load(fd)
-
+    def __setupProviders(self, providers_dict):
         providers = dict()
-        for provider_type_name, providers_config in providers_json.get('Providers', {}).items():
+        for provider_type_name, providers_config in providers_dict.items():
             logger.info('Found provider %s', provider_type_name)
             if not isinstance(providers_config, list):
                 providers_config = [providers_config]
 
             for provider_config in providers_config:
+                config_copy = dict(provider_config)
                 name = provider_config.get('name', provider_type_name)
 
                 providers[name] = ReferenceSample.PROVIDER_MAP[provider_type_name](
-                    os.path.join(self.__root_path, provider_config.pop('index')),
-                    os.path.join(self.__root_path, provider_config.pop('data')),
-                    self.__data_file_limit, provider_config
+                    os.path.join(self.__root_path, config_copy.pop('index')),
+                    os.path.join(self.__root_path, config_copy.pop('data')),
+                    self.__data_file_limit, config_copy
                 )
         return providers
 
-    def __init__(self, path: Union[str, pathlib.Path], providers_file: str = PROVIDERS_FILE,
+    def __init__(self, path: Union[str, pathlib.Path], providers: dict = None,
                  max_file_size=2 ** 30):
         """Creates a new ReferenceSample instance, managing the given path.
 
         Args:
             path:
                 The path to create the reference sample in
-            providers_file:
-                The name of the providers file, a json with the list of data providers with their
-                file names. It can be either absolute, or relative to `path`
+            providers: dict
+                Set of provider configuration to initialize. Defaults to DEFAULT_PROVIDERS
             max_file_size:
                 In bytes, the maximum size for data files
         """
+        if not providers:
+            providers = ReferenceSample.DEFAULT_PROVIDERS
+
         self.__data_file_limit = max_file_size
         self.__root_path = path
 
@@ -128,15 +115,14 @@ class ReferenceSample(object):
         if not os.path.isdir(self.__root_path):
             raise NotADirectoryError(self.__root_path + ' is not a directory')
 
-        self.__providers_path = os.path.join(path, providers_file)
-        self.__providers = self.__setupProviders(self.__providers_path)
+        self.__providers = self.__setupProviders(providers)
 
         if len(self.__providers):
-            self.__all_ids = set(np.concatenate(
+            self.__all_ids = list(np.unique(np.concatenate(
                 [p.getIds() for p in self.__providers.values()]
-            ))
+            )))
         else:
-            self.__all_ids = set()
+            self.__all_ids = list()
 
     def __len__(self):
         """
@@ -150,33 +136,12 @@ class ReferenceSample(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.flush()
 
-    def _flush_config(self):
-        providers_config = self._generateProviderConfig()
-        with open(self.__providers_path, 'wt') as fd:
-            json.dump(dict(Providers=providers_config), fd, indent=2)
-
     def flush(self):
         """
         Synchronize to disk
         """
         for prov in self.__providers.values():
             prov.flush()
-        self._flush_config()
-
-    def _generateProviderConfig(self):
-        providers_config = {}
-        for provider_name, provider in self.__providers.items():
-            provider_type_name = type(provider).__name__
-            if provider_type_name not in providers_config:
-                providers_config[provider_type_name] = []
-            config = dict(
-                name=provider_name,
-                index=os.path.basename(provider.index_path),
-                data=os.path.basename(provider.data_pattern),
-            )
-            config.update(provider.extra)
-            providers_config[provider_type_name].append(config)
-        return providers_config
 
     def getIds(self) -> np.ndarray:
         """
@@ -323,55 +288,41 @@ class ReferenceSample(object):
             The implementation only deals with files that are smaller than (or equal to) the
             limit for this reference sample.
         """
-        other_prov_path = os.path.join(other, os.path.basename(self.__providers_path))
-        with open(other_prov_path, 'rt') as fd:
-            other_providers_json = json.load(fd)
-
-        for prov_type_name, provs_config in other_providers_json.get('Providers', {}).items():
-            logger.info('Found provider %s', prov_type_name)
-            if not isinstance(provs_config, list):
-                provs_config = [provs_config]
-
-            for prov_config in provs_config:
-                name = prov_config.get('name', prov_type_name)
-                index_name = prov_config.pop('index')
-                data_pattern = prov_config.pop('data')
-                if name not in self.__providers:
-                    logger.info('Create provider %s of type %s', name, prov_type_name)
-                    self.__providers[name] = ReferenceSample.PROVIDER_MAP[prov_type_name](
-                        os.path.join(self.__root_path, index_name),
-                        os.path.join(self.__root_path, data_pattern),
-                        self.__data_file_limit, prov_config
-                    )
-                logger.info('Importing provider %s of type %s', name, prov_type_name)
-                self.__providers[name].importData(
-                    os.path.join(other, index_name),
-                    os.path.join(other, data_pattern),
-                    prov_config
-                )
+        for prov_type_name, provider in self.__providers.items():
+            logger.info('Importing provider %s of type %s', prov_type_name, type(provider).__name__)
+            provider.importData(
+                os.path.join(other, os.path.basename(provider.index_path)),
+                os.path.join(other, os.path.basename(provider.data_pattern)),
+                {}
+            )
 
         # Update list of object IDs
-        self.__all_ids = set(np.concatenate(
+        self.__all_ids = list(np.unique(np.concatenate(
             [p.getIds() for p in self.__providers.values()]
-        ))
+        )))
 
-    def addProvider(self, type_name, name=None, index_name: str = None, data_pattern: str = None,
-                    object_ids: Iterable[int] = None, data: np.ndarray = None, extra: dict = None,
-                    overwrite: bool = False):
+    def addProvider(self, type_name: str, name=None, index_name: str = None,
+                    data_pattern: str = None, object_ids: Iterable[int] = None,
+                    data: np.ndarray = None, extra: dict = None, overwrite: bool = False):
         """
-
+        Register a new provider after the initialization of the reference sample
         Args:
-            type_name:
-            name:
-            index_name:
-            data_pattern:
-            object_ids:
-            data:
-            extra:
-            overwrite:
-
-        Returns:
-
+            type_name: str
+                Provider type name, one of PROVIDER_MAP
+            name: str
+                Provider unique name, defaults to type_name if not given.
+            index_name: str
+                File name for the index
+            data_pattern: str
+                Pattern for the data file names
+            object_ids: iterable
+                Initial set of object ids
+            data: np.ndarray
+                Initial data set
+            extra: dict
+                Any additional metadata
+            overwrite: bool
+                If True, the destination files will be removed if they exist
         """
         if name is None:
             name = type_name
@@ -389,5 +340,4 @@ class ReferenceSample(object):
         provider.initializeFromData(object_ids, data)
         provider.flush()
         self.__providers[name] = provider
-        self._flush_config()
-        self.__all_ids.update(object_ids)
+        self.__all_ids = list(np.unique(self.__all_ids + list(object_ids)))
