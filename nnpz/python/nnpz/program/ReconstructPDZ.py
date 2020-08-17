@@ -31,6 +31,9 @@ import nnpz.config.nnpz
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 import nnpz.config.reference
+# noinspection PyUnresolvedReferences
+# pylint: disable=unused-import
+import nnpz.config.reconstruction
 
 
 def defineSpecificProgramOptions():
