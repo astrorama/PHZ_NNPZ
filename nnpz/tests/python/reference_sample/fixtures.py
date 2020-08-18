@@ -97,7 +97,7 @@ def redshift_bins_fixture():
 
 ##############################################################################
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def pdz_list_fixture():
     """
     Returns a list of PDZs to be used for testing.
@@ -142,9 +142,44 @@ def pdz_data_files_fixture(temp_dir_fixture, redshift_bins_fixture, pdz_list_fix
 
 ##############################################################################
 
+@pytest.fixture(scope='session')
+def mc_data_fixture(pdz_list_fixture):
+    """
+    Generate on the fly some MC data
+    """
+    result = {1: [], 2: []}
+    for i, pdz_data in pdz_list_fixture.items():
+        for obj, _ in pdz_data:
+            result[i].append([obj, np.random.randn(100, 4)])
+    return result
+
+
+##############################################################################
+
+@pytest.fixture
+def mc_data_files_fixture(temp_dir_fixture, mc_data_fixture):
+    """
+    Creates some MC data files to be used for testing
+
+    Returns: A map with keys the file indices and values he path to the newly created files
+    """
+    result = {}
+    for file_index, mc_data in mc_data_fixture.items():
+        filename = os.path.join(temp_dir_fixture, 'mc_data_{}.npy'.format(file_index))
+        array = np.concatenate([a.reshape(1, 100, 4) for _, a in mc_data], axis=0)
+        assert array.shape[0] == len(mc_data), array.shape
+        np.save(filename, array)
+        result[file_index] = filename
+    return result
+
+
+##############################################################################
+
 @pytest.fixture()
-def reference_sample_dir_fixture(temp_dir_fixture, sed_data_files_fixture,
-                                 pdz_data_files_fixture, sed_list_fixture, pdz_list_fixture):
+def reference_sample_dir_fixture(temp_dir_fixture,
+                                 sed_data_files_fixture, sed_list_fixture,
+                                 pdz_data_files_fixture, pdz_list_fixture,
+                                 mc_data_files_fixture, mc_data_fixture):
     """
     Returns a directory which contains a reference sample
     """
@@ -152,6 +187,7 @@ def reference_sample_dir_fixture(temp_dir_fixture, sed_data_files_fixture,
     # Create the index files
     sed_index_filename = os.path.join(temp_dir_fixture, 'sed_index.npy')
     pdz_index_filename = os.path.join(temp_dir_fixture, 'pdz_index.npy')
+    mc_index_filename = os.path.join(temp_dir_fixture, 'mc_index.npy')
 
     sed_index = []
     for file_index in sed_list_fixture:
@@ -166,6 +202,14 @@ def reference_sample_dir_fixture(temp_dir_fixture, sed_data_files_fixture,
             pdz_index.append(np.array([[obj_id, file_index, pos + 1]]))
     pdz_index = np.concatenate(pdz_index, axis=0)
     np.save(pdz_index_filename, pdz_index)
+
+    mc_index = []
+    for file_index in mc_data_fixture:
+        for pos, (obj_id, _) in enumerate(mc_data_fixture[file_index]):
+            mc_index.append(np.array([[obj_id, file_index, pos]]))
+    mc_index = np.concatenate(mc_index, axis=0)
+    np.save(mc_index_filename, mc_index)
+
     return temp_dir_fixture
 
 ##############################################################################
