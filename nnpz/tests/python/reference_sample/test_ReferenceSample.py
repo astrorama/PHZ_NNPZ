@@ -24,6 +24,7 @@ import tempfile
 
 from nnpz import ReferenceSample
 from nnpz.exceptions import *
+from nnpz.reference_sample.MontecarloProvider import MontecarloProvider
 
 from .fixtures import *
 
@@ -35,6 +36,15 @@ def pdzEqual(a, b):
     norm_a = a[:, 1] / np.trapz(a[:, 1], a[:, 0])
     norm_b = b[:, 1] / np.trapz(b[:, 1], b[:, 0])
     return np.allclose(norm_a, norm_b) and np.all(a[:, 0] == b[:, 0])
+
+
+@pytest.fixture
+def providers_with_mc():
+    providers = dict(ReferenceSample.DEFAULT_PROVIDERS)
+    providers['MontecarloProvider'] = [
+        {'index': 'mc_index.npy', 'data': 'mc_data_{}.npy'}
+    ]
+    return providers
 
 
 ###############################################################################
@@ -95,6 +105,23 @@ def test_constructor_missingDir(temp_dir_fixture):
 
 ###############################################################################
 
+def test_constructor_isFile(temp_dir_fixture):
+    """
+    Test the constructor when the path is actually a file
+    """
+
+    # Given
+    file_name = os.path.join(temp_dir_fixture, 'file')
+    with open(file_name, 'w') as fd:
+        fd.write('CONTENT')
+
+    # Then
+    with pytest.raises(NotADirectoryError):
+        ReferenceSample(file_name)
+
+
+###############################################################################
+
 def test_constructor_missingSedDataFile(reference_sample_dir_fixture):
     """
     Test the constructor when the SED data file is missing
@@ -121,6 +148,21 @@ def test_constructor_missingPdzDataFile(reference_sample_dir_fixture):
     # Then
     with pytest.raises(FileNotFoundException):
         ReferenceSample(reference_sample_dir_fixture)
+
+
+###############################################################################
+
+def test_constructor_missingMcDataFile(reference_sample_dir_fixture, providers_with_mc):
+    """
+    Test the constructor when the MC data file is missing
+    """
+
+    # Given
+    os.remove(os.path.join(reference_sample_dir_fixture, 'mc_data_1.npy'))
+
+    # Then
+    with pytest.raises(FileNotFoundException):
+        ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
 
 
 ###############################################################################
@@ -262,6 +304,49 @@ def test_getPdzData_dataUnset(reference_sample_dir_fixture):
     # Then
     assert pdz_data[0] is None
     assert pdz_data[1] is None
+
+
+##############################################################################
+
+def test_getMcData_dataUnset(reference_sample_dir_fixture, providers_with_mc):
+    """
+    Test the case where the MC data are not set yet
+    """
+
+    # Given
+    unset_mc_ids = [100, 101]
+
+    # When
+    sample = ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
+    mc_data = [sample.getData('MontecarloProvider', i) for i in unset_mc_ids]
+
+    # Then
+    assert mc_data[0] is None
+    assert mc_data[1] is None
+
+
+###############################################################################
+
+def test_getMcData_withData(reference_sample_dir_fixture, mc_data_fixture, providers_with_mc):
+    """
+    Test the case where the MC data exist
+    """
+
+    # Given
+    id_list = []
+    expected_data = []
+    for key in mc_data_fixture:
+        id_list += [i for i, _ in mc_data_fixture[key]]
+        expected_data += [d for _, d in mc_data_fixture[key]]
+
+    # When
+    sample = ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
+    data = [sample.getData('MontecarloProvider', i) for i in id_list]
+
+    # Then
+    for i in range(len(id_list)):
+        assert data[i].shape == expected_data[i].shape
+        assert np.allclose(data[i], expected_data[i])
 
 
 ###############################################################################
@@ -771,7 +856,7 @@ def test_normalizePdz(reference_sample_dir_fixture):
     """
 
     # Given
-    provider = ReferenceSample(reference_sample_dir_fixture)
+    ref_sample = ReferenceSample(reference_sample_dir_fixture)
     obj_id = 200
     original_pdz_data = np.asarray([(1, 10), (2, 20), (5, 50), (6, 60), (8, 80), (9, 90)],
                                    dtype=np.float32)
@@ -779,10 +864,10 @@ def test_normalizePdz(reference_sample_dir_fixture):
     assert original_integral != 1
 
     # When
-    provider.addPdzData(obj_id, original_pdz_data)
+    ref_sample.addPdzData(obj_id, original_pdz_data)
 
     # Then
-    stored_pdz = provider.getPdzData(obj_id)
+    stored_pdz = ref_sample.getPdzData(obj_id)
     assert np.trapz(stored_pdz[:, 1], stored_pdz[:, 0]) == 1
     assert pdzEqual(stored_pdz, original_pdz_data)
 
@@ -806,3 +891,33 @@ def test_importRefSample(reference_sample_dir_fixture):
         npdz = new_ref.getPdzData(obj_id)
         assert np.array_equal(nsed, old_ref.getSedData(obj_id))
         assert np.array_equal(npdz, old_ref.getPdzData(obj_id))
+
+
+###############################################################################
+
+def test_addProvider(reference_sample_dir_fixture):
+    """
+    Add a provider after creation
+    """
+
+    # Given
+    expected_data = np.random.rand(2, 100, 4)
+    ref_sample = ReferenceSample(reference_sample_dir_fixture)
+    with pytest.raises(KeyError):
+        ref_sample.getProvider('mc')
+
+    # When
+    ref_sample.addProvider(
+        'MontecarloProvider', name='mc',
+        index_name='mc2_index.npy', data_pattern='mc2_data_{}.npy',
+        object_ids=[100, 101],
+        data=expected_data, extra=dict(key='value')
+    )
+
+    # Then
+    prov = ref_sample.getProvider('mc')
+    assert prov is not None
+    assert isinstance(prov, MontecarloProvider)
+
+    data = ref_sample.getData('mc', 100)
+    assert np.allclose(expected_data[0], data.reshape(1, 100, 4))

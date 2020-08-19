@@ -21,6 +21,8 @@ Author: Alejandro Alvarez Ayllon
 
 from __future__ import division, print_function
 
+from nnpz.framework.NeighborSet import NeighborSet
+
 
 class AffectedSourcesReconstructor(object):
     """
@@ -32,7 +34,7 @@ class AffectedSourcesReconstructor(object):
         pass
 
     @staticmethod
-    def reconstruct(ref_ids, src_indexes, neighbors, weights, progress_listener):
+    def reconstruct(ref_ids, src_indexes, neighbors, weights, scales, progress_listener):
         """
 
         Args:
@@ -47,6 +49,9 @@ class AffectedSourcesReconstructor(object):
             weights:
                 An iterable object where each position holds the weights for the neighbors of each
                 source in the catalog.
+            scales:
+                An iterable object where each position holds the scaling for the neighbors of each
+                source in the catalog.
             progress_listener:
                 A callable that will be notified by the progress
         Returns:
@@ -58,14 +63,11 @@ class AffectedSourcesReconstructor(object):
         for ref_idx, ref_id in enumerate(ref_ids):
             ref_id_to_idx[ref_id] = ref_idx
         affected = {}
-        affected_weights = {}
         for i, src_idx in enumerate(src_indexes):
-            for neighbor_id, neighbor_weight in zip(neighbors[i], weights[i]):
-                neighbor_idx = ref_id_to_idx[neighbor_id]
-                if neighbor_idx not in affected:
-                    affected[neighbor_idx] = []
-                    affected_weights[neighbor_idx] = []
-                affected[neighbor_idx].append(src_idx)
-                affected_weights[neighbor_idx].append(neighbor_weight)
+            for nn_id, nn_weight, nn_scale in zip(neighbors[i], weights[i], scales[i]):
+                nn_idx = ref_id_to_idx[nn_id]
+                if nn_idx not in affected:
+                    affected[nn_idx] = NeighborSet()
+                affected[nn_idx].append(src_idx, weight=nn_weight, scale=nn_scale)
             progress_listener(i)
-        return affected, affected_weights
+        return affected

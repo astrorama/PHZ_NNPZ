@@ -31,6 +31,9 @@ import nnpz.config.nnpz
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 import nnpz.config.reference
+# noinspection PyUnresolvedReferences
+# pylint: disable=unused-import
+import nnpz.config.reconstruction
 
 
 def defineSpecificProgramOptions():
@@ -60,27 +63,28 @@ def mainMethod(args):
     nnpz_idx = conf_manager.getObject('nnpz_idx')
     nnpz_neighbors = conf_manager.getObject('nnpz_neighbors')
     nnpz_weights = conf_manager.getObject('nnpz_weights')
+    nnpz_scales = conf_manager.getObject('nnpz_scales')
 
     progress_listener = ProgressListener(
         len(nnpz_idx) - 1, 'Reconstructing affected table from neighbors list...', logger=logger
     )
-    affected, weights = AffectedSourcesReconstructor() \
-        .reconstruct(ref_ids, nnpz_idx, nnpz_neighbors, nnpz_weights, progress_listener)
+    affected = AffectedSourcesReconstructor().reconstruct(
+        ref_ids, nnpz_idx, nnpz_neighbors, nnpz_weights, nnpz_scales, progress_listener)
 
     # This stage is identical to nnpz, iterating the affected map in increasing
     # order of the reference sample indices.
-    output = conf_manager.getObject('pdz_output_handler')
+    output = conf_manager.getObject('output_handler')
 
     progress_listener = ProgressListener(
         len(affected) - 1, 'Adding contributions to output...', logger=logger
     )
     for progress, ref_i in enumerate(sorted(affected)):
         progress_listener(progress)
-        for target_i, weight in zip(affected[ref_i], weights[ref_i]):
-            output.addContribution(ref_i, target_i, weight, None)
+        for target in affected[ref_i]:
+            output.addContribution(ref_i, target, None)
 
     # Create the output catalog
-    output_file = conf_manager.getObject('pdz_output_file')
+    output_file = conf_manager.getObject('output_file')
     output.save(output_file)
     logger.info('Created file %s', output_file)
     return 0

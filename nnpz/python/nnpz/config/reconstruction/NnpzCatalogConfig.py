@@ -24,10 +24,11 @@ from __future__ import division, print_function
 import numpy as np
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
+from nnpz.exceptions import UnknownNameException
 from nnpz.io import CatalogReader
 from nnpz.io.catalog_properties import Column
 from nnpz.io.output_column_providers.NeighborList import NEIGHBOR_IDS_COLNAME, \
-    NEIGHBOR_WEIGHTS_COLNAME
+    NEIGHBOR_WEIGHTS_COLNAME, NEIGHBOR_SCALES_COLNAME
 
 logger = Logging.getLogger('Configuration')
 
@@ -52,8 +53,21 @@ class NnpzCatalogConfig(ConfigManager.ConfigHandler):
         nnpz_reader = CatalogReader(nnpz_cat)
         self.__neighbors = nnpz_reader.get(Column(NEIGHBOR_IDS_COLNAME, dtype=np.int64))
         self.__weights = nnpz_reader.get(Column(NEIGHBOR_WEIGHTS_COLNAME, dtype=np.float64))
+        try:
+            self.__scales = nnpz_reader.get(Column(NEIGHBOR_SCALES_COLNAME, dtype=np.float64))
+        except UnknownNameException:
+            self.__scales = np.ones(self.__weights.shape)
         self.__idxs = np.arange(len(self.__neighbors))
         self.__astropy_table = nnpz_reader.getAsAstropyTable()
+
+        if 'input_size' in args:
+            input_size = args['input_size']
+            if not isinstance(input_size, slice):
+                input_size = slice(input_size)
+            self.__neighbors = self.__neighbors[input_size]
+            self.__weights = self.__weights[input_size]
+            self.__scales = self.__scales[input_size]
+            self.__idxs = self.__idxs[input_size]
 
     def parseArgs(self, args):
         if not self.__added:
@@ -64,6 +78,7 @@ class NnpzCatalogConfig(ConfigManager.ConfigHandler):
             'nnpz_idx': self.__idxs,
             'nnpz_neighbors': self.__neighbors,
             'nnpz_weights': self.__weights,
+            'nnpz_scales': self.__scales,
             'nnpz_size': len(self.__idxs),
             'nnpz_astropy_table': self.__astropy_table
         }
