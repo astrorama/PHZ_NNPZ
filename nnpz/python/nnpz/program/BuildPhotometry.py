@@ -247,7 +247,7 @@ def mainMethod(args):
             args, ref_sample
         )
     else:
-        mc_phot_mean, mc_phot_std = {}, {}
+        n_mc_phot, mc_phot_mean, mc_phot_std, mc_filter_map = 0, {}, {}, {}
 
     # Create the output
     logger.info('')
