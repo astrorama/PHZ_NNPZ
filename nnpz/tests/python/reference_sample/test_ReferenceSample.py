@@ -20,6 +20,7 @@ Author: Nikolaos Apostolakos
 """
 
 from __future__ import division, print_function
+
 import tempfile
 
 from nnpz import ReferenceSample
@@ -878,9 +879,9 @@ def test_importRefSample(reference_sample_dir_fixture):
     """
     Test the import of another reference sample
     """
-    new_ref_dir = tempfile.mkdtemp(prefix='nnpz_test_new_ref')
+    new_ref_dir = tempfile.mktemp(prefix='nnpz_test_new_ref')
 
-    new_ref = ReferenceSample(new_ref_dir)
+    new_ref = ReferenceSample.createNew(new_ref_dir)
     new_ref.importDirectory(reference_sample_dir_fixture)
 
     old_ref = ReferenceSample(reference_sample_dir_fixture)
@@ -921,3 +922,65 @@ def test_addProvider(reference_sample_dir_fixture):
 
     data = ref_sample.getData('mc', 100)
     assert np.allclose(expected_data[0], data.reshape(1, 100, 4))
+
+
+###############################################################################
+
+def test_missingSedIndex(reference_sample_dir_fixture):
+    """
+    Open a directory where the SED index is missing
+    """
+
+    # When
+    os.unlink(os.path.join(reference_sample_dir_fixture, 'sed_index.npy'))
+
+    # Then
+    with pytest.raises(FileNotFoundException):
+        ReferenceSample(reference_sample_dir_fixture)
+
+
+###############################################################################
+
+def test_missingPdzIndex(reference_sample_dir_fixture):
+    """
+    Open a directory where the PDZ index is missing
+    """
+
+    # When
+    os.unlink(os.path.join(reference_sample_dir_fixture, 'pdz_index.npy'))
+
+    # Then
+    with pytest.raises(FileNotFoundException):
+        ReferenceSample(reference_sample_dir_fixture)
+
+
+###############################################################################
+
+def test_missingMCIndex(reference_sample_dir_fixture):
+    """
+    Open a directory where the MC index is missing.
+    However, we do *not* ask for the MC provider, so it should be fine
+    """
+
+    # When
+    os.unlink(os.path.join(reference_sample_dir_fixture, 'mc_index.npy'))
+
+    # Then
+    ref_sample = ReferenceSample(reference_sample_dir_fixture)
+    assert len(ref_sample.getIds()) > 0
+
+
+###############################################################################
+
+def test_missingMcIndex2(reference_sample_dir_fixture, providers_with_mc):
+    """
+    Open a directory where the MC index is missing.
+    This time, we do ask for the MC provider.
+    """
+
+    # When
+    os.unlink(os.path.join(reference_sample_dir_fixture, 'sed_index.npy'))
+
+    # Then
+    with pytest.raises(FileNotFoundException):
+        ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)

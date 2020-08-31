@@ -71,9 +71,9 @@ class ReferenceSample(object):
         if providers is None:
             providers = ReferenceSample.DEFAULT_PROVIDERS
 
-        return ReferenceSample(path, providers, max_file_size)
+        return ReferenceSample(path, providers, max_file_size, create=True)
 
-    def __setupProviders(self, providers_dict):
+    def __setupProviders(self, providers_dict, create):
         providers = dict()
         for provider_type_name, providers_config in providers_dict.items():
             logger.info('Found provider %s', provider_type_name)
@@ -84,15 +84,20 @@ class ReferenceSample(object):
                 config_copy = dict(provider_config)
                 name = provider_config.get('name', provider_type_name)
 
+                index_path = os.path.join(self.__root_path, config_copy.pop('index'))
+                data_pattern = os.path.join(self.__root_path, config_copy.pop('data'))
+
+                if not create and not os.path.exists(index_path):
+                    raise FileNotFoundException(index_path)
+
                 providers[name] = ReferenceSample.PROVIDER_MAP[provider_type_name](
-                    os.path.join(self.__root_path, config_copy.pop('index')),
-                    os.path.join(self.__root_path, config_copy.pop('data')),
+                    index_path, data_pattern,
                     self.__data_file_limit, config_copy
                 )
         return providers
 
     def __init__(self, path: Union[str, pathlib.Path], providers: dict = None,
-                 max_file_size=2 ** 30):
+                 max_file_size: int = 2 ** 30, create: bool = False):
         """Creates a new ReferenceSample instance, managing the given path.
 
         Args:
@@ -102,6 +107,9 @@ class ReferenceSample(object):
                 Set of provider configuration to initialize. Defaults to DEFAULT_PROVIDERS
             max_file_size:
                 In bytes, the maximum size for data files
+            create:
+                If True, fail if the required files exist, as this is supposed to be a new, empty,
+                reference sample.
         """
         if not providers:
             providers = ReferenceSample.DEFAULT_PROVIDERS
@@ -115,7 +123,7 @@ class ReferenceSample(object):
         if not os.path.isdir(self.__root_path):
             raise NotADirectoryError(self.__root_path + ' is not a directory')
 
-        self.__providers = self.__setupProviders(providers)
+        self.__providers = self.__setupProviders(providers, create=create)
 
         if len(self.__providers):
             self.__all_ids = list(np.unique(np.concatenate(
