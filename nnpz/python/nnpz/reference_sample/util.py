@@ -1,4 +1,5 @@
 import os
+from typing import Set
 
 from nnpz.exceptions import FileNotFoundException
 from nnpz.reference_sample import IndexProvider
@@ -16,17 +17,17 @@ def locate_existing_data_files(pattern):
     return result
 
 
-def validate_data_files(pattern: str, index: IndexProvider, label: str):
+def validate_data_files(pattern: str, index: IndexProvider, key: str):
     """
     Cross-check the existing data files and those referenced by the index
     """
     existing_files = locate_existing_data_files(pattern)
-    index_files = index.getFiles()
+    index_files = index.getFiles(key)
     if not existing_files.issuperset(index_files):
         missing_files = index_files.difference(existing_files)
         missing_files = list(map(pattern.format, missing_files))
         raise FileNotFoundException(
-            'Missing {} data files: {}'.format(label, ', '.join(missing_files))
+            'Missing {} data files: {}'.format(key, ', '.join(missing_files))
         )
     return existing_files
 

@@ -19,8 +19,6 @@ Created on: 10/11/17
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
-
 import os
 
 import numpy as np
@@ -185,31 +183,45 @@ def reference_sample_dir_fixture(temp_dir_fixture,
     """
 
     # Create the index files
-    sed_index_filename = os.path.join(temp_dir_fixture, 'sed_index.npy')
-    pdz_index_filename = os.path.join(temp_dir_fixture, 'pdz_index.npy')
-    mc_index_filename = os.path.join(temp_dir_fixture, 'mc_index.npy')
+    index_filename = os.path.join(temp_dir_fixture, 'index.npy')
 
-    sed_index = []
+    # Store on a dictionary each index individually
+    index_dict = {
+        'sed': dict(),
+        'pdz': dict(),
+        'mc': dict()
+    }
     for file_index in sed_list_fixture:
         for pos, (obj_id, _) in enumerate(sed_list_fixture[file_index]):
-            sed_index.append(np.array([[obj_id, file_index, pos]]))
-    sed_index = np.concatenate(sed_index, axis=0)
-    np.save(sed_index_filename, sed_index)
+            index_dict['sed'][obj_id] = (file_index, pos)
 
-    pdz_index = []
     for file_index in pdz_list_fixture:
         for pos, (obj_id, _) in enumerate(pdz_list_fixture[file_index]):
-            pdz_index.append(np.array([[obj_id, file_index, pos + 1]]))
-    pdz_index = np.concatenate(pdz_index, axis=0)
-    np.save(pdz_index_filename, pdz_index)
+            index_dict['pdz'][obj_id] = (file_index, pos + 1)
 
-    mc_index = []
     for file_index in mc_data_fixture:
         for pos, (obj_id, _) in enumerate(mc_data_fixture[file_index]):
-            mc_index.append(np.array([[obj_id, file_index, pos]]))
-    mc_index = np.concatenate(mc_index, axis=0)
-    np.save(mc_index_filename, mc_index)
+            index_dict['mc'][obj_id] = (file_index, pos)
 
+    # All known object IDS
+    all_ids = set()
+    for d in index_dict.values():
+        all_ids.update(d.keys())
+
+    # Allocate array with the full index
+    fields = ['id']
+    for prov in ['sed', 'pdz', 'mc']:
+        fields.append(f'{prov}_file')
+        fields.append(f'{prov}_offset')
+    index = np.full(len(all_ids), -1, dtype=list(map(lambda c: (c, np.int64), fields)))
+
+    # Fill and save it
+    for i, obj_id in enumerate(all_ids):
+        index['id'][i] = obj_id
+        for prov in ['sed', 'pdz', 'mc']:
+            index[f'{prov}_file'][i], index[f'{prov}_offset'][i] = index_dict[prov][obj_id]
+
+    np.save(index_filename, index)
     return temp_dir_fixture
 
 ##############################################################################
