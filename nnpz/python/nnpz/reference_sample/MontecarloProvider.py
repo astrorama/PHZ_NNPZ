@@ -25,7 +25,7 @@ class MontecarloProvider(BaseProvider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        data_files = validate_data_files(self._data_pattern, self._index, 'MontecarloProvider')
+        data_files = validate_data_files(self._data_pattern, self._index, self._key)
 
         self._data_map = {}
         for data_file in data_files:
@@ -42,7 +42,7 @@ class MontecarloProvider(BaseProvider):
             data_prov.flush()
 
     def getData(self, obj_id: int) -> np.ndarray:
-        loc = self._index.get(obj_id)
+        loc = self._index.get(obj_id, self._key)
         if not loc:
             return None
         return self._data_map[loc.file].read(loc.offset)
@@ -60,7 +60,7 @@ class MontecarloProvider(BaseProvider):
         Raises:
             AlreadySetException : If the provider has been already initialized
         """
-        if len(self._index):
+        if len(self._data_map):
             raise AlreadySetException('Provider already initialized')
 
         if len(data.shape) != 3:
@@ -73,16 +73,23 @@ class MontecarloProvider(BaseProvider):
         records_per_file = self._data_limit // record_size
         n_files = int(np.ceil(len(object_ids) / records_per_file))
 
-        index_data = np.zeros((len(object_ids), 3), dtype=np.int64)
+        file_field = f'{self._key}_file'
+        offset_field = f'{self._key}_offset'
+
+        index_data = np.zeros(
+            (len(object_ids),),
+            dtype=[('id', np.int64), (file_field, np.int64), (offset_field, np.int64)]
+        )
+
         for file_i in range(1, n_files + 1):
             data_file = self._data_pattern.format(file_i)
             if os.path.exists(data_file):
                 os.unlink(data_file)
             idx = slice((file_i - 1) * records_per_file, file_i * records_per_file)
-            index_data[idx, 0] = object_ids[idx]
-            index_data[idx, 1] = file_i
+            index_data['id'] = object_ids[idx]
+            index_data[file_field] = file_i
             data_prov = MontecarloDataProvider(data_file)
-            index_data[idx, 2] = data_prov.append(data[idx])
+            index_data[offset_field] = data_prov.append(data[idx])
             data_prov.flush()
             self._data_map[file_i] = data_prov
-        self._index.bulkAdd(index_data)
+            self._index.bulkAdd(index_data)

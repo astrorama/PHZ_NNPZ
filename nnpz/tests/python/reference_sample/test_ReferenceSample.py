@@ -19,8 +19,6 @@ Created on: 10/11/17
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
-
 import tempfile
 
 from nnpz import ReferenceSample
@@ -43,7 +41,7 @@ def pdzEqual(a, b):
 def providers_with_mc():
     providers = dict(ReferenceSample.DEFAULT_PROVIDERS)
     providers['MontecarloProvider'] = [
-        {'index': 'mc_index.npy', 'data': 'mc_data_{}.npy'}
+        {'name': 'mc', 'data': 'mc_data_{}.npy'}
     ]
     return providers
 
@@ -207,26 +205,6 @@ def test_getIds(reference_sample_dir_fixture, sed_list_fixture):
 
 ###############################################################################
 
-def test_getSedData_corruptedFile(reference_sample_dir_fixture):
-    """
-    Test the case where the ID in the index and in the SED data file differ
-    """
-
-    # Given
-    with open(os.path.join(reference_sample_dir_fixture, 'sed_index.npy'), 'rb+') as f:
-        f.seek(0)
-        correct_id = np.fromfile(f, count=1, dtype=np.int64)[0]
-        wrong_id = correct_id + 1
-        f.seek(0)
-        np.asarray([wrong_id], dtype=np.int64).tofile(f)
-
-    # Then
-    with pytest.raises(CorruptedFileException):
-        ReferenceSample(reference_sample_dir_fixture)
-
-
-###############################################################################
-
 def test_getSedData_dataUnset(reference_sample_dir_fixture):
     """
     Test the case where the SED data are not set yet
@@ -270,13 +248,13 @@ def test_getSedData_withData(reference_sample_dir_fixture, sed_list_fixture):
 
 ###############################################################################
 
-def test_getPdzData_corruptedFile(reference_sample_dir_fixture):
+def test_corruptedIndex(reference_sample_dir_fixture):
     """
-    Test the case where the ID in the index and in the PDZ data file differ
+    Corrupted index file
     """
 
     # Given
-    with open(os.path.join(reference_sample_dir_fixture, 'pdz_index.npy'), 'rb+') as f:
+    with open(os.path.join(reference_sample_dir_fixture, 'index.npy'), 'rb+') as f:
         f.seek(0)
         correct_id = np.fromfile(f, count=1, dtype=np.int64)[0]
         wrong_id = correct_id + 1
@@ -319,7 +297,7 @@ def test_getMcData_dataUnset(reference_sample_dir_fixture, providers_with_mc):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
-    mc_data = [sample.getData('MontecarloProvider', i) for i in unset_mc_ids]
+    mc_data = [sample.getData('mc', i) for i in unset_mc_ids]
 
     # Then
     assert mc_data[0] is None
@@ -342,7 +320,7 @@ def test_getMcData_withData(reference_sample_dir_fixture, mc_data_fixture, provi
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
-    data = [sample.getData('MontecarloProvider', i) for i in id_list]
+    data = [sample.getData('mc', i) for i in id_list]
 
     # Then
     for i in range(len(id_list)):
@@ -352,27 +330,18 @@ def test_getMcData_withData(reference_sample_dir_fixture, mc_data_fixture, provi
 
 ###############################################################################
 
-def test_getSedData_withData(reference_sample_dir_fixture, pdz_list_fixture, redshift_bins_fixture):
+def test_getPdzData_withData(reference_sample_dir_fixture, pdz_list_fixture, redshift_bins_fixture):
     """
     Test the case where the PDZ data exist
     """
-
-    # Given
-    id_list = []
-    expected_data = []
-    for key in pdz_list_fixture:
-        id_list += [i for i, _ in pdz_list_fixture[key]]
-        expected_data += [d for _, d in pdz_list_fixture[key]]
-
-    # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    pdz_data = [sample.getPdzData(i) for i in id_list]
 
-    # Then
-    for i in range(len(id_list)):
-        assert pdz_data[i].shape == (len(expected_data[i]), 2)
-        assert np.all(pdz_data[i][:, 0] == redshift_bins_fixture)
-        assert np.all(pdz_data[i][:, 1] == expected_data[i])
+    for obj in pdz_list_fixture.values():
+        for obj_id, expected in obj:
+            pdz = sample.getPdzData(obj_id)
+            assert pdz.shape == (len(expected), 2)
+            assert np.array_equal(pdz[:, 0], redshift_bins_fixture)
+            assert np.array_equal(pdz[:, 1], expected)
 
 
 ###############################################################################
@@ -905,82 +874,37 @@ def test_addProvider(reference_sample_dir_fixture):
     expected_data = np.random.rand(2, 100, 4)
     ref_sample = ReferenceSample(reference_sample_dir_fixture)
     with pytest.raises(KeyError):
-        ref_sample.getProvider('mc')
+        ref_sample.getProvider('mc2')
 
     # When
     ref_sample.addProvider(
-        'MontecarloProvider', name='mc',
-        index_name='mc2_index.npy', data_pattern='mc2_data_{}.npy',
+        'MontecarloProvider', name='mc2',
+        data_pattern='mc2_data_{}.npy',
         object_ids=[100, 101],
         data=expected_data, extra=dict(key='value')
     )
 
     # Then
-    prov = ref_sample.getProvider('mc')
+    prov = ref_sample.getProvider('mc2')
     assert prov is not None
     assert isinstance(prov, MontecarloProvider)
 
-    data = ref_sample.getData('mc', 100)
+    data = ref_sample.getData('mc2', 100)
     assert np.allclose(expected_data[0], data.reshape(1, 100, 4))
 
 
 ###############################################################################
 
-def test_missingSedIndex(reference_sample_dir_fixture):
+def test_missingIndex(reference_sample_dir_fixture):
     """
     Open a directory where the SED index is missing
     """
 
     # When
-    os.unlink(os.path.join(reference_sample_dir_fixture, 'sed_index.npy'))
+    os.unlink(os.path.join(reference_sample_dir_fixture, 'index.npy'))
 
     # Then
     with pytest.raises(FileNotFoundException):
         ReferenceSample(reference_sample_dir_fixture)
 
-
 ###############################################################################
-
-def test_missingPdzIndex(reference_sample_dir_fixture):
-    """
-    Open a directory where the PDZ index is missing
-    """
-
-    # When
-    os.unlink(os.path.join(reference_sample_dir_fixture, 'pdz_index.npy'))
-
-    # Then
-    with pytest.raises(FileNotFoundException):
-        ReferenceSample(reference_sample_dir_fixture)
-
-
-###############################################################################
-
-def test_missingMCIndex(reference_sample_dir_fixture):
-    """
-    Open a directory where the MC index is missing.
-    However, we do *not* ask for the MC provider, so it should be fine
-    """
-
-    # When
-    os.unlink(os.path.join(reference_sample_dir_fixture, 'mc_index.npy'))
-
-    # Then
-    ref_sample = ReferenceSample(reference_sample_dir_fixture)
-    assert len(ref_sample.getIds()) > 0
-
-
-###############################################################################
-
-def test_missingMcIndex2(reference_sample_dir_fixture, providers_with_mc):
-    """
-    Open a directory where the MC index is missing.
-    This time, we do ask for the MC provider.
-    """
-
-    # When
-    os.unlink(os.path.join(reference_sample_dir_fixture, 'sed_index.npy'))
-
-    # Then
-    with pytest.raises(FileNotFoundException):
-        ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)

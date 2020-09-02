@@ -28,6 +28,7 @@ from typing import Union
 
 import numpy as np
 from nnpz.exceptions import CorruptedFileException, DuplicateIdException
+from numpy.lib import recfunctions as rfn
 
 
 class IndexProvider(object):
@@ -58,25 +59,24 @@ class IndexProvider(object):
             except ValueError:
                 raise CorruptedFileException()
         else:
-            self.__data = np.zeros(shape=(0, 3), dtype=np.int64)
+            self.__data = np.array([], dtype=[('id', np.int64)])
 
-        if self.__data.dtype != np.int64:
+        if not self.__data.dtype.names:
+            raise CorruptedFileException('Expected a structured array')
+        if 'id' not in self.__data.dtype.names:
+            raise CorruptedFileException('Missing ids')
+        if not all(map(lambda d: d != np.int64, self.__data.dtype.fields.values())):
             raise CorruptedFileException('Expected 64 bits integers')
-        if len(self.__data.shape) != 2:
-            raise CorruptedFileException('Expected an array with two dimensions')
-        if self.__data.shape[1] != 3:
-            raise CorruptedFileException('The second dimension is expected to be of size 3')
 
         # Create a map for easier search and at the same time check if we have
         # duplicates. The map values are (i, sed_file, sed_pos, pdz_file, pdz_pos),
         # where i is the index of the ID.
         self.__index_map = {}
-        self.__files = set()
-        for row in self.__data:
-            if row[0] in self.__index_map:
-                raise DuplicateIdException('Duplicate ID {}'.format(row[0]))
-            self.__index_map[row[0]] = IndexProvider.ObjectLocation(row[1], row[2])
-            self.__files.add(row[1])
+        for i in range(len(self.__data)):
+            row = self.__data[i]
+            if row['id'] in self.__index_map:
+                raise DuplicateIdException('Duplicate ID {}'.format(row['id']))
+            self.__index_map[row['id']] = i
 
     def __enter__(self):
         return self
@@ -110,20 +110,27 @@ class IndexProvider(object):
         """
         Returns a list of long integers with the IDs
         """
-        return self.__data[:, 0]
+        return self.__data['id']
 
-    def getFiles(self) -> set:
+    def getFiles(self, key: str) -> set:
         """
-        Returns a list of short unsigned integers with the SED file indices
+        Returns a list of short unsigned integers with the file indices for the given key
         """
-        return self.__files
+        try:
+            files = set(self.__data[f'{key}_file'])
+            if -1 in files:
+                files.remove(-1)
+            return files
+        except ValueError:
+            return set()
 
-    def get(self, obj_id: int) -> ObjectLocation:
+    def get(self, obj_id: int, key: str) -> ObjectLocation:
         """
         Returns the position for a given ID.
 
         Args:
             obj_id: The ID of the object to retrieve the info for
+            key: The index key
 
         Returns:
             A named tuple with the following:
@@ -132,35 +139,104 @@ class IndexProvider(object):
         """
         if obj_id not in self.__index_map:
             return None
-        return self.__index_map[obj_id]
+        i = self.__index_map[obj_id]
+        try:
+            return IndexProvider.ObjectLocation(*self.__data[i][[f'{key}_file', f'{key}_offset']])
+        except KeyError:
+            return IndexProvider.ObjectLocation(-1, -1)
 
-    def add(self, obj_id: int, location: ObjectLocation):
+    def _addKey(self, key: str):
+        """
+        Add a new key to the index
+        """
+        self.__data = np.array(rfn.append_fields(
+            self.__data,
+            data=np.full((2, self.__data.shape[0]), -1),
+            names=[f'{key}_file', f'{key}_offset'],
+            dtypes=np.int64
+        ), copy=True)
+
+    def add(self, obj_id: int, key: str, location: ObjectLocation):
         """
         Add a new entry to the index
 
         Args:
             obj_id: The ID of the object to retrieve the info for
+            key: The index key
             location: The location of the data
 
         Raises:
 
         """
-        if obj_id in self.__index_map:
-            raise DuplicateIdException('Index already contains {}'.format(obj_id))
-        self.__index_map[obj_id] = location
-        self.__files.add(location.file)
-        entry = np.array([[obj_id, location.file, location.offset]], dtype=np.int64)
-        self.__data = np.concatenate([self.__data, entry], axis=0)
+        if f'{key}_file' not in self.__data.dtype.names:
+            self._addKey(key)
+
+        try:
+            i = self.__index_map[obj_id]
+        except KeyError:
+            entry = np.full(shape=1, fill_value=-1, dtype=self.__data.dtype)
+            entry['id'] = obj_id
+            self.__data = np.concatenate([self.__data, entry], axis=0)
+            i = self.__index_map[obj_id] = self.__data.shape[0] - 1
+
+        entry = self.__data[i]
+        if entry[f'{key}_file'] != -1:
+            raise DuplicateIdException(
+                'Index already contains {} (file {})'.format(obj_id, entry[f'{key}_file']))
+
+        entry[f'{key}_file'] = location.file
+        entry[f'{key}_offset'] = location.offset
 
     def bulkAdd(self, other: np.ndarray):
         """
         Concatenate a whole other index
         """
-        if other.dtype.type != np.int64:
-            raise ValueError('The index must be of type int64')
+        if not other.dtype.names:
+            raise ValueError('Expected a structured array')
+        if 'id' not in other.dtype.names:
+            raise ValueError('Missing id field')
+        if not all(map(lambda d: d != np.int64, other.dtype.fields.values())):
+            raise CorruptedFileException('Expected 64 bits integers')
 
-        if np.any(np.in1d(other[:, 0], self.__data[:, 0])):
-            raise DuplicateIdException()
-        self.__data = np.concatenate([self.__data, other], axis=0)
-        for row in other:
-            self.__index_map[row[0]] = IndexProvider.ObjectLocation(row[1], row[2])
+        this = self.__data
+
+        # Get set of unique IDs
+        unique_ids = np.unique(np.concatenate([this['id'], other['id']]))
+        unique_ids.sort()
+
+        # Get set of columns
+        columns = set(this.dtype.names)
+        columns.update(other.dtype.names)
+        columns.discard('id')
+        columns = list(sorted(columns))
+
+        # Pre-allocate destination
+        destination = np.full(
+            len(unique_ids), -1,
+            dtype=[('id', np.int64)] + list(map(lambda c: (c, np.int64), columns))
+        )
+
+        # Copy IDs over
+        destination['id'] = unique_ids
+
+        # Copy columns from both sides, checking for duplicates
+        this_idx = np.searchsorted(destination['id'], this['id'])
+        other_idx = np.searchsorted(destination['id'], other['id'])
+        for c in columns:
+            # From self
+            if c in this.dtype.names:
+                destination[c][this_idx] = this[c]
+            # From the other
+            if c in other.dtype.names:
+                already_set = destination[c][other_idx] != -1
+                if np.any(already_set):
+                    raise DuplicateIdException(destination['id'][other_idx[already_set]])
+                destination[c][other_idx] = other[c]
+
+        self.__data = destination
+        for i in range(self.__data.shape[0]):
+            self.__index_map[self.__data['id'][i]] = i
+
+    @property
+    def raw(self):
+        return self.__data

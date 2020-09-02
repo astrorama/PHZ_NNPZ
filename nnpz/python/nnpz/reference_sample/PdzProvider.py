@@ -23,7 +23,7 @@ class PdzProvider(BaseProvider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        data_files = validate_data_files(self._data_pattern, self._index, 'PdzProvider')
+        data_files = validate_data_files(self._data_pattern, self._index, self._key)
 
         self._data_map = {}
         for data_file in data_files:
@@ -57,7 +57,7 @@ class PdzProvider(BaseProvider):
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the PDZ data file
         """
-        pdz_loc = self._index.get(obj_id)
+        pdz_loc = self._index.get(obj_id, self._key)
         if not pdz_loc:
             return None
         z_bins = self._data_map[pdz_loc.file].getRedshiftBins().reshape(-1, 1)
@@ -84,7 +84,7 @@ class PdzProvider(BaseProvider):
                 the wavelength values of the other PDZs in the sample
         """
         # Check that the PDZ is not already set
-        loc = self._index.get(obj_id)
+        loc = self._index.get(obj_id, self._key)
         if loc is not None:
             raise AlreadySetException('PDZ for ID ' + str(obj_id) + ' is already set')
 
@@ -98,7 +98,7 @@ class PdzProvider(BaseProvider):
         # Add the PDZ data in the last file, normalizing first
         integral = np.trapz(data_arr[:, 1], data_arr[:, 0])
         new_pos = self._data_map[pdz_file].appendPdz(data_arr[:, 1] / integral)
-        self._index.add(obj_id, IndexProvider.ObjectLocation(pdz_file, new_pos))
+        self._index.add(obj_id, self._key, IndexProvider.ObjectLocation(pdz_file, new_pos))
 
     def _getCurrentPdzProvider(self, binning):
         """
@@ -126,21 +126,26 @@ class PdzProvider(BaseProvider):
 
         return last_pdz_file
 
-    def importData(self, index_path: Union[str, pathlib.Path], data_pattern: str, extra_data: dict):
+    def importData(self, other_index: IndexProvider, data_pattern: str, extra_data: dict):
         """
         Import a set of PDZ files
         """
         self.extra.update(extra_data)
-        other_index = np.load(index_path, mmap_mode='r')
         other_files = sorted(locate_existing_data_files(data_pattern))
+        file_field = f'{self._key}_file'
+        offset_field = f'{self._key}_offset'
         for other_pdz_i in other_files:
             other_pdz_file = data_pattern.format(other_pdz_i)
             other_pdz_size = os.path.getsize(other_pdz_file)
             other_pdz = np.load(other_pdz_file, mmap_mode='r')
 
             # Take the part of the index that points to the file other_pdz_i
-            other_pdz_index_pos = np.nonzero(other_index[:, 1] == other_pdz_i)[0]
-            updated_index = np.array(other_index[other_pdz_index_pos], copy=True)
+            other_pdz_index_pos = np.nonzero(other_index.raw[file_field] == other_pdz_i)[0]
+            updated_index = np.array(
+                other_index.raw[['id', file_field, offset_field]][other_pdz_index_pos], copy=True)
+
+            # The order of the index does not have to match the order on the file!
+            disk_order = np.argsort(updated_index[offset_field])
 
             # Take the current active provider to store the imported data
             pdz_provider_idx = self._getCurrentPdzProvider(other_pdz[0, :])
@@ -149,14 +154,14 @@ class PdzProvider(BaseProvider):
             # Fit whatever we can on the current file (approximately)
             available_size = self._data_limit - pdz_provider.size()
             nfit = len(other_pdz) * min(np.ceil(available_size / other_pdz_size), 1)
-            updated_index[:nfit, 1] = pdz_provider_idx
-            updated_index[:nfit, 2] = pdz_provider.appendPdz(other_pdz[1:nfit])
+            updated_index[file_field][:nfit] = pdz_provider_idx
+            updated_index[offset_field][disk_order[:nfit]] = pdz_provider.appendPdz(other_pdz[1:nfit])
 
             # Create a new one and put in the rest
             pdz_provider_idx = self._getCurrentPdzProvider(other_pdz[0, :])
             pdz_provider = self._data_map[pdz_provider_idx]
-            updated_index[nfit:, 1] = pdz_provider_idx
-            updated_index[nfit:, 2] = pdz_provider.appendPdz(other_pdz[nfit:])
+            updated_index[file_field][nfit:] = pdz_provider_idx
+            updated_index[offset_field][disk_order[nfit:]] = pdz_provider.appendPdz(other_pdz[nfit:])
 
             # Update the index
             self._index.bulkAdd(updated_index)

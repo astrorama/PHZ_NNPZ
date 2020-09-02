@@ -16,20 +16,31 @@ NNPZ handles, by default, a set of files for the SED, and a set of files for the
 Index file
 ----------
 
-An index file is an array of 64 bits ints and shape `(n.entries, 3)`, where the
-first column corresponds to the object ID, the second to the file index, and the third
-to the offset within that file (as an array index).
+NNPZ uses a single structured array as an index. The object ID is stored on
+the field `id`, which is the only one strictly required.
 
-Example:
+For each data provider (i.e. SED or PDZ) two additional columns are added to
+the index, suffixed `_file` and `_offset`, and prefixed by the provider name.
+
+For instance, the `dtype` for an index with only SEDs would be:
+
+```python
+dtype([('id', '<i8'), ('sed_file', '<i8'), ('sed_offset', '<i8')])
+```
+
+Example of an index with both SED and PDZ data:
 
 ```python
 In [1]: import numpy as np
 In [2]: import matplotlib.pyplot as plt
 
-In [3]: sed_idx = np.load('sed_index.npy')
-In [4]: sed_idx[sed_idx[:,0] == 1574081264730001]
-Out[4]: array([[1574081264730001,                1,            49972]])
-# Associated SED is on sed_data_1.npy, position 49972
+In [3]: idx = np.load('index.npy')
+In [4]: idx.dtype
+Out[4]: dtype([('id', '<i8'), ('sed_file', '<i8'), ('sed_offset', '<i8'), ('pdz_file', '<i8'), ('pdz_offset', '<i8')])
+In [5]: idx[idx['id'] == 1293091707580001][['sed_file', 'sed_offset']]
+Out[5]: array([(2, 5048)],
+              dtype={'names':['sed_file','sed_offset'], 'formats':['<i8','<i8'], 'offsets':[8,16], 'itemsize':40})
+# Associated SED is on sed_data_2.npy, position 5048
 ```
 
 SED data files
@@ -47,7 +58,7 @@ Units are not supported by the format and they are assumed to be
 Note that different SEDs may have different resolutions. They will be organized so
 SEDs with the same number of knots are kept together on the same set of files.
 
-By default, the index is named `sed_index.npy` and the data files `sed_data_XX.npy`.
+By default the data files are named `sed_data_XX.npy`.
 
 Example:
 
@@ -61,8 +72,8 @@ PDZ data files
 --------------
 
 The PDZ data files store the PDZs of the reference sample, which are produced
-using higher quality photometry. The files are named `pdz_data_XX.npy` and the
-index `pdz_index.npy`. The data is an array with two axes:
+using higher quality photometry. The files are named `pdz_data_XX.npy`,
+containing an array with two axes:
 
 1. The first axis corresponds to the number of objects on the array, plus
    one extra for the bin values

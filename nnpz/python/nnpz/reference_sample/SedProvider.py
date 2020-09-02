@@ -1,5 +1,4 @@
 import os
-import pathlib
 from typing import Union
 
 import numpy as np
@@ -25,7 +24,7 @@ class SedProvider(BaseProvider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        data_files = validate_data_files(self._data_pattern, self._index, 'MontecarloProvider')
+        data_files = validate_data_files(self._data_pattern, self._index, self._key)
 
         self._data_map = {}
         self._prov_for_size = {}
@@ -62,7 +61,7 @@ class SedProvider(BaseProvider):
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the SED data file
         """
-        sed_loc = self._index.get(obj_id)
+        sed_loc = self._index.get(obj_id, self._key)
         if sed_loc:
             return self._data_map[sed_loc.file].readSed(sed_loc.offset)
         return None
@@ -88,13 +87,13 @@ class SedProvider(BaseProvider):
         method will result to the creation of a new SED data file.
         """
         # Check that the SED is not already set
-        loc = self._index.get(obj_id)
+        loc = self._index.get(obj_id, self._key)
         if loc is not None:
             raise AlreadySetException('SED for ID ' + str(obj_id) + ' is already set')
 
         current_prov = self._getCurrentDataProvider(data.shape[0])
         new_pos = self._data_map[current_prov].appendSed(data)
-        self._index.add(obj_id, IndexProvider.ObjectLocation(current_prov, new_pos))
+        self._index.add(obj_id, self._key, IndexProvider.ObjectLocation(current_prov, new_pos))
 
     def _getCurrentDataProvider(self, knots):
         """
@@ -107,21 +106,26 @@ class SedProvider(BaseProvider):
             )
         return self._prov_for_size[knots]
 
-    def importData(self, index_path: Union[str, pathlib.Path], data_pattern: str, extra_data: dict):
+    def importData(self, other_index: IndexProvider, data_pattern: str, extra_data: dict):
         """
         Import a set of SED files
         """
         self.extra.update(extra_data)
-        other_index = np.load(index_path, mmap_mode='r')
         other_files = sorted(locate_existing_data_files(data_pattern))
+        file_field = f'{self._key}_file'
+        offset_field = f'{self._key}_offset'
         for other_sed_i in other_files:
             other_sed_file = data_pattern.format(other_sed_i)
             other_sed_size = os.path.getsize(other_sed_file)
             other_sed = np.load(other_sed_file, mmap_mode='r')
 
             # Take the part of the index that points to the file other_sed_i
-            other_sed_idx_pos = np.where(other_index[:, 1] == other_sed_i)[0]
-            updated_index = np.array(other_index[other_sed_idx_pos], copy=True)
+            other_sed_idx_pos = np.where(other_index.raw[file_field] == other_sed_i)[0]
+            updated_index = np.array(
+                other_index.raw[['id', file_field, offset_field]][other_sed_idx_pos], copy=True)
+
+            # The order of the index does not have to match the order on the file!
+            disk_order = np.argsort(updated_index[offset_field])
 
             # Take the current active provider to store the imported data
             sed_provider_idx = self._getCurrentDataProvider(other_sed.shape[1])
@@ -130,14 +134,14 @@ class SedProvider(BaseProvider):
             # Fit whatever we can on the current file (approximately)
             available_size = self._data_limit - sed_provider.size()
             nfit = len(other_sed) * min(np.ceil(available_size / other_sed_size), 1)
-            updated_index[:nfit, 1] = sed_provider_idx
-            updated_index[:nfit, 2] = sed_provider.appendSed(other_sed[:nfit])
+            updated_index[file_field][:nfit] = sed_provider_idx
+            updated_index[offset_field][disk_order[:nfit]] = sed_provider.appendSed(other_sed[:nfit])
 
             # Create a new one and put in the rest
             sed_provider_idx = self._getCurrentDataProvider(other_sed.shape[1])
             sed_provider = self._data_map[sed_provider_idx]
-            updated_index[nfit:, 1] = sed_provider_idx
-            updated_index[nfit:, 2] = sed_provider.appendSed(other_sed[nfit:])
+            updated_index[file_field][nfit:] = sed_provider_idx
+            updated_index[offset_field][disk_order[nfit:]] = sed_provider.appendSed(other_sed[nfit:])
 
             # Update the index
             self._index.bulkAdd(updated_index)
