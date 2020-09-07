@@ -203,7 +203,7 @@ def buildMontecarloPhotometry(args, ref_sample):
     # Merge all and generate the MC Provider
     nd_photo = np.concatenate(nd_photo, axis=-1)
     ref_sample.addProvider('MontecarloProvider', name='MontecarloPhotometry',
-                           index_name=args.mc_photo_index, data_pattern=args.mc_photo_data,
+                           data_pattern=args.mc_photo_data,
                            object_ids=obj_idx, data=nd_photo,
                            overwrite=True,
                            extra=dict(names=filter_name_list))
