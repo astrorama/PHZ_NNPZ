@@ -67,6 +67,8 @@ elements_add_python_program(NnpzBuildPhotometry
                             nnpz.program.BuildPhotometry)
 elements_add_python_program(NnpzReconstructPDZ
                             nnpz.program.ReconstructPDZ)
+elements_add_python_program(NnpzDereddenPhotometry
+                            nnpz.program.DereddenPhotometry)
 elements_add_python_program(nnpz
                             nnpz.program.Nnpz)
 

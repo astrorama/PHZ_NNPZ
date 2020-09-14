@@ -54,8 +54,10 @@ class Photometry(CatalogReader.CatalogPropertyInterface):
         """
         if len(column_list[0]) == 3:
             self.__column_list = column_list
-        else:
+        elif len(column_list[0]) == 2:
             self.__column_list = list(map(lambda t: t + (None,), column_list))
+        else:
+            self.__column_list = list(map(lambda t: (t,) + (None, None,), column_list))
         self.__nan_flags = nan_flags if nan_flags else []
 
     def __call__(self, catalog):

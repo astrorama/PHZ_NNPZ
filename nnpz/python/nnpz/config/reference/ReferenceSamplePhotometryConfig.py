@@ -63,6 +63,7 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
             logger.info('Reference sample photometric bands: %s', phot_filters)
             self.__ref_phot_data = ref_phot_prov.getData(*phot_filters)
             self.__ref_phot_type = ref_phot_prov.getType()
+            logger.info('Reference sample photometry type: %s', self.__ref_phot_type)
             self.__ref_filters = {}
             for f_name in phot_filters:
                 self.__ref_filters[f_name] = ref_phot_prov.getFilterTransmission(f_name)

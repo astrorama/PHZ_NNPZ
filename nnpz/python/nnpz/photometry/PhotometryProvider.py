@@ -92,7 +92,7 @@ class PhotometryProvider(object):
         hdus = self.__checkFileFormat(filename)
 
         # Get the type of photometry in the file
-        self.__type = hdus[1].header.get('PHOTYPE')
+        self.__type = hdus['NNPZ_PHOTOMETRY'].header.get('PHOTYPE')
 
         # Create a list with the filters in the file
         phot_table = Table(hdus['NNPZ_PHOTOMETRY'].data)
