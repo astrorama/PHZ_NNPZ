@@ -191,17 +191,17 @@ def buildMontecarloPhotometry(args, ref_sample):
 
     means = dict()
     std = dict()
-    nd_photo = []
+    dtype = [(filter_name, np.float) for filter_name in phot_map.keys()]
+    nd_photo = np.zeros((n_phot, args.mc_samples), dtype=dtype)
     for filter_name, phot in phot_map.items():
-        phot = phot.reshape(-1, args.mc_samples, 1)
-        nd_photo.append(phot)
-        means[filter_name + '_MC'] = np.mean(phot, axis=1)
-        std[filter_name + '_MC_ERR'] = np.std(phot, axis=1)
+        samples = phot.reshape(-1, args.mc_samples)
+        nd_photo[filter_name] = samples
+        means[filter_name + '_MC'] = np.mean(samples, axis=1)
+        std[filter_name + '_MC_ERR'] = np.std(samples, axis=1)
         # Rename filter names on the map
         filter_map[filter_name + '_MC'] = filter_map.pop(filter_name)
 
     # Merge all and generate the MC Provider
-    nd_photo = np.concatenate(nd_photo, axis=-1)
     ref_sample.addProvider('MontecarloProvider', name='MontecarloPhotometry',
                            data_pattern=args.mc_photo_data,
                            object_ids=obj_idx, data=nd_photo,
