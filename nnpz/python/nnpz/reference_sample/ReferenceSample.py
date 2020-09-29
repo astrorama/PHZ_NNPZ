@@ -331,12 +331,12 @@ class ReferenceSample(object):
         if name is None:
             name = type_name
 
-        if not set(['name', 'index', 'data']).isdisjoint(extra.keys()):
+        if extra and not set(['name', 'index', 'data']).isdisjoint(extra.keys()):
             raise KeyError('Extra metadata can not be one of name, index or data')
 
         provider = self.PROVIDER_MAP[type_name](
             self.__index, name, os.path.join(self.__root_path, data_pattern),
-            self.__data_file_limit, extra)
+            self.__data_file_limit, extra, overwrite=overwrite)
         provider.initializeFromData(object_ids, data)
         provider.flush()
         self.__providers[name] = provider

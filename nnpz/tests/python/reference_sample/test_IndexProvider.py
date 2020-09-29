@@ -339,6 +339,7 @@ def test_bulkAppendVertical(temp_dir_fixture, index_data):
     # Then
     assert np.array_equal(provider.getIds(), [1, 2, 3, 4])
 
+
 ###############################################################################
 
 def test_bulkAppendMixed(temp_dir_fixture, index_data):

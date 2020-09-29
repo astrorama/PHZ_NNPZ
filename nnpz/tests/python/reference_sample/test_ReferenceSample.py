@@ -902,6 +902,77 @@ def test_addProvider(reference_sample_dir_fixture):
 
 ###############################################################################
 
+def test_addProviderExists(reference_sample_dir_fixture):
+    """
+    Add a provider after creation
+    """
+
+    # Given
+    expected_data = np.zeros((2, 100), dtype=[
+        ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+    ])
+    for c in expected_data.dtype.names:
+        expected_data[c] = np.random.rand(*expected_data.shape)
+
+    ref_sample = ReferenceSample(reference_sample_dir_fixture)
+    with pytest.raises(KeyError):
+        ref_sample.getProvider('mc2')
+
+    # When
+    ref_sample.addProvider(
+        'MontecarloProvider', name='mc2',
+        data_pattern='mc2_data_{}.npy',
+        object_ids=[100, 101],
+        data=expected_data, extra=dict(key='value')
+    )
+
+    # Then
+    with pytest.raises(AlreadySetException):
+        ref_sample.addProvider(
+            'MontecarloProvider', name='mc2',
+            data_pattern='mc2_data_{}.npy',
+            object_ids=[205, 206],
+            data=expected_data,
+            overwrite=False)
+
+
+###############################################################################
+
+def test_addProviderOverwrite(reference_sample_dir_fixture):
+    """
+    Add a provider after creation
+    """
+
+    # Given
+    expected_data = np.zeros((2, 100), dtype=[
+        ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+    ])
+    for c in expected_data.dtype.names:
+        expected_data[c] = np.random.rand(*expected_data.shape)
+
+    ref_sample = ReferenceSample(reference_sample_dir_fixture)
+    with pytest.raises(KeyError):
+        ref_sample.getProvider('mc2')
+
+    # When
+    ref_sample.addProvider(
+        'MontecarloProvider', name='mc2',
+        data_pattern='mc2_data_{}.npy',
+        object_ids=[100, 101],
+        data=expected_data, extra=dict(key='value')
+    )
+
+    # Then
+    ref_sample.addProvider(
+        'MontecarloProvider', name='mc2',
+        data_pattern='mc2_data_{}.npy',
+        object_ids=[205, 206],
+        data=expected_data,
+        overwrite=True)
+
+
+###############################################################################
+
 def test_missingIndex(reference_sample_dir_fixture):
     """
     Open a directory where the SED index is missing
