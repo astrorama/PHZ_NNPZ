@@ -54,7 +54,7 @@ def test_readMc_success(mc_data_files_fixture, mc_data_fixture):
         found_data = provider.read(i)
 
         # Then
-        assert found_data.shape == (100, 4)
+        assert found_data.shape == (100,)
 
 
 ###############################################################################
@@ -103,7 +103,11 @@ def test_appendMc_success(mc_data_files_fixture):
     """
 
     # Given
-    expected_data = np.random.rand(100, 4)
+    expected_data = np.zeros(100, dtype=[
+        ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+    ])
+    for c in expected_data.dtype.names:
+        expected_data[c] = np.random.rand(*expected_data.shape)
 
     # When
     with MontecarloDataProvider(mc_data_files_fixture[1]) as provider:
@@ -111,7 +115,7 @@ def test_appendMc_success(mc_data_files_fixture):
 
     # Then
     array = np.load(mc_data_files_fixture[1])
-    assert np.array_equal(array[pos].reshape(100, 4), expected_data)
+    assert np.array_equal(array[pos].reshape(100,), expected_data)
 
 
 ###############################################################################
@@ -161,7 +165,11 @@ def test_appendBulk(mc_data_files_fixture):
     """
 
     # Given
-    expected_data = np.random.rand(20, 100, 4)
+    expected_data = np.zeros((20, 100), dtype=[
+        ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+    ])
+    for c in expected_data.dtype.names:
+        expected_data[c] = np.random.rand(*expected_data.shape)
 
     # When
     provider = MontecarloDataProvider(mc_data_files_fixture[1])
@@ -171,4 +179,4 @@ def test_appendBulk(mc_data_files_fixture):
     assert len(offsets) == len(expected_data)
     for i, o in enumerate(offsets):
         data = provider.read(o)
-        assert np.allclose(expected_data[i, :], data)
+        assert all([np.allclose(expected_data[c][i], data[c]) for c in data.dtype.names])

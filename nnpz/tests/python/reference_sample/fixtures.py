@@ -145,10 +145,14 @@ def mc_data_fixture(pdz_list_fixture):
     """
     Generate on the fly some MC data
     """
-    result = {1: [], 2: []}
+    result = {}
     for i, pdz_data in pdz_list_fixture.items():
-        for obj, _ in pdz_data:
-            result[i].append([obj, np.random.randn(100, 4)])
+        data = np.zeros((len(pdz_data), 100), dtype=[
+            ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+        ])
+        for c in data.dtype.names:
+            data[c] = np.random.rand(*data.shape)
+        result[i] = ([obj for obj, _ in pdz_data], data)
     return result
 
 
@@ -162,11 +166,9 @@ def mc_data_files_fixture(temp_dir_fixture, mc_data_fixture):
     Returns: A map with keys the file indices and values he path to the newly created files
     """
     result = {}
-    for file_index, mc_data in mc_data_fixture.items():
+    for file_index, (_, mc_data) in mc_data_fixture.items():
         filename = os.path.join(temp_dir_fixture, 'mc_data_{}.npy'.format(file_index))
-        array = np.concatenate([a.reshape(1, 100, 4) for _, a in mc_data], axis=0)
-        assert array.shape[0] == len(mc_data), array.shape
-        np.save(filename, array)
+        np.save(filename, mc_data)
         result[file_index] = filename
     return result
 
@@ -200,7 +202,7 @@ def reference_sample_dir_fixture(temp_dir_fixture,
             index_dict['pdz'][obj_id] = (file_index, pos + 1)
 
     for file_index in mc_data_fixture:
-        for pos, (obj_id, _) in enumerate(mc_data_fixture[file_index]):
+        for pos, obj_id in enumerate(mc_data_fixture[file_index][0]):
             index_dict['mc'][obj_id] = (file_index, pos)
 
     # All known object IDS

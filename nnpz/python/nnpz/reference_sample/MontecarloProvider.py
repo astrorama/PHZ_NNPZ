@@ -63,8 +63,8 @@ class MontecarloProvider(BaseProvider):
         if len(self._data_map):
             raise AlreadySetException('Provider already initialized')
 
-        if len(data.shape) != 3:
-            raise ValueError('Expecting an array with three axes')
+        if len(data.shape) != 2:
+            raise ValueError('Expecting an array with two axes')
         if len(object_ids) != data.shape[0]:
             raise ValueError('The number of objects and shape of the array do not match')
 

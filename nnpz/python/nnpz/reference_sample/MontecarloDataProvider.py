@@ -89,11 +89,11 @@ class MontecarloDataProvider(object):
         Raises:
             InvalidDimensionsException: If the dimensionality of the data does not match
         """
-        if len(data.shape) not in (2, 3):
+        if len(data.shape) not in (1, 2):
             raise InvalidDimensionsException(
-                f'Expected two or three axes, got {len(data.shape)}'
+                f'Expected one or two axes, got {len(data.shape)}'
             )
-        elif len(data.shape) == 2:
+        elif len(data.shape) == 1:
             data = data.reshape(1, *data.shape)
 
         if self.__data is None:
