@@ -141,9 +141,12 @@ class IndexProvider(object):
             return None
         i = self.__index_map[obj_id]
         try:
-            return IndexProvider.ObjectLocation(*self.__data[i][[f'{key}_file', f'{key}_offset']])
+            loc = IndexProvider.ObjectLocation(*self.__data[i][[f'{key}_file', f'{key}_offset']])
+            if loc.file == -1:
+                loc = None
+            return loc
         except KeyError:
-            return IndexProvider.ObjectLocation(-1, -1)
+            return None
 
     def _addKey(self, key: str):
         """
