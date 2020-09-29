@@ -53,14 +53,14 @@ class ReferenceSamplePhotometryBuilder(object):
         if not isinstance(filter_provider, FilterProviderInterface):
             raise WrongTypeException('filter_provider must implement FilterProviderInterface')
         if not isinstance(pre_post_processor, PhotometryPrePostProcessorInterface):
-            raise WrongTypeException('pre_post_processor must implement PhotometryPrePostProcessorInterface')
+            raise WrongTypeException(
+                'pre_post_processor must implement PhotometryPrePostProcessorInterface')
 
         self._filter_provider = filter_provider
         self._pre_post_processor = pre_post_processor
 
         # By default we produce photometry for every available filter
         self.setFilters(filter_provider.getFilterNames())
-
 
     def setFilters(self, filter_list):
         """Sets the filters for which the photometry is produced.
