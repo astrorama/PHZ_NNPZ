@@ -59,6 +59,7 @@ class NeighborSet(object):
             getattr(self, key).append(value)
         self.index.append(index)
         self.__neighbors.append(Neighbor(self, len(self.index) - 1))
+        return self.__neighbors[-1]
 
     def __getitem__(self, i):
         """
