@@ -2,7 +2,9 @@ from nnpz.config import ConfigManager
 from nnpz.config.nnpz import OutputHandlerConfig, TargetCatalogConfig, NeighborSelectorConfig
 from nnpz.config.reference import ReferenceConfig
 from nnpz.io.output_column_providers.McPdf1D import McPdf1D
+from nnpz.io.output_column_providers.McPdf2D import McPdf2D
 from nnpz.io.output_hdul_providers.McPdf1DBins import McPdf1DBins
+from nnpz.io.output_hdul_providers.McPdf2DBins import McPdf2DBins
 
 
 class McPdfConfig(ConfigManager.ConfigHandler):
@@ -37,7 +39,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
 
         for provider_name, parameters in mc_1d_pdf.items():
             provider = self.__ref_sample.getProvider(provider_name)
-            for param, binning in parameters.items():
+            for param, binning in parameters:
                 # Histogram values
                 self.__output.addColumnProvider(McPdf1D(
                     catalog_size=self.__catalog_size, n_neighbors=self.__neighbor_no,
@@ -50,7 +52,25 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                 self.__output.addExtensionTableProvider(McPdf1DBins(param, binning))
 
     def __add_mc_2d_pdf(self, args):
-        pass
+        mc_2d_pdf = args.get('mc_2d_pdf', None)
+        if not mc_2d_pdf:
+            return
+
+        for provider_name, parameters in mc_2d_pdf.items():
+            provider = self.__ref_sample.getProvider(provider_name)
+            for param1, param2, binning1, binning2 in parameters:
+                # Histogram values
+                self.__output.addColumnProvider(McPdf2D(
+                    catalog_size=self.__catalog_size, n_neighbors=self.__neighbor_no,
+                    take_n=self.__take_n,
+                    param_names=(param1, param2), binning=(binning1, binning2),
+                    mc_provider=provider,
+                    ref_ids=self.__ref_ids
+                ))
+                # Histogram binning
+                self.__output.addExtensionTableProvider(
+                    McPdf2DBins((param1, param2), (binning1, binning2))
+                )
 
     def parseArgs(self, args):
         if not self.__added:
