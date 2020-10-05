@@ -13,35 +13,21 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+from typing import Tuple
 
-import numpy as np
 from astropy.table import Column
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
 
 
-class McPdf1D(OutputHandler.OutputColumnProviderInterface):
+class McSamples(OutputHandler.OutputColumnProviderInterface):
     """
-    Generate a one dimensional PDF for a given parameter using a weighted random sample
-    from the reference objects nearest to a given object
-
-    See Also:
-        nnpz.io.output_hdul_providers.McPdf1DBins
-        nnpz.io.output_column_providers.McSampler
-    Args:
-        sampler: McSampler
-            The handler that takes care of handling the weighted random sampling
-        param_name:
-            The parameter to generate the 1D PDF for
-        binning:
-            A one dimensional numpy array with the histogram binning
+    Store the samples themselves into the output catalog
     """
 
-    def __init__(self, sampler: McSampler, param_name: str, binning: np.ndarray):
-        super(McPdf1D, self).__init__()
+    def __init__(self, sampler: McSampler, parameters: Tuple[str]):
         self.__sampler = sampler
-        self.__param_name = param_name
-        self.__binning = binning
+        self.__params = parameters
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         """
@@ -54,14 +40,12 @@ class McPdf1D(OutputHandler.OutputColumnProviderInterface):
         See OutputColumnProviderInterface.getColumns
         """
         samples = self.__sampler.getSamples()
-        # For each object, take a random weighted sample and generate the histogram
-        pdfs = np.zeros((len(samples), self.__binning.shape[0] - 1))
+        if self.__params is None:
+            self.__params = samples.dtype.names
 
-        for i in range(pdfs.shape[0]):
-            pdfs[i, :] = np.histogram(
-                samples[i][self.__param_name], bins=self.__binning, density=True
-            )[0]
-
-        return [
-            Column(pdfs, 'MC_PDF_1D_{}'.format(self.__param_name.upper()))
-        ]
+        columns = []
+        for param in self.__params:
+            columns.append(Column(
+                data=samples[param], name='MC_SAMPLES_' + param.upper()
+            ))
+        return columns
