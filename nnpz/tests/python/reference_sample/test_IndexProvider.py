@@ -153,8 +153,7 @@ def test_get_success(temp_dir_fixture, index_data):
         # When
         info = provider.get(row[0], 'pdz')
         # Then
-        assert info.file == -1
-        assert info.offset == -1
+        assert info is None
 
 
 ###############################################################################
@@ -224,8 +223,7 @@ def test_add_success(temp_dir_fixture, index_data):
         assert info.file == row[1]
         assert info.offset == row[2]
         info = provider.get(row[0], 'pdz')
-        assert info.file == -1
-        assert info.offset == -1
+        assert info is None
 
 
 ###############################################################################
@@ -338,6 +336,7 @@ def test_bulkAppendVertical(temp_dir_fixture, index_data):
 
     # Then
     assert np.array_equal(provider.getIds(), [1, 2, 3, 4])
+
 
 ###############################################################################
 

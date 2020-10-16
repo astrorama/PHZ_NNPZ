@@ -76,6 +76,8 @@ def defineSpecificProgramOptions():
                         help='Number of parallel processes to spawn')
     parser.add_argument('--input-size', dest='input_size', type=int, default=None,
                         help='Limit the computation to this many sources')
+    parser.add_argument('--chunk-size', dest='chunk_size', type=int, default=5000,
+                        help='Compute MC photometry this many objects at once')
     return parser
 
 
@@ -137,6 +139,34 @@ def buildPhotometry(args, ref_sample):
     return n_phot, phot_map, filter_map
 
 
+def generate_shifted_seds(nsamples, objects):
+    """
+    Return a generator with the SED shifted according to a set of random samples
+    from the PDZ
+    """
+    seds = SedGenerator()
+    obj_ids = []
+    for obj in objects:
+        pdz = obj.pdz
+        obj_ids.append(obj.id)
+        redshifted_sed = obj.sed
+        # Reference SED corresponds to the maximum value of the PDZ
+        ref_z = pdz[:, 0][pdz[:, 1].argmax()]
+        # Un-shift SED
+        sed = np.copy(redshifted_sed)
+        sed[:, 0] /= 1 + ref_z
+        sed[:, 1] *= (1 + ref_z) ** 2
+
+        # Generate MC Z samples
+        # Note: we use ABS because due to some floating point errors we may get tiny negatives
+        # (basically 0)
+        normed_pdz = np.abs(pdz[:, 1]) / np.sum(np.abs(pdz[:, 1]))
+        z_picks = np.random.choice(pdz[:, 0], nsamples, p=normed_pdz)
+        seds.add(sed, z_picks)
+
+    return obj_ids, seds
+
+
 def buildMontecarloPhotometry(args, ref_sample):
     """
     Build Montercarlo sampling of the photometry for different realizations of the PDZ
@@ -157,56 +187,62 @@ def buildMontecarloPhotometry(args, ref_sample):
     n_items = args.input_size if args.input_size is not None else len(ref_sample)
     phot_builder = createPhotometryBuilder(args.type, args.gal_ebv, args.parallel, filters_provider)
     n_phot = 0
-    progress_listener = ProgressListener(n_items, logger=logger)
 
-    # Initialize the SED generator
-    logger.info('Initializing MC SED generator')
-    all_seds = SedGenerator()
-    obj_idx = []
-    for obj in itertools.islice(ref_sample.iterate(), args.input_size):
-        pdz = obj.pdz
-        obj_idx.append(obj.id)
-        redshifted_sed = obj.sed
-        # Reference SED corresponds to the maximum value of the PDZ
-        ref_z = pdz[:, 0][pdz[:, 1].argmax()]
-        # Un-shift SED
-        sed = np.copy(redshifted_sed)
-        sed[:, 0] /= 1 + ref_z
-        sed[:, 1] *= (1 + ref_z) ** 2
+    # Get set of objects
+    input_objects = itertools.islice(ref_sample.iterate(), args.input_size)
 
-        # Generate MC Z samples
-        # Note: we use ABS becase due to some floating point errors we may get tiny negatives
-        # (basically 0)
-        normed_pdz = np.abs(pdz[:, 1]) / np.sum(np.abs(pdz[:, 1]))
-        z_picks = np.random.choice(pdz[:, 0], args.mc_samples, p=normed_pdz)
-        all_seds.add(sed, z_picks)
+    # Add provider
+    provider = ref_sample.addProvider(
+        'MontecarloProvider', name='MontecarloPhotometry',
+        data_pattern=args.mc_photo_data, overwrite=True
+    )
 
-        n_phot += 1
-        progress_listener(n_phot)
-
-    # Build the photometry
+    # Build in chunks to avoid memory exhaustion
     logger.info('Building the MC photometry, this can take a while...')
-    phot_map = phot_builder.buildPhotometry(
-        all_seds, progress_listener=ProgressListener(len(all_seds), logger=logger))
 
     means = dict()
     std = dict()
-    nd_photo = []
-    for filter_name, phot in phot_map.items():
-        phot = phot.reshape(-1, args.mc_samples, 1)
-        nd_photo.append(phot)
-        means[filter_name + '_MC'] = np.mean(phot, axis=1)
-        std[filter_name + '_MC_ERR'] = np.std(phot, axis=1)
+    for filter_name in filter_name_list:
         # Rename filter names on the map
         filter_map[filter_name + '_MC'] = filter_map.pop(filter_name)
+        # Initialize lists
+        means[filter_name + '_MC'] = list()
+        std[filter_name + '_MC_ERR'] = list()
 
-    # Merge all and generate the MC Provider
-    nd_photo = np.concatenate(nd_photo, axis=-1)
-    ref_sample.addProvider('MontecarloProvider', name='MontecarloPhotometry',
-                           data_pattern=args.mc_photo_data,
-                           object_ids=obj_idx, data=nd_photo,
-                           overwrite=True,
-                           extra=dict(names=filter_name_list))
+    dtype = [(filter_name, np.float) for filter_name in filter_name_list]
+
+    input_iter = iter(input_objects)
+    while True:
+        logger.info('Processing chunk of %d objects', args.chunk_size)
+        chunk = list(itertools.islice(input_iter, args.chunk_size))
+        if not chunk:
+            break
+
+        # Get shifted SEDs
+        obj_ids, seds = generate_shifted_seds(args.mc_samples, chunk)
+
+        # Build the photometry
+        phot_map = phot_builder.buildPhotometry(
+            seds, progress_listener=ProgressListener(len(seds), logger=logger)
+        )
+
+        # Compute mean, std, and store generated samples
+        nd_photo = np.zeros((len(obj_ids), args.mc_samples), dtype=dtype)
+        for filter_name, phot in phot_map.items():
+            samples = phot.reshape(-1, args.mc_samples)
+            nd_photo[filter_name] = samples
+            means[filter_name + '_MC'].append(np.mean(samples, axis=1))
+            std[filter_name + '_MC_ERR'].append(np.std(samples, axis=1))
+        provider.addData(obj_ids, nd_photo)
+        provider.flush()
+
+        # Update progress
+        n_phot += len(phot_map)
+
+    # Concatenate arrays
+    for filter_name in filter_name_list:
+        means[filter_name + '_MC'] = np.concatenate(means[filter_name + '_MC'])
+        std[filter_name + '_MC_ERR'] = np.concatenate(std[filter_name + '_MC_ERR'])
 
     return n_phot, means, std, filter_map
 

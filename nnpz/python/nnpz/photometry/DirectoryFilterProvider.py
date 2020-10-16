@@ -96,8 +96,9 @@ class DirectoryFilterProvider(FilterProviderInterface):
         dir_contents = []
         for root, _, files in os.walk(path):
             for fname in files:
-                filter_path = os.path.join(root, fname) if root else fname
-                dir_contents.append(os.path.relpath(filter_path, path))
+                if fname.endswith('.dat') or fname == 'filter_list.txt':
+                    filter_path = os.path.join(root, fname) if root else fname
+                    dir_contents.append(os.path.relpath(filter_path, path))
 
         if 'filter_list.txt' in dir_contents:
             filter_file_pairs = self.__parseFilterListFile(path, dir_contents)

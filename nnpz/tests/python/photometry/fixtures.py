@@ -57,8 +57,8 @@ def filter_dir_fixture(temp_dir_fixture, filters_fixture):
 
     with open(os.path.join(filter_dir, 'filter_list.txt'), 'w') as list_file:
         for name, data in filters_fixture:
-            list_file.write(name + 'File.txt : ' + name + '\n')
-            with open(os.path.join(filter_dir, name + 'File.txt'), 'w') as f:
+            list_file.write(name + 'File.dat : ' + name + '\n')
+            with open(os.path.join(filter_dir, name + 'File.dat'), 'w') as f:
                 for x, y in data:
                     f.write(str(x) + '\t' + str(y) + '\n')
 
@@ -80,10 +80,10 @@ def filter_list_file_fixture(temp_dir_fixture, filters_fixture):
     list_file = os.path.join(filter_dir, 'list_file.txt')
     with open(list_file, 'w') as lf:
         for name, data in filters_fixture:
-            lf.write(name + '/' + name + 'File.txt : ' + name + '\n')
+            lf.write(name + '/' + name + 'File.dat : ' + name + '\n')
             f_dir = os.path.join(filter_dir, name)
             os.makedirs(f_dir)
-            with open(os.path.join(f_dir, name + 'File.txt'), 'w') as f:
+            with open(os.path.join(f_dir, name + 'File.dat'), 'w') as f:
                 for x, y in data:
                     f.write(str(x) + '\t' + str(y) + '\n')
 

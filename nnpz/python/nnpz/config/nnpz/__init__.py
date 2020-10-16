@@ -29,3 +29,4 @@ from .WeightPhotometryProviderConfig import WeightPhotometryProviderConfig
 from .WeightCalculatorConfig import WeightCalculatorConfig
 from .GalacticUnreddenerConfig import GalacticUnreddenerConfig
 from .MeanPhotOutputConfig import MeanPhotOutputConfig
+from .McPdfConfig import McPdfConfig

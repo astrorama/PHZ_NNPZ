@@ -5,7 +5,7 @@ import numpy as np
 from nnpz.exceptions import AlreadySetException
 from nnpz.reference_sample import MontecarloDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
-from nnpz.reference_sample.util import validate_data_files
+from nnpz.reference_sample.util import validate_data_files, create_new_provider
 
 
 class MontecarloProvider(BaseProvider):
@@ -47,7 +47,25 @@ class MontecarloProvider(BaseProvider):
             return None
         return self._data_map[loc.file].read(loc.offset)
 
-    def initializeFromData(self, object_ids: Iterable[int] = None, data: np.ndarray = None):
+    def _getCurrentDataProvider(self):
+        """
+        Returns:
+            A suitable data provider to add new data
+        """
+        if self._data_map:
+            last_file = max(self._data_map)
+        else:
+            last_file = create_new_provider(
+                self._data_map, self._data_pattern, MontecarloDataProvider
+            )
+        # Check if the last file exceeded the size limit and create a new one
+        if self._data_map[last_file].size() >= self._data_limit:
+            last_file = create_new_provider(
+                self._data_map, self._data_pattern, MontecarloDataProvider
+            )
+        return last_file
+
+    def addData(self, object_ids: Iterable[int] = None, data: np.ndarray = None):
         """
         Add new data to the MC provider
 
@@ -56,23 +74,16 @@ class MontecarloProvider(BaseProvider):
                 Object ids
             data:
                 New data
-
-        Raises:
-            AlreadySetException : If the provider has been already initialized
         """
-        if len(self._data_map):
-            raise AlreadySetException('Provider already initialized')
-
-        if len(data.shape) != 3:
-            raise ValueError('Expecting an array with three axes')
+        if len(data.shape) != 2:
+            raise ValueError('Expecting an array with two axes')
         if len(object_ids) != data.shape[0]:
             raise ValueError('The number of objects and shape of the array do not match')
 
-        # Cut data in pieces if necessary
         record_size = data[0].nbytes
-        records_per_file = self._data_limit // record_size
-        n_files = int(np.ceil(len(object_ids) / records_per_file))
+        records_per_file = self._data_limit // record_size + (self._data_limit % record_size > 0)
 
+        # Index
         file_field = f'{self._key}_file'
         offset_field = f'{self._key}_offset'
 
@@ -81,15 +92,29 @@ class MontecarloProvider(BaseProvider):
             dtype=[('id', np.int64), (file_field, np.int64), (offset_field, np.int64)]
         )
 
-        for file_i in range(1, n_files + 1):
-            data_file = self._data_pattern.format(file_i)
-            if os.path.exists(data_file):
-                os.unlink(data_file)
-            idx = slice((file_i - 1) * records_per_file, file_i * records_per_file)
-            index_data['id'] = object_ids[idx]
-            index_data[file_field] = file_i
-            data_prov = MontecarloDataProvider(data_file)
-            index_data[offset_field] = data_prov.append(data[idx])
-            data_prov.flush()
-            self._data_map[file_i] = data_prov
-            self._index.bulkAdd(index_data)
+        # First available provider and merge whatever is possible
+        provider_idx = self._getCurrentDataProvider()
+        provider = self._data_map[provider_idx]
+        available_size = self._data_limit - provider.size()
+        nfit = available_size // record_size + (available_size % record_size > 0)
+
+        index_data['id'][:nfit] = object_ids[:nfit]
+        index_data[file_field][:nfit] = provider_idx
+        index_data[offset_field][:nfit] = provider.append(data[:nfit])
+        provider.flush()
+
+        # Cut what's left in whole files
+        n_files = int(np.ceil(len(object_ids[nfit:]) / records_per_file))
+
+        for file_i in range(n_files):
+            selection = slice(nfit + records_per_file * file_i,
+                              nfit + records_per_file * (file_i + 1))
+
+            provider_idx = self._getCurrentDataProvider()
+            provider = self._data_map[provider_idx]
+            index_data['id'][selection] = object_ids[selection]
+            index_data[file_field][selection] = provider_idx
+            index_data[offset_field][selection] = provider.append(data[selection])
+            provider.flush()
+
+        self._index.bulkAdd(index_data)

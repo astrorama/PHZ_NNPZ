@@ -55,7 +55,7 @@ class IndexProvider(object):
 
         if os.path.exists(filename):
             try:
-                self.__data = np.load(filename, mmap_mode='r')
+                self.__data = np.load(filename, mmap_mode='r+')
             except ValueError:
                 raise CorruptedFileException()
         else:
@@ -92,7 +92,7 @@ class IndexProvider(object):
         """
         if not isinstance(self.__data, np.memmap):
             np.save(self.__filename, self.__data)
-            self.__data = np.load(self.__filename, mmap_mode='r')
+            self.__data = np.load(self.__filename, mmap_mode='r+')
 
     def __len__(self) -> int:
         """
@@ -141,9 +141,12 @@ class IndexProvider(object):
             return None
         i = self.__index_map[obj_id]
         try:
-            return IndexProvider.ObjectLocation(*self.__data[i][[f'{key}_file', f'{key}_offset']])
+            loc = IndexProvider.ObjectLocation(*self.__data[i][[f'{key}_file', f'{key}_offset']])
+            if loc.file == -1:
+                loc = None
+            return loc
         except KeyError:
-            return IndexProvider.ObjectLocation(-1, -1)
+            return None
 
     def _addKey(self, key: str):
         """
@@ -155,6 +158,14 @@ class IndexProvider(object):
             names=[f'{key}_file', f'{key}_offset'],
             dtypes=np.int64
         ), copy=True)
+
+    def clear(self, key: str):
+        """
+        If key is part of the index, clear the values
+        """
+        if f'{key}_file' in self.__data.dtype.names:
+            self.__data[f'{key}_file'] = -1
+            self.__data[f'{key}_offset'] = -1
 
     def add(self, obj_id: int, key: str, location: ObjectLocation):
         """
