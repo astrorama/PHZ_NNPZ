@@ -7,9 +7,11 @@ from nnpz.io.output_column_providers.McPdf1D import McPdf1D
 from nnpz.io.output_column_providers.McPdf2D import McPdf2D
 from nnpz.io.output_column_providers.McSampler import McSampler
 from nnpz.io.output_column_providers.McSamples import McSamples
+from nnpz.io.output_column_providers.McSliceAggregate import McSliceAggregate
 from nnpz.io.output_hdul_providers.McCounterBins import McCounterBins
 from nnpz.io.output_hdul_providers.McPdf1DBins import McPdf1DBins
 from nnpz.io.output_hdul_providers.McPdf2DBins import McPdf2DBins
+from nnpz.io.output_hdul_providers.McSliceAggregateBins import McSliceAggregateBins
 
 
 class McPdfConfig(ConfigManager.ConfigHandler):
@@ -39,7 +41,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         self.__take_n = args.get('mc_pdf_take_n', 100)
 
     def __add_common(self, args):
-        for cfg_key in ['mc_1d_pdf', 'mc_2d_pdf', 'mc_samples', 'mc_count']:
+        for cfg_key in ['mc_1d_pdf', 'mc_2d_pdf', 'mc_samples', 'mc_count', 'mc_slice_aggregate']:
             cfg = args.get(cfg_key, {})
             for provider_name, _ in cfg.items():
                 if provider_name in self.__samplers:
@@ -112,6 +114,22 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                     McCounterBins(counter, parameter)
                 )
 
+    def __add_slicers(self, args):
+        mc_slicers = args.get('mc_slice_aggregate', None)
+        if not mc_slicers:
+            return
+
+        for provider_name, slice_cfgs in mc_slicers.items():
+            sampler = self.__samplers[provider_name]
+            for slice_cfg in slice_cfgs:
+                target, sliced, agg, binning = slice_cfg
+                self.__output.addColumnProvider(McSliceAggregate(
+                    sampler, target, sliced, agg, binning
+                ))
+                self.__output.addExtensionTableProvider(McSliceAggregateBins(
+                    target, sliced, binning
+                ))
+
     def parseArgs(self, args):
         if not self.__added:
             self.__parse_args_common(args)
@@ -120,6 +138,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
             self.__add_mc_2d_pdf(args)
             self.__add_samples(args)
             self.__add_counters(args)
+            self.__add_slicers(args)
             self.__added = True
         return {}
 
