@@ -13,9 +13,9 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+import numpy as np
 from astropy.table import Table
 from nnpz.io import OutputHandler
-from nnpz.io.output_column_providers.McCounter import McCounter
 
 
 class McCounterBins(OutputHandler.OutputExtensionTableProviderInterface):
@@ -23,13 +23,13 @@ class McCounterBins(OutputHandler.OutputExtensionTableProviderInterface):
     See McCounter
     """
 
-    def __init__(self, counter: McCounter, param_name: str):
-        self.__counter = counter
+    def __init__(self, param_name: str, binning: np.ndarray):
         self.__param_name = param_name
+        self.__binning = binning
 
     def getExtensionTables(self):
         return {
             'BINS_MC_COUNT_{}'.format(self.__param_name.upper()): Table({
-                'BINS': self.__counter.getBins(),
+                'BINS': self.__binning,
             })
         }

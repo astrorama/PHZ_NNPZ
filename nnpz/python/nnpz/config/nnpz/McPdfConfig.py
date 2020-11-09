@@ -104,15 +104,15 @@ class McPdfConfig(ConfigManager.ConfigHandler):
 
         for provider_name, parameters in mc_counters.items():
             sampler = self.__samplers[provider_name]
-            for parameter in parameters:
+            for parameter, bins in parameters:
                 pdtype = sampler.getProvider().getDtype(parameter)
                 if not np.issubdtype(pdtype, np.int) and not np.issubdtype(pdtype, np.bool):
                     raise Exception('Can only count integer types, got {}'.format(pdtype))
-                counter = McCounter(sampler, parameter)
-                self.__output.addColumnProvider(counter)
-                self.__output.addExtensionTableProvider(
-                    McCounterBins(counter, parameter)
-                )
+                if not np.issubdtype(bins.dtype, np.int) and not np.issubdtype(bins.dtype, np.bool):
+                    raise Exception('The binning must be an integer type, got {}', bins.dtype)
+                bins = np.sort(bins)
+                self.__output.addColumnProvider(McCounter(sampler, parameter, bins))
+                self.__output.addExtensionTableProvider(McCounterBins(parameter, bins))
 
     def __add_slicers(self, args):
         mc_slicers = args.get('mc_slice_aggregate', None)

@@ -34,10 +34,10 @@ class McCounter(OutputHandler.OutputColumnProviderInterface):
           domain there are potentially infinite posible values
     """
 
-    def __init__(self, sampler: McSampler, param_name: str):
+    def __init__(self, sampler: McSampler, param_name: str, binning: np.ndarray):
         self.__sampler = sampler
         self.__param_name = param_name
-        self.__integers = None
+        self.__binning = binning
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         """
@@ -52,8 +52,7 @@ class McCounter(OutputHandler.OutputColumnProviderInterface):
         samples = self.__sampler.getSamples()[self.__param_name]
 
         # Compute the binning as [i-0.5, i+0.5)
-        self.__integers = np.unique(samples)
-        bins = np.append(self.__integers, self.__integers[-1] + 1).astype(np.float)
+        bins = np.append(self.__binning, self.__binning[-1] + 1).astype(np.float)
         bins -= 0.5
 
         # For each object, take a random weighted sample and generate the histogram
@@ -65,10 +64,3 @@ class McCounter(OutputHandler.OutputColumnProviderInterface):
         return [
             Column(counts, 'MC_COUNT_{}'.format(self.__param_name.upper()))
         ]
-
-    def getBins(self):
-        """
-        Used by McCounterBins HDUL provider, to avoid re-counting the known
-        integers
-        """
-        return self.__integers
