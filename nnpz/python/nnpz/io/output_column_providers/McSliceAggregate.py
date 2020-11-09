@@ -30,10 +30,11 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
     """
 
     def __init__(self, sampler: McSampler, target_param: str, slice_param: str,
-                 aggregator: Callable, binning: np.ndarray):
+                 suffix: str, aggregator: Callable, binning: np.ndarray):
         self.__sampler = sampler
         self.__target_param = target_param
         self.__slice_param = slice_param
+        self.__suffix = suffix
         self.__aggregator = aggregator
         self.__binning = binning
 
@@ -61,8 +62,8 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
         return [
             Column(
                 data=aggregated,
-                name='MC_SLICE_AGGREGATE_{}_{}'.format(
-                    self.__target_param.upper(), self.__slice_param.upper()
+                name='MC_SLICE_AGGREGATE_{}_{}_{}'.format(
+                    self.__target_param.upper(), self.__slice_param.upper(), self.__suffix
                 )
             )
         ]

@@ -122,13 +122,14 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         for provider_name, slice_cfgs in mc_slicers.items():
             sampler = self.__samplers[provider_name]
             for slice_cfg in slice_cfgs:
-                target, sliced, agg, binning = slice_cfg
-                self.__output.addColumnProvider(McSliceAggregate(
-                    sampler, target, sliced, agg, binning
-                ))
-                self.__output.addExtensionTableProvider(McSliceAggregateBins(
-                    target, sliced, binning
-                ))
+                target, sliced, binning, aggs = slice_cfg
+                for suffix, agg in aggs.items():
+                    self.__output.addColumnProvider(McSliceAggregate(
+                        sampler, target, sliced, suffix, agg, binning
+                    ))
+                    self.__output.addExtensionTableProvider(McSliceAggregateBins(
+                        target, sliced, suffix, binning
+                    ))
 
     def parseArgs(self, args):
         if not self.__added:

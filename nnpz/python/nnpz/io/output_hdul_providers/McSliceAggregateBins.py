@@ -26,15 +26,16 @@ class McSliceAggregateBins(OutputHandler.OutputExtensionTableProviderInterface):
         McSliceAggregate
     """
 
-    def __init__(self, target_param: str, slice_param: str, slice_binning: np.ndarray):
+    def __init__(self, target_param: str, slice_param: str, suffix: str, slice_binning: np.ndarray):
         self.__target_param = target_param
         self.__slice_param = slice_param
+        self.__suffix = suffix
         self.__slice_binning = slice_binning
 
     def getExtensionTables(self):
         return {
-            'BINS_MC_SLICE_AGGREGATE_{}_{}'.format(
-                self.__target_param.upper(), self.__slice_param.upper()
+            'BINS_MC_SLICE_AGGREGATE_{}_{}_{}'.format(
+                self.__target_param.upper(), self.__slice_param.upper(), self.__suffix
             ): Table(
                 {
                     self.__slice_param.upper(): self.__slice_binning.ravel(),
