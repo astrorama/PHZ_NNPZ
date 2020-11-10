@@ -5,14 +5,19 @@ from nnpz.io.output_column_providers.McSampler import McSampler
 
 
 class MockProvider:
+
+    def __init__(self):
+        self.__data = np.zeros((3, 50), dtype=[('P1', np.float), ('P2', np.float), ('I1', np.int)])
+        for i in range(len(self.__data)):
+            random = np.random.multivariate_normal(
+                (i, i * 2), cov=[[0.0, 0.], [0., 0.0]], size=50
+            )
+            self.__data['P1'][i] = random[:, 0]
+            self.__data['P2'][i] = random[:, 1]
+            self.__data['I1'][i] = i
+
     def getData(self, obj_id):
-        data = np.zeros(50, dtype=[('P1', np.float), ('P2', np.float)])
-        random = np.random.multivariate_normal(
-            (obj_id, obj_id * 2), cov=[[0.0, 0.], [0., 0.0]], size=50
-        )
-        data['P1'] = random[:, 0]
-        data['P2'] = random[:, 1]
-        return data
+        return self.__data[obj_id]
 
 
 @pytest.fixture

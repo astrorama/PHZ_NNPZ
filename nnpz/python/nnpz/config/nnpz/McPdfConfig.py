@@ -1,12 +1,17 @@
+import numpy as np
 from nnpz.config import ConfigManager
 from nnpz.config.nnpz import NeighborSelectorConfig, OutputHandlerConfig, TargetCatalogConfig
 from nnpz.config.reference import ReferenceConfig
+from nnpz.io.output_column_providers.McCounter import McCounter
 from nnpz.io.output_column_providers.McPdf1D import McPdf1D
 from nnpz.io.output_column_providers.McPdf2D import McPdf2D
 from nnpz.io.output_column_providers.McSampler import McSampler
 from nnpz.io.output_column_providers.McSamples import McSamples
+from nnpz.io.output_column_providers.McSliceAggregate import McSliceAggregate
+from nnpz.io.output_hdul_providers.McCounterBins import McCounterBins
 from nnpz.io.output_hdul_providers.McPdf1DBins import McPdf1DBins
 from nnpz.io.output_hdul_providers.McPdf2DBins import McPdf2DBins
+from nnpz.io.output_hdul_providers.McSliceAggregateBins import McSliceAggregateBins
 
 
 class McPdfConfig(ConfigManager.ConfigHandler):
@@ -36,7 +41,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         self.__take_n = args.get('mc_pdf_take_n', 100)
 
     def __add_common(self, args):
-        for cfg_key in ['mc_1d_pdf', 'mc_2d_pdf', 'mc_samples']:
+        for cfg_key in ['mc_1d_pdf', 'mc_2d_pdf', 'mc_samples', 'mc_count', 'mc_slice_aggregate']:
             cfg = args.get(cfg_key, {})
             for provider_name, _ in cfg.items():
                 if provider_name in self.__samplers:
@@ -92,6 +97,40 @@ class McPdfConfig(ConfigManager.ConfigHandler):
             for parameter_set in parameters:
                 self.__output.addColumnProvider(McSamples(sampler, parameter_set))
 
+    def __add_counters(self, args):
+        mc_counters = args.get('mc_count', None)
+        if not mc_counters:
+            return
+
+        for provider_name, parameters in mc_counters.items():
+            sampler = self.__samplers[provider_name]
+            for parameter, bins in parameters:
+                pdtype = sampler.getProvider().getDtype(parameter)
+                if not np.issubdtype(pdtype, np.int) and not np.issubdtype(pdtype, np.bool):
+                    raise Exception('Can only count integer types, got {}'.format(pdtype))
+                if not np.issubdtype(bins.dtype, np.int) and not np.issubdtype(bins.dtype, np.bool):
+                    raise Exception('The binning must be an integer type, got {}', bins.dtype)
+                bins = np.sort(bins)
+                self.__output.addColumnProvider(McCounter(sampler, parameter, bins))
+                self.__output.addExtensionTableProvider(McCounterBins(parameter, bins))
+
+    def __add_slicers(self, args):
+        mc_slicers = args.get('mc_slice_aggregate', None)
+        if not mc_slicers:
+            return
+
+        for provider_name, slice_cfgs in mc_slicers.items():
+            sampler = self.__samplers[provider_name]
+            for slice_cfg in slice_cfgs:
+                target, sliced, binning, aggs = slice_cfg
+                for suffix, agg in aggs.items():
+                    self.__output.addColumnProvider(McSliceAggregate(
+                        sampler, target, sliced, suffix, agg, binning
+                    ))
+                    self.__output.addExtensionTableProvider(McSliceAggregateBins(
+                        target, sliced, suffix, binning
+                    ))
+
     def parseArgs(self, args):
         if not self.__added:
             self.__parse_args_common(args)
@@ -99,6 +138,8 @@ class McPdfConfig(ConfigManager.ConfigHandler):
             self.__add_mc_1d_pdf(args)
             self.__add_mc_2d_pdf(args)
             self.__add_samples(args)
+            self.__add_counters(args)
+            self.__add_slicers(args)
             self.__added = True
         return {}
 

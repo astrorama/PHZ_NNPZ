@@ -73,7 +73,7 @@ class ReferenceSample(object):
         logger.debug('Creating reference sample directory %s...', path)
         os.makedirs(path)
 
-        if not providers:
+        if providers is None:
             providers = ReferenceSample.DEFAULT_PROVIDERS
         if not index:
             index = ReferenceSample.DEFAULT_INDEX
@@ -115,7 +115,7 @@ class ReferenceSample(object):
                 If True, fail if the required files exist, as this is supposed to be a new, empty,
                 reference sample.
         """
-        if not providers:
+        if providers is None:
             providers = ReferenceSample.DEFAULT_PROVIDERS
         if not index:
             index = ReferenceSample.DEFAULT_INDEX

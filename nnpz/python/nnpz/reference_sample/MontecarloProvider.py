@@ -2,7 +2,7 @@ import os
 from typing import Iterable
 
 import numpy as np
-from nnpz.exceptions import AlreadySetException
+from nnpz.exceptions import AlreadySetException, UninitializedException
 from nnpz.reference_sample import MontecarloDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
 from nnpz.reference_sample.util import validate_data_files, create_new_provider
@@ -40,6 +40,15 @@ class MontecarloProvider(BaseProvider):
         self._index.flush()
         for data_prov in self._data_map.values():
             data_prov.flush()
+
+    def getDtype(self, parameter):
+        """
+        Returns:
+            The dtype of the given parameter
+        """
+        if not self._data_map:
+            raise UninitializedException('MontecarloProvider not initialized')
+        return next(iter(self._data_map.values())).read(0)[parameter].dtype
 
     def getData(self, obj_id: int) -> np.ndarray:
         loc = self._index.get(obj_id, self._key)

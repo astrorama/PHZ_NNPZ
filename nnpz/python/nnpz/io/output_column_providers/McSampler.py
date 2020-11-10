@@ -59,6 +59,12 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         self.__ref_ids = ref_ids
         self.__samples = None
 
+    def getProvider(self):
+        """
+        Return the provider
+        """
+        return self.__provider
+
     def addContribution(self, reference_sample_i, neighbor, flags):
         """
         See OutputColumnProviderInterface.addContribution
