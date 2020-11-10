@@ -14,37 +14,29 @@
 # MA 02110-1301 USA
 #
 
+from astropy.table import Column
+from nnpz.io.output_column_providers.McCounter import McCounter
+
 # noinspection PyUnresolvedReferences
 from .fixtures import *
 
 
-def test_take_samples(reference_ids, contributions, mock_provider):
-    sampler = McSampler(
-        2, n_neighbors=3, take_n=200, mc_provider=mock_provider,
-        ref_ids=reference_ids
-    )
-    for ref_i, contrib in contributions:
-        sampler.addContribution(ref_i, contrib, None)
+def test_count_samples(sampler):
+    counter = McCounter(sampler, param_name='I1', binning=np.arange(0, 10))
+    columns = counter.getColumns()
 
-    columns = sampler.getColumns()
-    assert len(columns) == 0
-
+    assert len(columns) == 1
+    column = columns[0]
+    assert isinstance(column, Column)
+    assert column.name == 'MC_COUNT_I1'
+    assert column.shape == (2, 10)
     # First object can not have any sample from 2, and the weight is higher for 1
-    samples = sampler.generateSamples(0)
-    assert samples.shape == (200,)
-    assert samples.dtype.names == ('P1', 'P2', 'I1')
-    vals, counts = np.unique(samples['P1'], return_counts=True)
-    assert 2 not in vals
-    assert 0 in vals
-    assert 1 in vals
-    assert counts[0] < counts[1]
-    assert counts[0] + counts[1] == 200
-
+    assert column[0, 2] == 0
+    assert column[0, 0] > 0
+    assert column[0, 1] > column[0, 0]
+    assert column[0].sum() == 200
     # Second object must have the most samples from 2, and more from 0 than from 1
-    samples = sampler.generateSamples(1)
-    assert samples.shape == (200,)
-    assert samples.dtype.names == ('P1', 'P2', 'I1')
-    vals, counts = np.unique(samples['P1'], return_counts=True)
-    assert counts[0] > counts[1]
-    assert counts[2] > counts[1]
-    assert counts.sum() == 200
+    assert column[1, 1] > 0
+    assert column[1, 0] > column[1, 1]
+    assert column[1, 2] > column[1, 0]
+    assert column[1].sum() == 200

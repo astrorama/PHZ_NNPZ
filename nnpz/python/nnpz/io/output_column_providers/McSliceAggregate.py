@@ -54,10 +54,8 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
 
         for i in range(aggregated.shape[1]):
             rmin, rmax = self.__binning[i:i + 2]
-            mask = (samples[self.__slice_param] >= rmin) & (samples[self.__slice_param] < rmax)
-            data = np.where(mask, samples[self.__target_param], np.nan)
-            data = self.__aggregator(data, axis=1)
-            aggregated[:, i] = data
+            data = np.ma.masked_outside(samples[self.__target_param], rmin, rmax, copy=False)
+            aggregated[:, i] = self.__aggregator(data, axis=1).filled(np.nan)
 
         return [
             Column(
