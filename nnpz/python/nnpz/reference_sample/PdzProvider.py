@@ -1,13 +1,12 @@
 import os
-import pathlib
-from typing import Union
+from typing import List, Union
 
 import numpy as np
-from nnpz.exceptions import InvalidAxisException, AlreadySetException, InvalidDimensionsException
-from nnpz.reference_sample import PdzDataProvider, IndexProvider
+from nnpz.exceptions import AlreadySetException, InvalidAxisException, InvalidDimensionsException
+from nnpz.reference_sample import IndexProvider, PdzDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
-from nnpz.reference_sample.util import validate_data_files, create_new_provider, \
-    locate_existing_data_files
+from nnpz.reference_sample.util import create_new_provider, locate_existing_data_files, \
+    validate_data_files
 
 
 class PdzProvider(BaseProvider):
@@ -155,13 +154,74 @@ class PdzProvider(BaseProvider):
             available_size = self._data_limit - pdz_provider.size()
             nfit = len(other_pdz) * min(np.ceil(available_size / other_pdz_size), 1)
             updated_index[file_field][:nfit] = pdz_provider_idx
-            updated_index[offset_field][disk_order[:nfit]] = pdz_provider.appendPdz(other_pdz[1:nfit])
+            updated_index[offset_field][disk_order[:nfit]] = pdz_provider.appendPdz(
+                other_pdz[1:nfit])
 
             # Create a new one and put in the rest
             pdz_provider_idx = self._getCurrentPdzProvider(other_pdz[0, :])
             pdz_provider = self._data_map[pdz_provider_idx]
             updated_index[file_field][nfit:] = pdz_provider_idx
-            updated_index[offset_field][disk_order[nfit:]] = pdz_provider.appendPdz(other_pdz[nfit:])
+            updated_index[offset_field][disk_order[nfit:]] = pdz_provider.appendPdz(
+                other_pdz[nfit:])
 
             # Update the index
             self._index.bulkAdd(updated_index)
+
+    def addData(self, object_ids: List[int] = None, data: np.ndarray = None):
+        """
+        Add new data to the PDZ provider
+
+        Args:
+            object_ids:
+                Object ids
+            data:
+                New data. The first entry must correspond to the PDZ bins
+        """
+        if len(data.shape) != 2:
+            raise InvalidDimensionsException('The PDZ data must have two axes')
+        if len(object_ids) != data.shape[0] - 1:
+            raise InvalidDimensionsException(
+                'The number of PDZ entries does not match the number of objects'
+            )
+
+        pdz_bins = data[0]
+        pdz = data[1:]
+
+        record_size = pdz[0].nbytes
+        records_per_file = self._data_limit // record_size + (self._data_limit % record_size > 0)
+
+        # Index
+        file_field = f'{self._key}_file'
+        offset_field = f'{self._key}_offset'
+
+        index_data = np.zeros(
+            (len(object_ids),),
+            dtype=[('id', np.int64), (file_field, np.int64), (offset_field, np.int64)]
+        )
+
+        # First available provider and merge whatever is possible
+        provider_idx = self._getCurrentPdzProvider(pdz_bins)
+        provider = self._data_map[provider_idx]
+        available_size = self._data_limit - provider.size()
+        nfit = available_size // record_size + (available_size % record_size > 0)
+
+        index_data['id'][:nfit] = object_ids[:nfit]
+        index_data[file_field][:nfit] = provider_idx
+        index_data[offset_field][:nfit] = provider.appendPdz(pdz[:nfit])
+        provider.flush()
+
+        # Cut what's left in whole files
+        n_files = int(np.ceil(len(object_ids[nfit:]) / records_per_file))
+
+        for file_i in range(n_files):
+            selection = slice(nfit + records_per_file * file_i,
+                              nfit + records_per_file * (file_i + 1))
+
+            provider_idx = self._getCurrentPdzProvider(pdz_bins)
+            provider = self._data_map[provider_idx]
+            index_data['id'][selection] = object_ids[selection]
+            index_data[file_field][selection] = provider_idx
+            index_data[offset_field][selection] = provider.appendPdz(pdz[selection])
+            provider.flush()
+
+        self._index.bulkAdd(index_data)
