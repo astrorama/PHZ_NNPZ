@@ -56,7 +56,7 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
 
             logger.info('Using reference sample photometry from %s', self.__phot_file)
             ref_phot_prov = PhotometryProvider(self.__phot_file)
-            if np.any(np.sort(ref_phot_prov.getIds()) != np.sort(ref_sample_dict['reference_ids'])):
+            if np.any(ref_phot_prov.getIds() != ref_sample_dict['reference_ids']):
                 logger.error('ERROR: Reference sample photometry ID mismatch')
                 exit(-1)
 
