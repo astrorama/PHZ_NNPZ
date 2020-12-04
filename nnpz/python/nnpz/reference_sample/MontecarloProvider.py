@@ -1,11 +1,9 @@
-import os
-from typing import Iterable
-
 import numpy as np
-from nnpz.exceptions import AlreadySetException, UninitializedException
+from nnpz.exceptions import UninitializedException
 from nnpz.reference_sample import MontecarloDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
-from nnpz.reference_sample.util import validate_data_files, create_new_provider
+from nnpz.reference_sample.util import validate_data_files
+from typing import Iterable
 
 
 class MontecarloProvider(BaseProvider):
@@ -25,21 +23,27 @@ class MontecarloProvider(BaseProvider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        data_files = validate_data_files(self._data_pattern, self._index, self._key)
-
-        self._data_map = {}
-        for data_file in data_files:
-            self._data_map[data_file] = MontecarloDataProvider(
-                self._data_pattern.format(data_file)
-            )
+        self._data_files = validate_data_files(self._data_pattern, self._index, self._key)
+        self._current_data_provider = None
+        self._current_data_index = None
+        self._last_data_index = max(self._data_files) if self._data_files else None
 
     def flush(self):
         """
         Write the changes to disk.
         """
         self._index.flush()
-        for data_prov in self._data_map.values():
-            data_prov.flush()
+        if self._current_data_provider:
+            self._current_data_provider.flush()
+
+    def _swapProvider(self, index):
+        if index != self._current_data_index:
+            if self._current_data_provider is not None:
+                self._current_data_provider.flush()
+            self._current_data_index = index
+            self._current_data_provider = MontecarloDataProvider(
+                self._data_pattern.format(index)
+            )
 
     def getDtype(self, parameter):
         """
@@ -54,25 +58,24 @@ class MontecarloProvider(BaseProvider):
         loc = self._index.get(obj_id, self._key)
         if not loc:
             return None
-        return self._data_map[loc.file].read(loc.offset)
+        self._swapProvider(loc.file)
+        return self._current_data_provider.read(loc.offset)
 
-    def _getCurrentDataProvider(self):
+    def _getWriteableDataProvider(self):
         """
         Returns:
             A suitable data provider to add new data
         """
-        if self._data_map:
-            last_file = max(self._data_map)
-        else:
-            last_file = create_new_provider(
-                self._data_map, self._data_pattern, MontecarloDataProvider
-            )
+        if not self._last_data_index:
+            self._last_data_index = 1
+            self._swapProvider(self._last_data_index)
+
         # Check if the last file exceeded the size limit and create a new one
-        if self._data_map[last_file].size() >= self._data_limit:
-            last_file = create_new_provider(
-                self._data_map, self._data_pattern, MontecarloDataProvider
-            )
-        return last_file
+        if self._current_data_provider.size() >= self._data_limit:
+            self._last_data_index += 1
+            self._swapProvider(self._last_data_index)
+
+        return self._last_data_index, self._current_data_provider
 
     def addData(self, object_ids: Iterable[int] = None, data: np.ndarray = None):
         """
@@ -102,8 +105,7 @@ class MontecarloProvider(BaseProvider):
         )
 
         # First available provider and merge whatever is possible
-        provider_idx = self._getCurrentDataProvider()
-        provider = self._data_map[provider_idx]
+        provider_idx, provider = self._getWriteableDataProvider()
         available_size = self._data_limit - provider.size()
         nfit = available_size // record_size + (available_size % record_size > 0)
 
@@ -119,11 +121,9 @@ class MontecarloProvider(BaseProvider):
             selection = slice(nfit + records_per_file * file_i,
                               nfit + records_per_file * (file_i + 1))
 
-            provider_idx = self._getCurrentDataProvider()
-            provider = self._data_map[provider_idx]
+            provider_idx, provider = self._getWriteableDataProvider()
             index_data['id'][selection] = object_ids[selection]
             index_data[file_field][selection] = provider_idx
             index_data[offset_field][selection] = provider.append(data[selection])
-            provider.flush()
 
         self._index.bulkAdd(index_data)

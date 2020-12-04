@@ -1,5 +1,4 @@
 import os
-from typing import Set
 
 from nnpz.exceptions import FileNotFoundException
 from nnpz.reference_sample import IndexProvider
@@ -20,6 +19,9 @@ def locate_existing_data_files(pattern):
 def validate_data_files(pattern: str, index: IndexProvider, key: str):
     """
     Cross-check the existing data files and those referenced by the index
+
+    Returns:
+        A set of existing file ids
     """
     existing_files = locate_existing_data_files(pattern)
     index_files = index.getFiles(key)
@@ -30,18 +32,3 @@ def validate_data_files(pattern: str, index: IndexProvider, key: str):
             'Missing {} data files: {}'.format(key, ', '.join(missing_files))
         )
     return existing_files
-
-
-def create_new_provider(provider_map: dict, pattern: str, class_: type):
-    """
-    Instantiate a new provider
-    """
-    if provider_map:
-        last = max(provider_map)
-        provider_map[last].flush()
-        new_file = last + 1
-    else:
-        new_file = 1
-    filename = pattern.format(new_file)
-    provider_map[new_file] = class_(filename)
-    return new_file
