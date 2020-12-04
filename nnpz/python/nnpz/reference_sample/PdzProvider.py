@@ -1,12 +1,10 @@
-import os
-from typing import List, Union
-
 import numpy as np
+import os
 from nnpz.exceptions import AlreadySetException, InvalidAxisException, InvalidDimensionsException
 from nnpz.reference_sample import IndexProvider, PdzDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
-from nnpz.reference_sample.util import create_new_provider, locate_existing_data_files, \
-    validate_data_files
+from nnpz.reference_sample.util import locate_existing_data_files, validate_data_files
+from typing import List, Union
 
 
 class PdzProvider(BaseProvider):
@@ -22,19 +20,27 @@ class PdzProvider(BaseProvider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        data_files = validate_data_files(self._data_pattern, self._index, self._key)
-
-        self._data_map = {}
-        for data_file in data_files:
-            self._data_map[data_file] = PdzDataProvider(self._data_pattern.format(data_file))
+        self._data_files = validate_data_files(self._data_pattern, self._index, self._key)
+        self._current_data_provider = None
+        self._current_data_index = None
+        self._last_data_index = max(self._data_files) if self._data_files else None
 
     def flush(self):
         """
         Write the changes to disk.
         """
         self._index.flush()
-        for data_prov in self._data_map.values():
-            data_prov.flush()
+        if self._current_data_provider:
+            self._current_data_provider.flush()
+
+    def _swapProvider(self, index):
+        if index != self._current_data_index:
+            if self._current_data_provider is not None:
+                self._current_data_provider.flush()
+            self._current_data_index = index
+            self._current_data_provider = PdzDataProvider(
+                self._data_pattern.format(index)
+            )
 
     def getPdzData(self, obj_id: int) -> Union[np.ndarray, None]:
         """
@@ -59,8 +65,10 @@ class PdzProvider(BaseProvider):
         pdz_loc = self._index.get(obj_id, self._key)
         if not pdz_loc:
             return None
-        z_bins = self._data_map[pdz_loc.file].getRedshiftBins().reshape(-1, 1)
-        pdz_data = self._data_map[pdz_loc.file].readPdz(pdz_loc.offset).reshape(-1, 1)
+        if not self._current_data_index or self._current_data_index != pdz_loc.file:
+            self._swapProvider(pdz_loc.file)
+        z_bins = self._current_data_provider.getRedshiftBins().reshape(-1, 1)
+        pdz_data = self._current_data_provider.readPdz(pdz_loc.offset).reshape(-1, 1)
         return np.hstack([z_bins, pdz_data])
 
     def addPdzData(self, obj_id, data):
@@ -92,38 +100,34 @@ class PdzProvider(BaseProvider):
         if len(data_arr.shape) != 2 or data_arr.shape[1] != 2:
             raise InvalidDimensionsException()
 
-        pdz_file = self._getCurrentPdzProvider(data_arr[:, 0])
+        pdz_file, provider = self._getWriteablePdzProvider(data_arr[:, 0])
 
         # Add the PDZ data in the last file, normalizing first
         integral = np.trapz(data_arr[:, 1], data_arr[:, 0])
-        new_pos = self._data_map[pdz_file].appendPdz(data_arr[:, 1] / integral)
+        new_pos = provider.appendPdz(data_arr[:, 1] / integral)
         self._index.add(obj_id, self._key, IndexProvider.ObjectLocation(pdz_file, new_pos))
 
-    def _getCurrentPdzProvider(self, binning):
+    def _getWriteablePdzProvider(self, binning):
         """
-        Get the index of the active PDZ provider, create a new one if needed
+        Get the index of the last writeable PDZ provider, create a new one if needed
         """
-        if self._data_map:
-            last_pdz_file = max(self._data_map)
-        else:
-            last_pdz_file = create_new_provider(
-                self._data_map, self._data_pattern, PdzDataProvider
-            )
+        if not self._last_data_index:
+            self._last_data_index = 1
+        self._swapProvider(self._last_data_index)
 
         # Check if the last file exceeded the size limit and create a new one
-        if self._data_map[last_pdz_file].size() >= self._data_limit:
-            last_pdz_file = create_new_provider(
-                self._data_map, self._data_pattern, PdzDataProvider
-            )
+        if self._current_data_provider.size() >= self._data_limit:
+            self._last_data_index += 1
+            self._swapProvider(self._last_data_index)
 
         # Set, or crosscheck, the binning
-        existing_zs = self._data_map[last_pdz_file].getRedshiftBins()
+        existing_zs = self._current_data_provider.getRedshiftBins()
         if existing_zs is None:
-            self._data_map[last_pdz_file].setRedshiftBins(binning)
+            self._current_data_provider.setRedshiftBins(binning)
         elif not np.array_equal(binning, existing_zs):
             raise InvalidAxisException('Given wavelengths are different than existing ones')
 
-        return last_pdz_file
+        return self._last_data_index, self._current_data_provider
 
     def importData(self, other_index: IndexProvider, data_pattern: str, extra_data: dict):
         """
@@ -131,41 +135,15 @@ class PdzProvider(BaseProvider):
         """
         self.extra.update(extra_data)
         other_files = sorted(locate_existing_data_files(data_pattern))
-        file_field = f'{self._key}_file'
-        offset_field = f'{self._key}_offset'
         for other_pdz_i in other_files:
             other_pdz_file = data_pattern.format(other_pdz_i)
-            other_pdz_size = os.path.getsize(other_pdz_file)
             other_pdz = np.load(other_pdz_file, mmap_mode='r')
 
-            # Take the part of the index that points to the file other_pdz_i
-            other_pdz_index_pos = np.nonzero(other_index.raw[file_field] == other_pdz_i)[0]
-            updated_index = np.array(
-                other_index.raw[['id', file_field, offset_field]][other_pdz_index_pos], copy=True)
+            # Ask for the IDs following disk order
+            other_ids = other_index.getIdsForFile(other_pdz_i, self._key)
 
-            # The order of the index does not have to match the order on the file!
-            disk_order = np.argsort(updated_index[offset_field])
-
-            # Take the current active provider to store the imported data
-            pdz_provider_idx = self._getCurrentPdzProvider(other_pdz[0, :])
-            pdz_provider = self._data_map[pdz_provider_idx]
-
-            # Fit whatever we can on the current file (approximately)
-            available_size = self._data_limit - pdz_provider.size()
-            nfit = len(other_pdz) * min(np.ceil(available_size / other_pdz_size), 1)
-            updated_index[file_field][:nfit] = pdz_provider_idx
-            updated_index[offset_field][disk_order[:nfit]] = pdz_provider.appendPdz(
-                other_pdz[1:nfit])
-
-            # Create a new one and put in the rest
-            pdz_provider_idx = self._getCurrentPdzProvider(other_pdz[0, :])
-            pdz_provider = self._data_map[pdz_provider_idx]
-            updated_index[file_field][nfit:] = pdz_provider_idx
-            updated_index[offset_field][disk_order[nfit:]] = pdz_provider.appendPdz(
-                other_pdz[nfit:])
-
-            # Update the index
-            self._index.bulkAdd(updated_index)
+            # Import the data
+            self.addData(other_ids, other_pdz)
 
     def addData(self, object_ids: List[int] = None, data: np.ndarray = None):
         """
@@ -200,8 +178,7 @@ class PdzProvider(BaseProvider):
         )
 
         # First available provider and merge whatever is possible
-        provider_idx = self._getCurrentPdzProvider(pdz_bins)
-        provider = self._data_map[provider_idx]
+        provider_idx, provider = self._getWriteablePdzProvider(pdz_bins)
         available_size = self._data_limit - provider.size()
         nfit = available_size // record_size + (available_size % record_size > 0)
 
@@ -217,8 +194,7 @@ class PdzProvider(BaseProvider):
             selection = slice(nfit + records_per_file * file_i,
                               nfit + records_per_file * (file_i + 1))
 
-            provider_idx = self._getCurrentPdzProvider(pdz_bins)
-            provider = self._data_map[provider_idx]
+            provider_idx, provider = self._getWriteablePdzProvider(pdz_bins)
             index_data['id'][selection] = object_ids[selection]
             index_data[file_field][selection] = provider_idx
             index_data[offset_field][selection] = provider.appendPdz(pdz[selection])

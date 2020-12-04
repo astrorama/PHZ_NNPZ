@@ -5,8 +5,7 @@ import numpy as np
 from nnpz.exceptions import AlreadySetException
 from nnpz.reference_sample import SedDataProvider, IndexProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
-from nnpz.reference_sample.util import validate_data_files, create_new_provider, \
-    locate_existing_data_files
+from nnpz.reference_sample.util import validate_data_files, locate_existing_data_files
 
 
 class SedProvider(BaseProvider):
@@ -24,22 +23,31 @@ class SedProvider(BaseProvider):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        data_files = validate_data_files(self._data_pattern, self._index, self._key)
-
-        self._data_map = {}
-        self._prov_for_size = {}
-        for data_file in data_files:
+        self._data_files = validate_data_files(self._data_pattern, self._index, self._key)
+        self._current_data_provider = None
+        self._current_data_index = None
+        self._last_index_for_knots = dict()
+        for data_file in self._data_files:
             sed_data_prov = SedDataProvider(self._data_pattern.format(data_file))
-            self._data_map[data_file] = sed_data_prov
-            self._prov_for_size[sed_data_prov.getKnots()] = data_file
+            self._last_index_for_knots[sed_data_prov.getKnots()] = data_file
+        self._last_data_index = max(self._data_files) if self._data_files else 0
 
     def flush(self):
         """
         Write the changes to disk.
         """
         self._index.flush()
-        for data_prov in self._data_map.values():
-            data_prov.flush()
+        if self._current_data_provider:
+            self._current_data_provider.flush()
+
+    def _swapProvider(self, index):
+        if index != self._current_data_index:
+            if self._current_data_provider is not None:
+                self._current_data_provider.flush()
+            self._current_data_index = index
+            self._current_data_provider = SedDataProvider(
+                self._data_pattern.format(index)
+            )
 
     def getSedData(self, obj_id: int) -> Union[np.ndarray, None]:
         """
@@ -62,9 +70,11 @@ class SedProvider(BaseProvider):
                 different than the one stored in the SED data file
         """
         sed_loc = self._index.get(obj_id, self._key)
-        if sed_loc:
-            return self._data_map[sed_loc.file].readSed(sed_loc.offset)
-        return None
+        if not sed_loc:
+            return None
+        if not self._current_data_index or self._current_data_index != sed_loc.file:
+            self._swapProvider(sed_loc.file)
+        return self._current_data_provider.readSed(sed_loc.offset)
 
     def addSedData(self, obj_id: int, data: np.ndarray):
         """
@@ -91,20 +101,26 @@ class SedProvider(BaseProvider):
         if loc is not None:
             raise AlreadySetException('SED for ID ' + str(obj_id) + ' is already set')
 
-        current_prov = self._getCurrentDataProvider(data.shape[0])
-        new_pos = self._data_map[current_prov].appendSed(data)
-        self._index.add(obj_id, self._key, IndexProvider.ObjectLocation(current_prov, new_pos))
+        sed_file, provider = self._getWriteableDataProvider(data.shape[0])
+        new_pos = provider.appendSed(data)
+        self._index.add(obj_id, self._key, IndexProvider.ObjectLocation(sed_file, new_pos))
 
-    def _getCurrentDataProvider(self, knots):
+    def _getWriteableDataProvider(self, knots):
         """
         Get the index of the active SED provider, create a new one if needed
         """
-        if knots not in self._prov_for_size \
-            or self._data_map[self._prov_for_size[knots]].size() >= self._data_limit:
-            self._prov_for_size[knots] = create_new_provider(
-                self._data_map, self._data_pattern, SedDataProvider
-            )
-        return self._prov_for_size[knots]
+        if knots not in self._last_index_for_knots:
+            self._last_data_index += 1
+            self._last_index_for_knots[knots] = self._last_data_index
+        self._swapProvider(self._last_index_for_knots[knots])
+
+        # Check if the last file exceeded the size limit and create a new one
+        if self._current_data_provider.size() >= self._data_limit:
+            self._last_data_index += 1
+            self._last_index_for_knots[knots] = self._last_data_index
+            self._swapProvider(self._last_data_index)
+
+        return self._current_data_index, self._current_data_provider
 
     def importData(self, other_index: IndexProvider, data_pattern: str, extra_data: dict):
         """
@@ -128,18 +144,16 @@ class SedProvider(BaseProvider):
             disk_order = np.argsort(updated_index[offset_field])
 
             # Take the current active provider to store the imported data
-            sed_provider_idx = self._getCurrentDataProvider(other_sed.shape[1])
-            sed_provider = self._data_map[sed_provider_idx]
+            sed_provider_idx, sed_provider = self._getWriteableDataProvider(other_sed.shape[1])
 
             # Fit whatever we can on the current file (approximately)
             available_size = self._data_limit - sed_provider.size()
-            nfit = len(other_sed) * min(np.ceil(available_size / other_sed_size), 1)
+            nfit = int(len(other_sed) * min(np.ceil(available_size / other_sed_size), 1))
             updated_index[file_field][:nfit] = sed_provider_idx
             updated_index[offset_field][disk_order[:nfit]] = sed_provider.appendSed(other_sed[:nfit])
 
             # Create a new one and put in the rest
-            sed_provider_idx = self._getCurrentDataProvider(other_sed.shape[1])
-            sed_provider = self._data_map[sed_provider_idx]
+            sed_provider_idx, sed_provider = self._getWriteableDataProvider(other_sed.shape[1])
             updated_index[file_field][nfit:] = sed_provider_idx
             updated_index[offset_field][disk_order[nfit:]] = sed_provider.appendSed(other_sed[nfit:])
 

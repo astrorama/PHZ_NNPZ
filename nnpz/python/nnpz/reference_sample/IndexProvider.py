@@ -251,3 +251,13 @@ class IndexProvider(object):
     @property
     def raw(self):
         return self.__data
+
+    def getIdsForFile(self, file_id: int, key: str):
+        """
+        Returns:
+            The list of object IDs stored on a given file, following the physical order
+        """
+        idx_mask = self.__data[f'{key}_file'] == file_id
+        idx_masked = self.__data[idx_mask]
+        disk_order = np.argsort(idx_masked[f'{key}_offset'])
+        return idx_masked[disk_order]['id']
