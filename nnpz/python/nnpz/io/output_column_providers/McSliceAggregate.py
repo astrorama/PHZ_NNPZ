@@ -56,7 +56,9 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
             rmin, rmax = self.__binning[i:i + 2]
             mask = (samples[self.__slice_param] < rmin) | (samples[self.__slice_param] >= rmax)
             data = np.ma.array(samples[self.__target_param], mask=mask, copy=False)
-            aggregated[:, i] = self.__aggregator(data, axis=1).filled(np.nan)
+            # Technically NaN is more adequate for the mean of an empty set, but this breaks
+            # boost on later stages of the PHZ pipeline :(
+            aggregated[:, i] = self.__aggregator(data, axis=1).filled(-99.)
 
         return [
             Column(
