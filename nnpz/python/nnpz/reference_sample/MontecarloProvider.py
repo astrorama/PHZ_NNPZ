@@ -50,9 +50,11 @@ class MontecarloProvider(BaseProvider):
         Returns:
             The dtype of the given parameter
         """
-        if not self._data_map:
+        if not self._data_files:
             raise UninitializedException('MontecarloProvider not initialized')
-        return next(iter(self._data_map.values())).read(0)[parameter].dtype
+        if not self._current_data_provider:
+            self._swapProvider(next(iter(self._data_files)))
+        return self._current_data_provider.read(0)[parameter].dtype
 
     def getData(self, obj_id: int) -> np.ndarray:
         loc = self._index.get(obj_id, self._key)
