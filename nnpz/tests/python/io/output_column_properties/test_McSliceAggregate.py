@@ -39,7 +39,7 @@ def test_slice(sampler, mock_provider):
     assert column.shape == (2, 5)
 
     # First object can not have any sample from 2
-    assert np.isnan(column[0, 2])
+    assert np.equal(column[0, 2], -99.)
     assert np.isclose(column[0, 0].mean(), ref0['P1'].mean())
     assert np.isclose(column[0, 1].mean(), ref1['P1'].mean())
     # Second object
