@@ -55,7 +55,7 @@ class McPdf1D(OutputHandler.OutputColumnProviderInterface):
         """
         samples = self.__sampler.getSamples()
         # For each object, take a random weighted sample and generate the histogram
-        pdfs = np.zeros((len(samples), self.__binning.shape[0] - 1))
+        pdfs = np.zeros((len(samples), self.__binning.shape[0] - 1), dtype=np.float32)
 
         for i in range(pdfs.shape[0]):
             pdfs[i, :] = np.histogram(

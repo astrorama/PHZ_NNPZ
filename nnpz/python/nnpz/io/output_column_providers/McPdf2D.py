@@ -58,7 +58,7 @@ class McPdf2D(OutputHandler.OutputColumnProviderInterface):
         samples = self.__sampler.getSamples()
         pdfs = np.zeros((len(samples),
                          self.__binning[0].shape[0] - 1,
-                         self.__binning[1].shape[0] - 1), dtype=np.float)
+                         self.__binning[1].shape[0] - 1), dtype=np.float32)
 
         for i in range(len(samples)):
             pdfs[i, :] = np.histogram2d(

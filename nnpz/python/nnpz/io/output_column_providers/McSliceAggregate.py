@@ -50,7 +50,7 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
         """
         samples = self.__sampler.getSamples()
 
-        aggregated = np.zeros((len(samples), len(self.__binning) - 1), dtype=np.float)
+        aggregated = np.zeros((len(samples), len(self.__binning) - 1), dtype=np.float32)
 
         for i in range(aggregated.shape[1]):
             rmin, rmax = self.__binning[i:i + 2]
