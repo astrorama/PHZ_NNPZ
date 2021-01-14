@@ -22,9 +22,9 @@ Author: Alejandro Alvarez Ayllon
 from __future__ import division, print_function
 
 from nnpz.flags import NnpzFlag
-from nnpz.photometry import PhotometryProvider
+from nnpz.reference_sample import PhotometryProvider
 from nnpz.weights import CopiedPhotometry
-from ..photometry.fixtures import *
+from ..reference_sample.fixtures import *
 
 
 ###############################################################################

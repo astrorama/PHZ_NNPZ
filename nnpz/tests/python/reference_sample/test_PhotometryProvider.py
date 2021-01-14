@@ -22,7 +22,7 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 from nnpz.exceptions import *
-from nnpz.photometry import PhotometryProvider
+from nnpz.reference_sample import PhotometryProvider
 
 from .fixtures import *
 

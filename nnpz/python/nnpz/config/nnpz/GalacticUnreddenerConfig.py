@@ -50,12 +50,10 @@ class GalacticUnreddenerConfig(ConfigManager.ConfigHandler):
             reference_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
             filter_order = args['reference_sample_phot_filters']
             filter_trans_map = reference_config['reference_filter_transmission']
-            out_filter_order = args['reference_sample_out_mean_phot_filters']
 
             self.__galactic_absorption_unreddener = SourceIndependantGalacticUnReddening(
                 filter_trans_map,
-                filter_order,
-                out_filter_order
+                filter_order
             )
         self.__parsed = True
 

@@ -30,7 +30,9 @@ from nnpz.exceptions import FileNotFoundException, WrongFormatException, Unknown
 
 
 class PhotometryProvider(object):
-    """This is a utility cass for handling NNPZ photometry FITS files"""
+    """
+    This is a utility cass for handling NNPZ photometry FITS files
+    """
 
     @staticmethod
     def __checkFileFormat(filename):
