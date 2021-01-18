@@ -39,10 +39,11 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__ref_phot_data = None
         self.__ref_phot_prov = None
-        self.__ref_filters = None
+        self.__ref_filter_trans = None
         self.__out_mean_phot_filters = None
         self.__out_mean_phot_data = None
         self.__phot_file = None
+        self.__phot_filters = None
         self.__ref_phot_type = None
 
     def __createData(self, args):
@@ -53,7 +54,7 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
             self._checkParameterExists('reference_sample_phot_file', args)
             self.__phot_file = args['reference_sample_phot_file']
             self._checkParameterExists('reference_sample_phot_filters', args)
-            phot_filters = args['reference_sample_phot_filters']
+            self.__phot_filters = args['reference_sample_phot_filters']
 
             logger.info('Using reference sample photometry from %s', self.__phot_file)
             self.__ref_phot_prov = PhotometryProvider(self.__phot_file)
@@ -61,13 +62,13 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
                 logger.error('ERROR: Reference sample photometry ID mismatch')
                 exit(-1)
 
-            logger.info('Reference sample photometric bands: %s', phot_filters)
-            self.__ref_phot_data = self.__ref_phot_prov.getData(*phot_filters)
+            logger.info('Reference sample photometric bands: %s', self.__phot_filters)
+            self.__ref_phot_data = self.__ref_phot_prov.getData(*self.__phot_filters)
             self.__ref_phot_type = self.__ref_phot_prov.getType()
             logger.info('Reference sample photometry type: %s', self.__ref_phot_type)
-            self.__ref_filters = {}
-            for f_name in phot_filters:
-                self.__ref_filters[f_name] = self.__ref_phot_prov.getFilterTransmission(f_name)
+            self.__ref_filter_trans = {}
+            for f_name in self.__phot_filters:
+                self.__ref_filter_trans[f_name] = self.__ref_phot_prov.getFilterTransmission(f_name)
 
     def parseArgs(self, args):
 
@@ -80,7 +81,8 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
             result['reference_phot_type'] = self.__ref_phot_type
             result['reference_photometry'] = self.__ref_phot_prov
             result['reference_phot_data'] = self.__ref_phot_data
-            result['reference_filter_transmission'] = self.__ref_filters
+            result['reference_filter_transmission'] = self.__ref_filter_trans
+            result['reference_filters'] = self.__phot_filters
         return result
 
 

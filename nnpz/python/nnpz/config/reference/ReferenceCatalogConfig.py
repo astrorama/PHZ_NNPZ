@@ -44,12 +44,13 @@ class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
         self.__ref_catalog = None
         self.__ref_cat = None
         self.__ref_phot_prov = None
+        self.__phot_filters = None
 
     def __createData(self, args):
         if 'reference_catalog' in args:
             self.__ref_cat = args['reference_catalog']
             self._checkParameterExists('reference_catalog_filters', args)
-            ref_filters = args['reference_catalog_filters']
+            self.__phot_filters = args['reference_catalog_filters']
             self._checkParameterExists('reference_catalog_redshift', args)
             ref_z_col = args['reference_catalog_redshift']
 
@@ -57,7 +58,7 @@ class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
             ref_reader = CatalogReader(self.__ref_cat)
             self.__ref_phot_prov = CatalogPhotometryProvider(ref_reader)
             self.__ref_ids = ref_reader.get(prop.ID)
-            self.__ref_phot_data = ref_reader.get(prop.Photometry(ref_filters))
+            self.__ref_phot_data = ref_reader.get(prop.Photometry(self.__phot_filters))
             self.__ref_z = ref_reader.get(prop.Column(ref_z_col))
 
             # The redshift column is a PDZ instead of a point estimate
@@ -83,6 +84,7 @@ class ReferenceCatalogConfig(ConfigManager.ConfigHandler):
             result['reference_ids'] = self.__ref_ids
             result['reference_phot_data'] = self.__ref_phot_data
             result['reference_photometry'] = self.__ref_phot_prov
+            result['reference_filters'] = self.__phot_filters
             if self.__ref_catalog:
                 result['reference_sample'] = self.__ref_catalog
             else:
