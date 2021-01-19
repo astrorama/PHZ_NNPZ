@@ -74,7 +74,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         if target_catalog_filters_mean is not None:
             logger.info('Using filters mean wavelength columns %s', target_catalog_filters_mean)
             self.__target_filter_mean_wavelength = target_reader.get(
-                prop.FiltersMeanWavelength(target_catalog_filters_mean, missing_phot_flags)
+                prop.FiltersMeanWavelength(target_catalog_filters_mean, missing_phot_flags + [0.])
             )
 
         if 'input_size' in args:
