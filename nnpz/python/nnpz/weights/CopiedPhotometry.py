@@ -18,7 +18,8 @@
 Created on: 08/02/18
 Author: Nikolaos Apostolakos
 """
-
+import numpy as np
+from nnpz.reference_sample import PhotometryProvider
 from nnpz.weights import WeightPhotometryProvider
 
 
@@ -28,8 +29,13 @@ class CopiedPhotometry(WeightPhotometryProvider):
     weighting are exactly those used for the K-NN search.
     """
 
-    def __init__(self, ref_phot):
-        self.__ref_phot = ref_phot
+    def __init__(self, ref_phot: PhotometryProvider):
+        filter_list = ref_phot.getFilterList()
+        raw_data = ref_phot.getData()
+        dtype = [(filter_name, np.float32) for filter_name in filter_list]
+        self.__ref_phot = np.zeros((len(raw_data), 2), dtype=dtype)
+        for i, filter_name in enumerate(filter_list):
+            self.__ref_phot[filter_name] = raw_data[:, i, :]
 
     def __call__(self, ref_i, cat_i, flags):
         return self.__ref_phot[ref_i]

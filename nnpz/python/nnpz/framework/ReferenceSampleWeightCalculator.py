@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2020 Euclid Science Ground Segment
+# Copyright (C) 2012-2021 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,10 +18,13 @@
 Created on: 27/04/2018
 Author: Alejandro Alvarez Ayllon
 """
+from typing import List
+
 import numpy as np
 from ElementsKernel import Logging
 
 from nnpz import NnpzFlag
+from nnpz.weights import WeightCalculatorInterface, WeightPhotometryProvider
 
 log = Logging.getLogger('ReferenceSampleWeightCalculator')
 
@@ -40,17 +43,22 @@ class ReferenceSampleWeightCalculator(object):
     Compute the weights of the reference objects
     """
 
-    def __init__(self, weight_phot_provider, weight_calculator, weight_calculator_alt, scaling):
+    def __init__(self, weight_phot_provider: WeightPhotometryProvider,
+                 weight_calculator: WeightCalculatorInterface,
+                 weight_calculator_alt: WeightCalculatorInterface, filter_list: List[str],
+                 scaling=None):
         """
         Constructor
         Args:
             weight_phot_provider: An object implementing WeightPhotometryProvider
             weight_calculator: An object implementing WeightCalculatorInterface
+            filter_list: Set of filters used to compare the reference with the target catalog
             scaling: An object that implement photometry rescaling
         """
         self._weight_phot_provider = weight_phot_provider
         self._weight_calculator = weight_calculator
         self._weight_calculator_alt = weight_calculator_alt
+        self._filter_list = filter_list
         self._scaling = scaling
 
     def computeWeights(self, affected, target_data, result_flags, progress_listener):
@@ -60,11 +68,6 @@ class ReferenceSampleWeightCalculator(object):
             target_data: Target catalog data
             result_flags: A list of NnpzFlag, one per entry on the target catalog
             progress_listener: An object implementing ProgressListener
-
-        Returns:
-            A map where the keys are the indices of the reference sample objects
-            and values are lists of the computed weight of the reference sample object per each
-            object in the target catalog
         """
         # Note that we iterate the affected map in increasing order of the reference
         # sample indices. This is done to use as much the cache of the disk, by accessing
@@ -88,12 +91,15 @@ class ReferenceSampleWeightCalculator(object):
             target_list = affected[ref_i]
 
             # Get the reference sample object photometry to use for the weight calculation
-            # This array has one row per target object, with one column for the target ID,
-            # plus one column per band
+            # This array has one row per target object plus one column per band
+            full_photometry = []
             ref_photometry = np.ndarray((len(target_list),) + filters_shape, dtype=np.float32)
             for i, target in enumerate(target_list):
                 flag = result_flags[target.index]
-                ref_photometry[i, :, :] = self._weight_phot_provider(ref_i, target, flag)
+                recomputed = self._weight_phot_provider(ref_i, target, flag)
+                full_photometry.append(recomputed)
+                for filter_id, filter_name in enumerate(self._filter_list):
+                    ref_photometry[i, filter_id, :] = recomputed[filter_name]
 
                 # Re-apply the scaling if needed
                 if self._scaling:
@@ -106,8 +112,9 @@ class ReferenceSampleWeightCalculator(object):
                 self._weight_calculator, target_list, ref_photometry, target_data, result_flags
             )
 
-            for target, w in zip(target_list, weights):
+            for target, w, p in zip(target_list, weights, full_photometry):
                 target.weight = w
+                target.matched_photo = p
                 weight_sum_per_target[target.index] += target.weight
 
             # Since we have the photometry calculated here already, and
@@ -119,7 +126,8 @@ class ReferenceSampleWeightCalculator(object):
                 target_zero_weights = list(filter(lambda t: t.weight == 0, target_list))
                 # Select the reference (recomputed) photometries for those objects
                 ref_obj_zero_weights = [
-                    ref_obj for ref_obj, target_obj in zip(ref_photometry, target_list) if target_obj.weight == 0
+                    ref_obj for ref_obj, target_obj in zip(ref_photometry, target_list) if
+                    target_obj.weight == 0
                 ]
                 new_weights = _apply_weight_calculator(
                     self._weight_calculator_alt, target_zero_weights, ref_obj_zero_weights,

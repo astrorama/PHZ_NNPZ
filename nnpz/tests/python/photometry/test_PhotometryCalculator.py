@@ -88,7 +88,7 @@ def test_compute():
         assert np.array_equal(filter_trans, filter_map[filter_name])
 
     # Check that the result has the correct values
-    assert photometry['first'] == pytest.approx(expected['first'], rel=1e-1)
-    assert photometry['second'] == pytest.approx(expected['second'], rel=1e-1)
+    assert photometry['first'][0] == pytest.approx(expected['first'], rel=1e-1)
+    assert photometry['second'][0] == pytest.approx(expected['second'], rel=1e-1)
 
 ###############################################################################

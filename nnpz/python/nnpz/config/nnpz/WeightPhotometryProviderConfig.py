@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2020 Euclid Science Ground Segment
+# Copyright (C) 2012-2021 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -42,7 +42,8 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
 
     def __createCopiedPhotometry(self, args):
         ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
-        ref_phot_data = ref_config['reference_phot_data']
+        filter_order = ref_config['reference_filters']
+        ref_phot_data = ref_config['reference_photometry'].getData(*filter_order)
         self.__photometry_provider = CopiedPhotometry(ref_phot_data)
 
     def __createRecomputedPhotometry(self, args):
@@ -60,14 +61,12 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
             sys.exit(1)
 
         ref_sample = reference_config['reference_sample']
-        filter_order = args['reference_sample_phot_filters']
-        filter_trans_map = reference_config['reference_filter_transmission']
-        phot_type = reference_config['reference_phot_type']
+        ref_phot = reference_config['reference_photometry']
         ebv = target_config['target_ebv']
         trans_mean = target_config['target_filter_mean_wavelength']
 
         self.__photometry_provider = RecomputedPhotometry(
-            ref_sample, filter_order, filter_trans_map, phot_type,
+            ref_sample, ref_phot,
             ebv_list=ebv, filter_trans_mean_lists=trans_mean
         )
 

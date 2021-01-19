@@ -21,17 +21,20 @@ Author: Alejandro Alvarez Ayllon
 
 from __future__ import division, print_function
 
-import numpy as np
 import os
-import pytest
 
+import numpy as np
+import pytest
+from astropy.io import fits
 from astropy.table import Table
+from nnpz.reference_sample import PhotometryProvider
 from nnpz.reference_sample.ReferenceSample import ReferenceSample
 
+# noinspection PyUnresolvedReferences
 from ..fixtures.util_fixtures import temp_dir_fixture
 
 
-@pytest.fixture()
+@pytest.fixture
 def reference_sample_fixture(temp_dir_fixture):
     """
     Generates a reference sample to be used by the weight tests
@@ -57,7 +60,7 @@ def reference_sample_fixture(temp_dir_fixture):
     return ref_sample
 
 
-@pytest.fixture()
+@pytest.fixture
 def filters_fixture():
     """
     Returns the filters to be used for testing
@@ -100,7 +103,7 @@ def filters_fixture():
     return filters
 
 
-@pytest.fixture()
+@pytest.fixture
 def target_fixture(filters_fixture):
     """
     Generates a target catalog with E(B-V) and filter shifts per target.
@@ -121,3 +124,28 @@ def target_fixture(filters_fixture):
         'ebv': np.zeros(n_targets),
         'filter_means': filter_means,
     }
+
+
+@pytest.fixture
+def reference_photo_fixture(temp_dir_fixture, filters_fixture):
+    photo_path = os.path.join(temp_dir_fixture, 'Photometry.fits')
+
+    nnpz_photo = dict(ID=np.arange(5, dtype=np.int))
+    for filter_name in filters_fixture.keys():
+        nnpz_photo[filter_name] = np.zeros(5, dtype=np.float32)
+    nnpz_photo = fits.BinTableHDU(
+        data=Table(nnpz_photo),
+        name='NNPZ_PHOTOMETRY',
+        header=dict(PHOTYPE='F_nu_uJy')
+    )
+
+    hdus = [fits.PrimaryHDU(), nnpz_photo]
+
+    for filter_name, transmission in filters_fixture.items():
+        hdus.append(fits.BinTableHDU(data=Table(dict(
+            Wavelength=transmission[:, 0],
+            Transmission=transmission[:, 1]
+        )), name=filter_name))
+
+    fits.HDUList(hdus).writeto(photo_path)
+    return PhotometryProvider(photo_path)

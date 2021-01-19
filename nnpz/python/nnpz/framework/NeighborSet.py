@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2020 Euclid Science Ground Segment
+# Copyright (C) 2012-2021 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -36,9 +36,13 @@ class NeighborSet(object):
          the other way around!
          Meaning, it is normally used as reference_neighbors[target_index].weight
     """
-    def __init__(self):
+
+    def __init__(self, indexes=None):
         self.__neighbors = []
         self.index = []
+        if indexes:
+            for idx in indexes:
+                self.append(idx)
 
     def __len__(self):
         """
@@ -96,6 +100,7 @@ class Neighbor(object):
     Wraps the attributes contained within NeighborSet, accessing them by the index that
     identifies the target object
     """
+
     def __init__(self, neighbor_set, position):
         self.__set = neighbor_set
         self.__position = position
