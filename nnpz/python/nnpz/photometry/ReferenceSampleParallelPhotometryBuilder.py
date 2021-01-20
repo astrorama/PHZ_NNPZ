@@ -108,8 +108,8 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
                     progress_listener(progress)
 
                 # Update the photo_list_map
-                for f in photo:
-                    photo_list_map[f].append(photo[f])
+                for f in photo.dtype.names:
+                    photo_list_map[f].append(photo[f][0])
 
         # Convert the photometry lists to numpy arrays
         result_map = {}
