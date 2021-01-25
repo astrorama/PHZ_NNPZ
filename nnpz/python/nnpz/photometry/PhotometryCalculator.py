@@ -25,7 +25,8 @@ import numpy as np
 
 
 class PhotometryCalculator(object):
-    """Class for computing the photometry for a filter reference system
+    """
+    Class for computing the photometry for a filter reference system
     """
 
     def __init__(self, filter_map, pre_post_processor):
@@ -63,7 +64,7 @@ class PhotometryCalculator(object):
             min_i -= 1
         max_i = np.searchsorted(sed[:, 0], lambd_range[1])
         max_i += 1
-        return sed[min_i:max_i+1, :]
+        return sed[min_i:max_i + 1, :]
 
     def compute(self, sed):
         """Computes the photometry for the given SED.
@@ -115,21 +116,15 @@ class PhotometryCalculator(object):
             # Truncate the SED to the size of the filter
             trunc_sed = self.__truncateSed(sed, self.__filter_range_map[filter_name])
 
-            # Interpolate to a superset of both filter and sed
-            interp_grid = np.sort(np.concatenate([sed[:, 0], filter_trans[:, 0]]))
-
             # Interpolate the SED
-            interp_sed = np.interp(interp_grid, trunc_sed[:, 0], trunc_sed[:, 1], left=0, right=0)
-
-            # Interpolate the filter
-            interp_filter = np.interp(interp_grid, filter_trans[:, 0], filter_trans[:, 1],
-                                      left=0, right=0)
+            interp_sed = np.interp(filter_trans[:, 0], trunc_sed[:, 0], trunc_sed[:, 1],
+                                   left=0, right=0)
 
             # Compute the SED through the filter
-            filtered_sed = interp_sed * interp_filter
+            filtered_sed = interp_sed * filter_trans[:, 1]
 
             # Compute the intensity of the filtered object
-            intensity = np.trapz(filtered_sed, x=interp_grid)
+            intensity = np.trapz(filtered_sed, x=filter_trans[:, 0])
 
             # Post-process the intensity
             photometry = self.__pre_post_processor.postProcess(intensity, filter_name, filter_trans)

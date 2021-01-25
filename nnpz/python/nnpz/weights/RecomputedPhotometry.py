@@ -24,10 +24,14 @@ from __future__ import division, print_function
 import itertools
 
 import numpy as np
+from ElementsKernel import Logging
 from ElementsKernel.Auxiliary import getAuxiliaryPath
 from nnpz.photometry import (PhotometryTypeMap, GalacticReddeningPrePostProcessor,
                              PhotometryCalculator, ListFileFilterProvider)
 from nnpz.weights import WeightPhotometryProvider
+from scipy.interpolate import interp1d
+
+logger = Logging.getLogger(__name__)
 
 
 class RecomputedPhotometry(WeightPhotometryProvider):
@@ -44,8 +48,21 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         provider = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
         self.__reddening_curve = provider.getFilterTransmission('extinction_curve')
 
+    def __oversampleFilter(self, transmission: np.ndarray, n: int, kind: str):
+        """
+        Oversample a filter transmission `n` times
+        """
+        # Wavelength new sampling points
+        nlambda = np.interp(np.arange(len(transmission) * n),
+                            np.arange(len(transmission)) * n, transmission[:, 0])
+        # Interpolate transmission over the new sampling points
+        ntrans = interp1d(transmission[:, 0], transmission[:, 1], kind=kind)(nlambda)
+
+        return np.column_stack([nlambda, ntrans])
+
     def __init__(self, ref_sample, filter_order, filter_trans_map, phot_type, ebv_list=None,
-                 filter_trans_mean_lists=None):
+                 filter_trans_mean_lists=None,
+                 oversample_filter: int = 1, oversample_kind: str = 'linear'):
         """
         Constructor.
         Args:
@@ -57,10 +74,14 @@ class RecomputedPhotometry(WeightPhotometryProvider):
                 target catalog
             filter_trans_mean_list: A map with the filter_name as key, and a list/array with the
                 filter mean corresponding to each entry in the target catalog
+            oversample_filter: Number of times to oversample the filter transmissions.
+                This may be needed if their resolution is not enough to cover the resolution of
+                all the SEDs
+            oversample_kind: See scipy.interpolate.interp1d
         """
         self.__ref_sample = ref_sample
         self.__filter_order = filter_order
-        self.__filter_trans_map = filter_trans_map
+        self.__filter_trans_map = dict(filter_trans_map)
         self.__ebv_list = ebv_list
         self.__phot_pre_post = PhotometryTypeMap[phot_type][0]
         self.__current_ref_i = None
@@ -68,6 +89,12 @@ class RecomputedPhotometry(WeightPhotometryProvider):
 
         if self.__ebv_list is not None:
             self.__init_filters_and_curve()
+
+        if oversample_filter and oversample_filter > 1:
+            logger.info('Re-sampling filter transmissions for the recomputed photometry')
+            for fname, ftrans in self.__filter_trans_map.items():
+                self.__filter_trans_map[fname] = self.__oversampleFilter(ftrans, oversample_filter,
+                                                                         oversample_kind)
 
         self.__filter_shifts = dict(itertools.product(self.__filter_trans_map.keys(), [None]))
         if filter_trans_mean_lists is not None:
