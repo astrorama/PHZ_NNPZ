@@ -43,8 +43,8 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
     def __createCopiedPhotometry(self, args):
         ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
         filter_order = ref_config['reference_filters']
-        ref_phot_data = ref_config['reference_photometry'].getData(*filter_order)
-        self.__photometry_provider = CopiedPhotometry(ref_phot_data)
+        ref_phot = ref_config['reference_photometry']
+        self.__photometry_provider = CopiedPhotometry(ref_phot)
 
     def __createRecomputedPhotometry(self, args):
         self._checkParameterExists('reference_sample_phot_filters', args)
