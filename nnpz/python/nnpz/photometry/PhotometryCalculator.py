@@ -56,16 +56,6 @@ class PhotometryCalculator(object):
         ranges_arr = np.asarray(list(self.__filter_range_map.values()))
         self.__total_range = (ranges_arr[:, 0].min(), ranges_arr[:, 1].max())
 
-    @staticmethod
-    def __truncateSed(sed, lambd_range):
-        """Truncates the given SED at the given range"""
-        min_i = np.searchsorted(sed[:, 0], lambd_range[0])
-        if min_i > 0:
-            min_i -= 1
-        max_i = np.searchsorted(sed[:, 0], lambd_range[1])
-        max_i += 1
-        return sed[min_i:max_i + 1, :]
-
     def compute(self, sed):
         """Computes the photometry for the given SED.
 
@@ -102,9 +92,6 @@ class PhotometryCalculator(object):
             etc) that have to be performed after the SED integration.
         """
 
-        # First remove any part of the SED that is outside the total range
-        sed = self.__truncateSed(sed, self.__total_range)
-
         # Pre-process the SED
         sed = self.__pre_post_processor.preProcess(sed)
 
@@ -113,12 +100,8 @@ class PhotometryCalculator(object):
         for filter_name in self.__filter_trans_map:
             filter_trans = self.__filter_trans_map[filter_name]
 
-            # Truncate the SED to the size of the filter
-            trunc_sed = self.__truncateSed(sed, self.__filter_range_map[filter_name])
-
             # Interpolate the SED
-            interp_sed = np.interp(filter_trans[:, 0], trunc_sed[:, 0], trunc_sed[:, 1],
-                                   left=0, right=0)
+            interp_sed = np.interp(filter_trans[:, 0], sed[:, 0], sed[:, 1], left=0, right=0)
 
             # Compute the SED through the filter
             filtered_sed = interp_sed * filter_trans[:, 1]

@@ -64,11 +64,6 @@ def test_compute():
 
     # Then
 
-    # Check the preProcess() has been called with the SED truncated to the range
-    # of the filters
-    pre_post_processor.preProcess.assert_called_once()
-    assert np.array_equal(pre_post_processor.preProcess.call_args[0][0], sed[3:44])
-
     # Compute the expected photometry values. Note that the grid here is not the same
     # used in PhotometryCalculator, so we need to give a considerable tolerance
     expected = {}
