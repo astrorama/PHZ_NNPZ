@@ -29,7 +29,8 @@ class PhotometryPrePostProcessorInterface(object):
 
     @abc.abstractmethod
     def preProcess(self, sed):
-        """Pre-processes an SED.
+        """
+        Pre-processes an SED.
 
         Args:
             sed: The SED to process. It is a two dimensional numpy array of
@@ -45,18 +46,14 @@ class PhotometryPrePostProcessorInterface(object):
         return
 
     @abc.abstractmethod
-    def postProcess(self, intensity, filter_name, filter_trans):
-        """Post-processes a band intensity.
+    def postProcess(self, intensity, filter_name):
+        """
+        Post-processes a band intensity.
 
         Args:
             intesity: The intensity of the band, as computed by integrating the
                 SED convolved with the filter
             filter_name: The name of the filter the intensity is for
-            filter_trans: The filter transmission as a 2D numpy array of single
-                precision floating point numbers. The first dimension represents
-                the knots of the filter transmission and the second one has
-                always size 2, representing the wavelength (expressed in
-                Angstrom) and the transmission value (in the range [0,1]).
 
         Returns: The photometry value for the specific band
         """

@@ -110,7 +110,7 @@ class PhotometryCalculator(object):
             intensity = np.trapz(filtered_sed, x=filter_trans[:, 0])
 
             # Post-process the intensity
-            photometry = self.__pre_post_processor.postProcess(intensity, filter_name, filter_trans)
+            photometry = self.__pre_post_processor.postProcess(intensity, filter_name)
 
             # Add the computed photometry in the results
             photometry_map[filter_name] = photometry

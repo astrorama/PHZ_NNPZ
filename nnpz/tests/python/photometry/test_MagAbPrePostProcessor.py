@@ -14,9 +14,9 @@
 # MA 02110-1301 USA
 #
 
-import pytest
-import numpy as np
 import math
+
+import numpy as np
 from nnpz.photometry import FnuPrePostProcessor, MagAbPrePostProcessor
 
 
@@ -26,35 +26,36 @@ def test_preProcess():
     """Test the preProcess() method"""
 
     # Given
-    fnu = FnuPrePostProcessor()
+    fnu = FnuPrePostProcessor({})
     sed = np.asarray([(1, 0.1), (2, 0.1), (3, 0.2), (4, 0.2)], dtype=np.float32)
     expected = fnu.preProcess(sed)
 
     # When
-    processor = MagAbPrePostProcessor()
+    processor = MagAbPrePostProcessor({})
     result = processor.preProcess(sed)
 
     # Then
     assert np.array_equal(result, expected)
+
 
 ###############################################################################
 
 def test_postProcess():
     """Test the postProcess() method"""
 
-    # Given
-    fnu = FnuPrePostProcessor()
-    intensity = 1.
     filter_name = 'name'
-    filter_trans = np.asarray([(1,0), (2,4), (3,9), (4,0)], dtype=np.float32)
-    expected = -2.5 * math.log10(fnu.postProcess(intensity, filter_name, filter_trans)) -48.6
+    filter_trans = np.asarray([(1, 0), (2, 4), (3, 9), (4, 0)], dtype=np.float32)
+
+    # Given
+    fnu = FnuPrePostProcessor({filter_name: filter_trans})
+    intensity = 1.
+    expected = -2.5 * math.log10(fnu.postProcess(intensity, filter_name)) - 48.6
 
     # When
-    processor = MagAbPrePostProcessor()
-    result = processor.postProcess(intensity, filter_name, filter_trans)
+    processor = MagAbPrePostProcessor({filter_name: filter_trans})
+    result = processor.postProcess(intensity, filter_name)
 
     # Then
     assert result == expected
-
 
 ###############################################################################

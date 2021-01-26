@@ -31,14 +31,25 @@ class FnuuJyPrePostProcessor(PhotometryPrePostProcessorInterface):
     converts the output to uJy.
     """
 
-    def __init__(self):
-        self.__fnu = FnuPrePostProcessor()
+    def __init__(self, transmission):
+        """
+        Initialize the pre-post processor.
+
+        Args:
+            transmissions: A dictionary where the key is the filter name, and the value
+                the filter transmission as a 2D numpy array of single
+                precision floating point numbers. The first dimension represents
+                the knots of the filter transmission and the second one has
+                always size 2, representing the wavelength (expressed in
+                Angstrom) and the transmission value (in the range [0,1]).
+        """
+        self.__fnu = FnuPrePostProcessor(transmission)
 
     def preProcess(self, sed):
         """Redirects the call to the FnuPrePostProcessor"""
         return self.__fnu.preProcess(sed)
 
-    def postProcess(self, intensity, filter_name, filter_trans):
+    def postProcess(self, intensity, filter_name):
         """Returns the flux in uJy.
 
         This method uses first the FnuPrePostProcessor to compute the flux in
@@ -46,5 +57,5 @@ class FnuuJyPrePostProcessor(PhotometryPrePostProcessorInterface):
         with 10^23 (https://en.wikipedia.org/wiki/Jansky). Then it is converted
         to uJy by multiplying with 10^6.
         """
-        flux = self.__fnu.postProcess(intensity, filter_name, filter_trans)
+        flux = self.__fnu.postProcess(intensity, filter_name)
         return flux * 1E29

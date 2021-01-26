@@ -29,20 +29,32 @@ from nnpz.photometry import PhotometryPrePostProcessorInterface
 class FlambdaPrePostProcessor(PhotometryPrePostProcessorInterface):
     """Pre/Post processor for producing  photometry in erg/s/cm^2/A"""
 
-    def __init__(self):
+    def __init__(self, transmissions):
+        """
+        Initialize the pre-post processor.
+
+        Args:
+            transmissions: A dictionary where the key is the filter name, and the value
+                the filter transmission as a 2D numpy array of single
+                precision floating point numbers. The first dimension represents
+                the knots of the filter transmission and the second one has
+                always size 2, representing the wavelength (expressed in
+                Angstrom) and the transmission value (in the range [0,1]).
+        """
         self.__filter_norm = {}
+        for filter_name, filter_trans in transmissions.items():
+            self.__filter_norm[filter_name] = np.trapz(filter_trans[:, 1], x=filter_trans[:, 0])
 
     def preProcess(self, sed):
         """Returns the SED unmodified"""
         return sed
 
-    def postProcess(self, intensity, filter_name, filter_trans):
+    def postProcess(self, intensity, filter_name):
         """Converts the intensity to flux density by normalizing for the filter.
 
         Args:
             intensity: The intensity
             filter_name: The filter name
-            filter_trans: The filter transmission
 
         Returns:
             The flux density in erg/s/cm^2/A
@@ -52,11 +64,4 @@ class FlambdaPrePostProcessor(PhotometryPrePostProcessorInterface):
 
         The filter integration is performed using the trapezoidal rule.
         """
-
-        # First get the filter normalization. We cache the factors to avoid
-        # recomputing them when the processor is used for multiple SEDs.
-        if filter_name not in self.__filter_norm:
-            self.__filter_norm[filter_name] = np.trapz(filter_trans[:, 1], x=filter_trans[:, 0])
-        norm = self.__filter_norm[filter_name]
-
-        return intensity / norm
+        return intensity / self.__filter_norm[filter_name]

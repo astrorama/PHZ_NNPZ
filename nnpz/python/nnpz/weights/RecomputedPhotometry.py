@@ -83,9 +83,14 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         self.__filter_order = filter_order
         self.__filter_trans_map = dict(filter_trans_map)
         self.__ebv_list = ebv_list
-        self.__phot_pre_post = PhotometryTypeMap[phot_type][0]
         self.__current_ref_i = None
         self.__current_ref_sed = None
+
+        # The classes that implement PhotometryPrePostProcessorInterface use the norm of the
+        # filter transmission, which is the integration of their transmission over the wavelength
+        # This integration is *invariant* even when filter shifts are applied, so we can save
+        # quite a lot of computation if we just initialize it here
+        self.__phot_pre_post = PhotometryTypeMap[phot_type][0](filter_trans_map)
 
         if self.__ebv_list is not None:
             self.__init_filters_and_curve()
@@ -135,7 +140,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
                 filter_map[filter_name][:, 0] += self.__filter_shifts[filter_name][cat_i]
 
         # Create the photometry provider
-        pre_post_proc = self.__phot_pre_post()
+        pre_post_proc = self.__phot_pre_post
         if self.__ebv_list is not None:
             ebv = self.__ebv_list[cat_i]
             pre_post_proc = GalacticReddeningPrePostProcessor(

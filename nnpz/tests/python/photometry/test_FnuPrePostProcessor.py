@@ -42,7 +42,7 @@ def test_preProcess():
     # expected = np.asarray([(1, 0.1), (2, 0.1), (3, 0.2), (4, 0.2)], dtype=np.float32)
 
     # When
-    processor = FnuPrePostProcessor()
+    processor = FnuPrePostProcessor({})
     result = processor.preProcess(sed)
 
     # Then
@@ -65,8 +65,8 @@ def test_postProcess():
     expected = 0.5
 
     # When
-    processor = FnuPrePostProcessor()
-    result = processor.postProcess(intensity, filter_name, filter_trans)
+    processor = FnuPrePostProcessor({filter_name: filter_trans})
+    result = processor.postProcess(intensity, filter_name)
 
     # Then
     assert result == pytest.approx(expected)
@@ -91,8 +91,8 @@ def test_lambdaZero():
     expected = 0.5
 
     # When
-    processor = FnuPrePostProcessor()
-    result = processor.postProcess(intensity, filter_name, filter_trans)
+    processor = FnuPrePostProcessor({filter_name: filter_trans})
+    result = processor.postProcess(intensity, filter_name)
 
     # Then
     assert result == pytest.approx(expected)
@@ -110,13 +110,9 @@ def test_lambdaZeroWithValue():
     filter_name = 'name'
     # Photon Equation
     filter_trans = np.asarray([(-1, 0), (0, 0.1), (1, 0), (2, 2), (3, 3), (4, 0)], dtype=np.float32)
-    expected = 0.5
-
-    # When
-    processor = FnuPrePostProcessor()
 
     # Then
     with pytest.raises(ValueError):
-        processor.postProcess(intensity, filter_name, filter_trans)
+        _ = FnuPrePostProcessor({filter_name: filter_trans})
 
 ###############################################################################

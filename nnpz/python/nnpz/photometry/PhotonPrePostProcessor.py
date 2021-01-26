@@ -31,6 +31,20 @@ class PhotonPrePostProcessor(PhotometryPrePostProcessorInterface):
     Pre/Post processor for producing photometry values in photon/cm^2/s
     """
 
+    def __init__(self, transmissions):
+        """
+        Initialize the pre-post processor.
+
+        Args:
+            transmissions: A dictionary where the key is the filter name, and the value
+                the filter transmission as a 2D numpy array of single
+                precision floating point numbers. The first dimension represents
+                the knots of the filter transmission and the second one has
+                always size 2, representing the wavelength (expressed in
+                Angstrom) and the transmission value (in the range [0,1]).
+        """
+        pass
+
     def preProcess(self, sed):
         """Converts the given SED from ergs/cm^2/s/A to photon/cm^2/s/A.
 
@@ -49,6 +63,6 @@ class PhotonPrePostProcessor(PhotometryPrePostProcessorInterface):
         result[:, 1] = 5.03411250E7 * sed[:, 1] * sed[:, 0]
         return result
 
-    def postProcess(self, intensity, filter_name, filter_trans):
+    def postProcess(self, intensity, filter_name):
         """Returns the intensity unmodified. The filter info is ignored."""
         return intensity
