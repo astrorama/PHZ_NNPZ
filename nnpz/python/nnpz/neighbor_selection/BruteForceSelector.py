@@ -108,13 +108,16 @@ class BruteForceSelector(NeighborSelectorInterface):
         self.__scaling = scaling_method
 
     def _initializeImpl(self, ref_data):
-        """Initializes the selector with the given data.
+        """
+        Initializes the selector with the given data.
 
         For argument description see the interface documentation.
         """
 
         self.__ref_data_values = ref_data[:, :, 0]
         self.__ref_data_errors = ref_data[:, :, 1]
+        assert np.may_share_memory(self.__ref_data_values, ref_data)
+        assert np.may_share_memory(self.__ref_data_errors, ref_data)
 
     def _findNeighborsImpl(self, coordinate, flags):
         """Returns the neighbors of the given coordinate in the reference sample.
@@ -130,19 +133,28 @@ class BruteForceSelector(NeighborSelectorInterface):
         obj_errors = coordinate[:, 1]
 
         # We are going to ignore all NaN values from the computation
-        not_nan = np.logical_not(np.isnan(obj_values))
+        nan_filters = np.isnan(obj_values)
+
+        obj_values = np.ma.masked_array(obj_values, nan_filters)
+        obj_errors = np.ma.masked_array(obj_errors, nan_filters)
+
+        # Reference values and errors
+        ref_nan_mask = np.tile(nan_filters, (self.__ref_data_values.shape[0], 1))
+        ref_values = np.ma.masked_array(self.__ref_data_values, ref_nan_mask)
+        ref_errors = np.ma.masked_array(self.__ref_data_errors, ref_nan_mask)
+        # assert np.may_share_memory(ref_values, self.__ref_data_values)
+        # assert np.may_share_memory(ref_errors, self.__ref_data_errors)
 
         # Compute the scaling
+        # Do not pay for what we do not use: multiply only if scaling is enabled
         if self.__scaling:
-            scale = self.__scaling(self.__ref_data_values[:, not_nan],
-                                   self.__ref_data_errors[:, not_nan],
-                                   obj_values[not_nan], obj_errors[not_nan])
+            scale = self.__scaling(ref_values, ref_errors, obj_values, obj_errors)
+            ref_values = ref_values * scale[:, np.newaxis]
+            ref_errors = ref_errors * scale[:, np.newaxis]
         else:
             scale = np.ones((len(self.__ref_data_values)))
 
-        distances = self.__distance(scale[:, np.newaxis] * self.__ref_data_values[:, not_nan],
-                                    scale[:, np.newaxis] * self.__ref_data_errors[:, not_nan],
-                                    obj_values[not_nan], obj_errors[not_nan])
+        distances = self.__distance(ref_values, ref_errors, obj_values, obj_errors).data
         neighbor_ids = self.__selection(distances)
         neighbor_distances = distances[neighbor_ids]
         neighbor_scales = scale[neighbor_ids]

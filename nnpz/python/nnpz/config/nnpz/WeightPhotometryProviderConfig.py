@@ -68,7 +68,9 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
 
         self.__photometry_provider = RecomputedPhotometry(
             ref_sample, filter_order, filter_trans_map, phot_type,
-            ebv_list=ebv, filter_trans_mean_lists=trans_mean
+            ebv_list=ebv, filter_trans_mean_lists=trans_mean,
+            oversample_filter=args.get('recomputed_filter_oversample', None),
+            oversample_kind=args.get('recomputed_filter_oversample_type', 'linear')
         )
 
     def __createPhotometryProvider(self, args):

@@ -95,11 +95,12 @@ class EuclideanRegionBruteForceSelector(NeighborSelectorInterface):
         # for the full reference sample
         if np.isnan(coordinate).any():
             batch = np.arange(self.__ref_data.shape[0])
+            # Since we use all reference objects, avoid a full copy
+            batch_data = self.__ref_data
         else:
             batch, _, _ = self.__kdtree.findNeighbors(coordinate, flags)
-
-        # Get the slice of the reference data which covers the batch
-        batch_data = self.__ref_data[batch, :, :]
+            # Get the slice of the reference data which covers the batch
+            batch_data = self.__ref_data[batch, :, :]
 
         # Now use a BruteForceSelector to find the chi2 neighbors in the batch
         brute_force = BruteForceSelector(

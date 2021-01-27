@@ -124,7 +124,7 @@ class IndexProvider(object):
         except ValueError:
             return set()
 
-    def get(self, obj_id: int, key: str) -> ObjectLocation:
+    def get(self, obj_id: int, key: str) -> 'ObjectLocation':
         """
         Returns the position for a given ID.
 

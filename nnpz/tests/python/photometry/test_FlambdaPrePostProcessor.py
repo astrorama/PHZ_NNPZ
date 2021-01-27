@@ -38,7 +38,7 @@ def test_preProcess():
     sed = np.asarray([(1, 0.1), (2, 0.1), (3, 0.2), (4, 0.2)], dtype=np.float32)
 
     # When
-    processor = FlambdaPrePostProcessor()
+    processor = FlambdaPrePostProcessor({})
     result = processor.preProcess(sed)
 
     # Then
@@ -56,8 +56,8 @@ def test_postProcess():
     expected = 1. / 13.
 
     # When
-    processor = FlambdaPrePostProcessor()
-    result = processor.postProcess(intensity, filter_name, filter_trans)
+    processor = FlambdaPrePostProcessor({filter_name: filter_trans})
+    result = processor.postProcess(intensity, filter_name)
 
     # Then
     assert result == pytest.approx(expected)

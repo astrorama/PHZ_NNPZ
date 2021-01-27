@@ -86,7 +86,7 @@ class GalacticReddeningPrePostProcessor(PhotometryPrePostProcessorInterface):
         # apply pre-processing
         return self.__processor.preProcess(reddened_sed)
 
-    def postProcess(self, intensity, filter_name, filter_trans):
+    def postProcess(self, intensity, filter_name):
         """Returns the flux as computed from the decorated pre/post processor.
         """
-        return self.__processor.postProcess(intensity, filter_name, filter_trans)
+        return self.__processor.postProcess(intensity, filter_name)
