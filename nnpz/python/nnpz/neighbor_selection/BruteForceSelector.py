@@ -23,8 +23,8 @@ from __future__ import division, print_function
 
 import abc
 import numpy as np
+from warnings import warn
 from nnpz.exceptions import WrongTypeException
-
 from nnpz.neighbor_selection import NeighborSelectorInterface
 
 
@@ -116,8 +116,8 @@ class BruteForceSelector(NeighborSelectorInterface):
 
         self.__ref_data_values = ref_data[:, :, 0]
         self.__ref_data_errors = ref_data[:, :, 1]
-        assert np.may_share_memory(self.__ref_data_values, ref_data)
-        assert np.may_share_memory(self.__ref_data_errors, ref_data)
+        if not np.may_share_memory(self.__ref_data_values, ref_data):
+            warn('BruteForceSelector may have copied the reference photometry!')
 
     def _findNeighborsImpl(self, coordinate, flags):
         """Returns the neighbors of the given coordinate in the reference sample.
@@ -142,8 +142,6 @@ class BruteForceSelector(NeighborSelectorInterface):
         ref_nan_mask = np.tile(nan_filters, (self.__ref_data_values.shape[0], 1))
         ref_values = np.ma.masked_array(self.__ref_data_values, ref_nan_mask)
         ref_errors = np.ma.masked_array(self.__ref_data_errors, ref_nan_mask)
-        # assert np.may_share_memory(ref_values, self.__ref_data_values)
-        # assert np.may_share_memory(ref_errors, self.__ref_data_errors)
 
         # Compute the scaling
         # Do not pay for what we do not use: multiply only if scaling is enabled
