@@ -95,7 +95,7 @@ def test_compute():
         assert intensity == pytest.approx(expected[filter_name], rel=1e-1)
 
     # Check that the result has the correct values
-    assert photometry['first'] == pytest.approx(expected['first'], rel=1e-1)
-    assert photometry['second'] == pytest.approx(expected['second'], rel=1e-1)
+    assert photometry['first'][0] == pytest.approx(expected['first'], rel=1e-1)
+    assert photometry['second'][0] == pytest.approx(expected['second'], rel=1e-1)
 
 ###############################################################################

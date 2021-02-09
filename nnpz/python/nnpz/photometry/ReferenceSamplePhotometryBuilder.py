@@ -123,8 +123,8 @@ class ReferenceSamplePhotometryBuilder(object):
 
             # Compute the photometry and update the photo_list_map
             photo = calculator.compute(element.sed)
-            for f in photo:
-                photo_list_map[f].append(photo[f])
+            for f in photo.dtype.names:
+                photo_list_map[f].append(photo[f][0])
 
         # Convert the photometry lists to numpy arrays
         result_map = {}

@@ -22,22 +22,24 @@ Author: Alejandro Alvarez Ayllon
 from __future__ import division, print_function
 
 from nnpz.flags import NnpzFlag
-from nnpz.photometry import PhotometryProvider
+from nnpz.reference_sample import PhotometryProvider
 from nnpz.weights import CopiedPhotometry
-from ..photometry.fixtures import *
+
+# noinspection PyUnresolvedReferences
+from .fixtures import *
 
 
 ###############################################################################
 
-def test_copiedPhotometryAll(photometry_file_fixture):
-
-    # Given
-    provider = PhotometryProvider(photometry_file_fixture)
-
+def test_copiedPhotometryAll(reference_photo_fixture):
     # When
-    copied = CopiedPhotometry(provider.getData())
+    copied = CopiedPhotometry(reference_photo_fixture)
 
     # Then
-    for ref_i in range(len(provider.getIds())):
+    for ref_i in range(len(reference_photo_fixture.getIds())):
         phot = copied(ref_i, 1, NnpzFlag())
-        assert np.array_equal(phot, provider.getData()[ref_i])
+        assert phot['Y'].shape == (2,)
+        original = reference_photo_fixture.getData()[ref_i]
+        assert np.array_equal(phot['Y'], original[0])
+        assert np.array_equal(phot['g'], original[1])
+        assert np.array_equal(phot['vis'], original[2])

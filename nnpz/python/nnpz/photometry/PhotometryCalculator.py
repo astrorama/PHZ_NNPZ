@@ -68,7 +68,8 @@ class PhotometryCalculator(object):
                 the second the energy value, expressed in erg/s/cm^2/Angstrom.
 
         Returns:
-            A map with keys the filter names and values the photometry values
+            A structured array with the filter names as attributes, and one dimension with two
+            positions: value and error
 
         The type of the photometry values computed depends on the type of the
         pre_post_processor passed to the constructor.
@@ -96,7 +97,8 @@ class PhotometryCalculator(object):
         sed = self.__pre_post_processor.preProcess(sed)
 
         # Iterate through the filters and compute the photometry values
-        photometry_map = {}
+        dtype = [(filter_name, np.float32) for filter_name in self.__filter_trans_map]
+        photometry_map = np.zeros(2, dtype=dtype)
         for filter_name in self.__filter_trans_map:
             filter_trans = self.__filter_trans_map[filter_name]
 
@@ -113,7 +115,7 @@ class PhotometryCalculator(object):
             photometry = self.__pre_post_processor.postProcess(intensity, filter_name)
 
             # Add the computed photometry in the results
-            photometry_map[filter_name] = photometry
+            photometry_map[filter_name][0] = photometry
 
         return photometry_map
 

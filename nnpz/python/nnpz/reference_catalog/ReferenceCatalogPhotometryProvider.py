@@ -13,21 +13,16 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+from nnpz.io import CatalogReader, catalog_properties as prop
 
-"""
-Configuration classes for the K-NN stage
-"""
 
-from .TargetCatalogConfig import TargetCatalogConfig
-from .NeighborSelectorConfig import NeighborSelectorConfig
-from .OutputHandlerConfig import OutputHandlerConfig
-from .CopyInputColumnsConfig import CopyInputColumnsConfig
-from .NeighborListOutputConfig import NeighborListOutputConfig
-from .PdzOutputConfig import PdzOutputConfig
-from .FlagsConfig import FlagsConfig
-from .WeightPhotometryProviderConfig import WeightPhotometryProviderConfig
-from .WeightCalculatorConfig import WeightCalculatorConfig
-from .GalacticUnreddenerConfig import GalacticUnreddenerConfig
-from .MeanPhotOutputConfig import MeanPhotOutputConfig
-from .McPdfConfig import McPdfConfig
-from .UniformPhotometryConfig import UniformPhotometry
+class CatalogPhotometryProvider(object):
+    """
+    As PhotometryProvider, but wrapping a regular catalog instead
+    """
+
+    def __init__(self, reader: CatalogReader):
+        self.__reader = reader
+
+    def getData(self, *filter_list):
+        return self.__reader.get(prop.Photometry(filter_list))

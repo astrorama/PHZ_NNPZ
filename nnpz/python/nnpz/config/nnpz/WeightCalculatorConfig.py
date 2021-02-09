@@ -66,8 +66,7 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         reader = CatalogReader(catalog_path)
         absolute_weights = reader.get(prop.Column(column_name))
 
-        # If we are loading from a different catalog, make sure the IDs
-        # match
+        # If we are loading from a different catalog, make sure the IDs  match
         if verify_ids:
             weights_ids = reader.get(prop.ID)
             if np.any(weights_ids != ref_config['reference_ids']):
@@ -80,6 +79,7 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
     def __createCalculator(self, args):
         photo_provider_config = ConfigManager.getHandler(WeightPhotometryProviderConfig).parseArgs(args)
         neighbor_sel_config = ConfigManager.getHandler(NeighborSelectorConfig).parseArgs(args)
+        ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
 
         self._checkParameterExists('weight_method', args)
         method = args['weight_method']
@@ -91,9 +91,11 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         alternative = args.get('weight_method_alternative', None)
         self.__calculator_alternative = _calculator_map[alternative] if alternative else None
 
+        ref_filters = ref_config['reference_filters']
         self.__ref_sample_weight_calculator = ReferenceSampleWeightCalculator(
-            photo_provider_config['photometry_provider'], self.__calculator, self.__calculator_alternative,
-            scaling=neighbor_sel_config['scaling']
+            photo_provider_config['photometry_provider'],
+            self.__calculator, self.__calculator_alternative,
+            ref_filters, scaling=neighbor_sel_config['scaling']
         )
 
         if args.get('absolute_weights', None):

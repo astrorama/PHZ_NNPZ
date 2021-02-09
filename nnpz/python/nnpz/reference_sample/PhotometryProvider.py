@@ -30,7 +30,9 @@ from nnpz.exceptions import FileNotFoundException, WrongFormatException, Unknown
 
 
 class PhotometryProvider(object):
-    """This is a utility cass for handling NNPZ photometry FITS files"""
+    """
+    This is a utility cass for handling NNPZ photometry FITS files
+    """
 
     @staticmethod
     def __checkFileFormat(filename):
@@ -107,6 +109,7 @@ class PhotometryProvider(object):
 
         # Read the photometry values
         self.__phot_data = self.__readPhotometryData(phot_table, self.__filter_list)
+        self.__phot_data.flags.writeable = False
 
     def getType(self):
         """Returns the type of photometry in the file.
@@ -145,7 +148,8 @@ class PhotometryProvider(object):
         if filter not in self.__filter_data:
             raise UnknownNameException('Unknown filter {}'.format(filter))
         if self.__filter_data[filter] is None:
-            raise MissingDataException('File does not contain tranmission for {} filter'.format(filter))
+            raise MissingDataException(
+                'File does not contain tranmission for {} filter'.format(filter))
         return self.__filter_data[filter]
 
     def getIds(self):
@@ -177,20 +181,17 @@ class PhotometryProvider(object):
         names.
         """
 
-        if len(filter_list) == 0:
-            filter_list = self.getFilterList()
+        # Affected index
+        try:
+            if len(filter_list) == 0:
+                # numpy will avoid a copy if the index is a slice, while it will *always*
+                # copy if it is a list
+                filter_idx = slice(len(self.__filter_list))
+            else:
+                filter_idx = np.array(list(map(lambda f: self.__filter_list.index(f), filter_list)))
+        except ValueError as e:
+            missing = str(e).split()[0]
+            raise UnknownNameException('File does not contain photometry for {}'.format(missing))
 
-        # Create the array to store the results
-        result = np.zeros((len(self.__ids), len(filter_list), 2), dtype=np.float32)
-
-        for user_i, name in enumerate(filter_list):
-            # Find the index of the filter
-            try:
-                local_i = self.__filter_list.index(name)
-            except ValueError:
-                raise UnknownNameException('File does not contain photometry for {}'.format(name))
-
-            # Populate the result
-            result[:, user_i, :] = self.__phot_data[:, local_i, :]
-
-        return result
+        # Return a view rather than a copy
+        return self.__phot_data[:, filter_idx, :]

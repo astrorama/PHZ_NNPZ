@@ -42,8 +42,9 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
 
     def __createCopiedPhotometry(self, args):
         ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
-        ref_phot_data = ref_config['reference_phot_data']
-        self.__photometry_provider = CopiedPhotometry(ref_phot_data)
+        filter_order = ref_config['reference_filters']
+        ref_phot = ref_config['reference_photometry']
+        self.__photometry_provider = CopiedPhotometry(ref_phot)
 
     def __createRecomputedPhotometry(self, args):
         self._checkParameterExists('reference_sample_phot_filters', args)
@@ -60,14 +61,13 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
             sys.exit(1)
 
         ref_sample = reference_config['reference_sample']
-        filter_order = args['reference_sample_phot_filters']
-        filter_trans_map = reference_config['reference_filter_transmission']
+        ref_phot = reference_config['reference_photometry']
         phot_type = reference_config['reference_phot_type']
         ebv = target_config['target_ebv']
         trans_mean = target_config['target_filter_mean_wavelength']
 
         self.__photometry_provider = RecomputedPhotometry(
-            ref_sample, filter_order, filter_trans_map, phot_type,
+            ref_sample, ref_phot, phot_type=phot_type,
             ebv_list=ebv, filter_trans_mean_lists=trans_mean,
             oversample_filter=args.get('recomputed_filter_oversample', None),
             oversample_kind=args.get('recomputed_filter_oversample_type', 'linear')

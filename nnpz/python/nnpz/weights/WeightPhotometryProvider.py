@@ -32,4 +32,21 @@ class WeightPhotometryProvider(object):
 
     @abc.abstractmethod
     def __call__(self, ref_i, cat_i, flags):
+        """
+        Return the photometry that must be used to compare the reference ref_i with the target
+        cat_i. This may be the original photometry of the reference, or it may be a transformed
+        or recomputed photometry that brings it to the target color space
+        See Also:
+            RecomputedPhotometry
+            CopiedPhotometry
+
+        Args:
+            ref_i: Reference index
+            cat_i: Target index
+            flags: NnpzFlag
+
+        Returns:
+            A structured array with the filter names as attributes, and one dimension with two
+            positions: value and error
+        """
         return
