@@ -59,12 +59,12 @@ def catalog_photometry():
 
 def test_uniform_photometry(reference_photometry, reference_matched_photometry, catalog_photometry):
     uniform = UniformPhotometry(
-        catalog_photometry, reference_photometry, [
-            ('A', 'A', 'FLUX_A', 'FLUX_A_ERR'),
-            ('B', 'B', 'FLUX_B', 'FLUX_B_ERR'),
-            ('C', 'C', 'FLUX_C', 'FLUX_C_ERR'),
-            ('C', 'A', 'FLUX_A', 'FLUX_A_ERR')
-        ]
+        catalog_photometry, reference_photometry, {
+            ('MY_A_A', 'MY_A_A_ERR'): ('A', 'A', 'FLUX_A', 'FLUX_A_ERR'),
+            ('MY_B_B', 'MY_B_B_ERR'): ('B', 'B', 'FLUX_B', 'FLUX_B_ERR'),
+            ('MY_C_C', 'MY_C_C_ERR'): ('C', 'C', 'FLUX_C', 'FLUX_C_ERR'),
+            ('MY_C_A', 'MY_C_A_ERR'): ('C', 'A', 'FLUX_A', 'FLUX_A_ERR')
+        }
     )
 
     ns = NeighborSet()
@@ -79,14 +79,14 @@ def test_uniform_photometry(reference_photometry, reference_matched_photometry, 
     assert len(columns) == 8
     assert all(map(lambda c: len(c) == 1, columns))
 
-    assert columns[0].name == 'A_RATIO_A'
-    assert columns[1].name == 'A_RATIO_A_ERR'
-    assert columns[2].name == 'B_RATIO_B'
-    assert columns[3].name == 'B_RATIO_B_ERR'
-    assert columns[4].name == 'C_RATIO_C'
-    assert columns[5].name == 'C_RATIO_C_ERR'
-    assert columns[6].name == 'C_RATIO_A'
-    assert columns[7].name == 'C_RATIO_A_ERR'
+    assert columns[0].name == 'MY_A_A'
+    assert columns[1].name == 'MY_A_A_ERR'
+    assert columns[2].name == 'MY_B_B'
+    assert columns[3].name == 'MY_B_B_ERR'
+    assert columns[4].name == 'MY_C_C'
+    assert columns[5].name == 'MY_C_C_ERR'
+    assert columns[6].name == 'MY_C_A'
+    assert columns[7].name == 'MY_C_A_ERR'
 
     assert np.isclose(columns[0][0], catalog_photometry['FLUX_A'][0] * 0.75)
     assert np.isclose(columns[2][0], catalog_photometry['FLUX_B'][0] * 0.62745)
