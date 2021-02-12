@@ -39,12 +39,8 @@ class UniformPhotometryConfig(ConfigManager.ConfigHandler):
         phot_prov = ref_config['reference_photometry']
 
         # Build the list of tuples
-        photo_map = []
-        for obj_ideal, obs_ideal, obs, obs_err in corrected_phot:
-            photo_map.append((obj_ideal, obs_ideal, obs, obs_err))
-
         output_config['output_handler'].addColumnProvider(
-            UniformPhotometry(target, phot_prov, photo_map)
+            UniformPhotometry(target, phot_prov, corrected_phot)
         )
 
     def parseArgs(self, args):
