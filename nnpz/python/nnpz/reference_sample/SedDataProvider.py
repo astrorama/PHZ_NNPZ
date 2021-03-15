@@ -35,43 +35,56 @@ class SedDataProvider(object):
     Class for handling the SED data file of NNPZ format
     """
 
-    def __init__(self, filename: Union[str, pathlib.Path]):
+    def __tryLoad(self):
         """
-        Creates a new instance for handling the given file.
-
-        Raises:
-            FileNotFoundException: If the file does not exist
+        Initialize internal members and perform some checks if the datafile exists
         """
-        self.__filename = filename
+        if not os.path.exists(self.__filename):
+            return
         try:
-            self.__data = np.load(filename, mmap_mode='r') if os.path.exists(filename) else None
+            data = np.load(self.__filename, mmap_mode='r')
+            if len(data.shape) != 3:
+                raise CorruptedFileException('Expected an NdArray with three dimensions')
+            if data.shape[2] != 2:
+                raise CorruptedFileException(
+                    'Expected an NdArray with the size of the last axis being 2')
+            self.__knots = data.shape[1]
+            self.__entries = data.shape[0]
         except ValueError:
             raise CorruptedFileException()
 
-        if self.__data is not None:
-            if len(self.__data.shape) != 3:
-                raise CorruptedFileException('Expected an NdArray with three dimensions')
-            if self.__data.shape[2] != 2:
-                raise CorruptedFileException(
-                    'Expected an NdArray with the size of the last axis being 2')
+    def __init__(self, filename: Union[str, pathlib.Path], cache_size: int = 5000):
+        """
+        Creates a new instance for handling the given file.
+        Args:
+            filename:
+                Data file
+            cache_size:
+                Number of entries to keep in memory in any given time
+        """
+        self.__filename = filename
+        self.__cache_size = cache_size
+        self.__cache_line = None
+        self.__cache = None
+        self.__entries = 0
+        self.__full = None
+        self.__knots = 0
+        self.__tryLoad()
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if not isinstance(self.__data, np.memmap):
-            np.save(self.__filename, self.__data)
+        self.flush()
 
     def flush(self):
         """
         Write the changes to disk and re-load as a memory mapped file.
         To be used when this provider is full
         """
-        if isinstance(self.__data, np.memmap):
-            self.__data.flush()
-        else:
-            np.save(self.__filename, self.__data)
-            self.__data = np.load(self.__filename, mmap_mode='r')
+        if self.__full is not None:
+            np.save(self.__filename, self.__full)
+            self.__full = None
 
     def size(self) -> int:
         """
@@ -83,7 +96,25 @@ class SedDataProvider(object):
         """
         Return how many knots store this SED provider
         """
-        return self.__data.shape[1] if self.__data is not None else 0
+        return self.__knots
+
+    def __fromCache(self, pos: int) -> int:
+        """
+        Return the offset within the cache
+        """
+        if pos > self.__entries:
+            raise InvalidAxisException('Position {} for {} entries'.format(pos, self.__entries))
+        if self.__cache is None:
+            self.__cache = np.zeros((self.__cache_size, self.__knots, 2))
+        cache_line, cache_offset = divmod(pos, self.__cache_size)
+        if cache_line != self.__cache_line:
+            cache_start = cache_line * self.__cache_size
+            read_size = min(self.__cache_size, self.__entries - cache_start)
+            cache_end = cache_start + read_size
+            data = np.load(self.__filename, mmap_mode='r')
+            np.copyto(self.__cache[:read_size], data[cache_start:cache_end], casting='same_kind')
+            self.__cache_line = cache_line
+        return cache_offset
 
     def readSed(self, pos: int) -> np.ndarray:
         """
@@ -102,9 +133,12 @@ class SedDataProvider(object):
         Raises:
             UninitializedException: If not initialized yet
         """
-        if self.__data is None:
+        if self.__knots == 0:
             raise UninitializedException()
-        return self.__data[pos, :, :]
+        if self.__full is not None:
+            return self.__full[pos]
+        offset = self.__fromCache(pos)
+        return self.__cache[offset]
 
     def appendSed(self, data: Union[np.ndarray, list]) -> int:
         """
@@ -149,11 +183,15 @@ class SedDataProvider(object):
         if not np.all(data_arr[:, :-1, 0] <= data_arr[:, 1:, 0]):
             raise InvalidAxisException('Wavelength axis must no have decreasing values')
 
-        if self.__data is not None:
-            self.__data = np.concatenate([self.__data, data_arr], axis=0)
+        if self.__full is None and os.path.exists(self.__filename):
+            self.__full = np.load(self.__filename)
+        if self.__full is None:
+            self.__full = np.array(data_arr, copy=True)
+            self.__knots = data_arr.shape[1]
         else:
-            self.__data = np.array(data_arr, copy=True)
+            self.__full = np.concatenate([self.__full, data_arr], axis=0)
 
+        self.__entries = len(self.__full)
         if data_arr.shape[0] == 1:
-            return len(self.__data) - 1
-        return len(self.__data) - np.arange(data_arr.shape[0], 0, -1, dtype=np.int64)
+            return self.__entries - 1
+        return self.__entries - np.arange(data_arr.shape[0], 0, -1, dtype=np.int64)
