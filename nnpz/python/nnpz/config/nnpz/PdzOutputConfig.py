@@ -48,10 +48,8 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
         # NNPZ can be run on neighbor-only mode, so skip PDZ computation in that case
         # Make sure the list of neighbors is generated in that case!
         self.__add_pdz_output = args.get('pdz_output', True)
-        if not self.__add_pdz_output:
-            if not neighbor_options['neighbor_info_output']:
-                logger.error('PDZ and neighbor list can not be disabled at the same time!')
-                sys.exit(-1)
+        if not self.__add_pdz_output and not neighbor_options['neighbor_info_output']:
+            logger.warn('PDZ and neighbor list disabled at the same time!')
             return
 
         # First handle the case where we have a reference sample directory. In
