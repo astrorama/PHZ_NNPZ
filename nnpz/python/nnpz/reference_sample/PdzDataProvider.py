@@ -43,7 +43,7 @@ class PdzDataProvider(object):
         except ValueError:
             raise CorruptedFileException()
 
-        # Read from the file the redshift beans, if the header is there
+        # Read from the file the redshift bins, if the header is there
         self.__redshift_bins = None
         if self.__data is not None:
             if len(self.__data.shape) != 2:
