@@ -47,7 +47,7 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
 
         ref_phot_prov = ref_options['reference_photometry']
 
-        if 'reference_sample_out_mean_phot_filters' in args:
+        if args.get('reference_sample_out_mean_phot_filters', None):
             out_mean_phot_filters = args['reference_sample_out_mean_phot_filters']
             out_mean_phot_data = ref_phot_prov.getData(*out_mean_phot_filters)
 
