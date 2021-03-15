@@ -205,49 +205,6 @@ class ReferenceSample(object):
         """
         return self.__providers['pdz'].getPdzData(obj_id)
 
-    def addSedData(self, obj_id: int, data: np.ndarray):
-        """
-        Adds the SED data of a reference sample object.
-
-        Args:
-            obj_id: The ID of the object to add the SED for. It must be an integer.
-            data: The data of the SED as a two dimensional array-like object.
-                The first dimension has size same as the number of the knots and
-                the second dimension has always size equal to two, with the
-                first element representing the wavelength and the second the
-                energy value.
-
-        Raises:
-            AlreadySetException: If the SED data are already set for the given ID
-            InvalidDimensionsException: If the given data dimensions are wrong
-            InvalidAxisException: If there are decreasing wavelength values
-
-        Note that if the latest SED data file size is bigger than 2GB, this
-        method will result to the creation of a new SED data file.
-        """
-        return self.__providers['sed'].addSedData(obj_id, data)
-
-    def addPdzData(self, obj_id, data):
-        """
-        Adds the PDZ data of a reference sample object.
-
-        Args:
-            obj_id: The ID of the object to add the PDZ for. It must be an integer.
-            data: The data of the PDZ as a two dimensional array-like object.
-                The first dimension has size same as the number of the knots and
-                the second dimension has always size equal to two, with the
-                first element representing the wavelength and the second the
-                probability value.
-
-        Raises:
-            AlreadySetException: If the PDZ data are aready set for the given ID
-            InvalidDimensionsException: If the given data dimensions are wrong
-            InvalidAxisException: If the wavelength values are not strictly increasing
-            InvalidAxisException: If the wavelength values given are not matching
-                the wavelength values of the other PDZs in the sample
-        """
-        return self.__providers['pdz'].addPdzData(obj_id, data)
-
     def getData(self, name: str, obj_id: int):
         return self.__providers[name].getData(obj_id)
 

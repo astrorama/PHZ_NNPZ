@@ -54,7 +54,7 @@ def reference_sample_fixture(temp_dir_fixture):
         new_sed = np.ndarray(test_sed.shape)
         new_sed[:, 0] = test_sed[:, 0] * z
         new_sed[:, 1] = test_sed[:, 1] / z
-        ref_sample.addSedData(obj_id, new_sed)
+        ref_sample.getProvider('sed').addData([obj_id], new_sed.reshape(1, -1, 2))
         # Can skip the PDZ for these tests
 
     return ref_sample

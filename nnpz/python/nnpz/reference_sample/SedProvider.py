@@ -1,8 +1,8 @@
 import os
-from typing import Union
+from typing import List, Union
 
 import numpy as np
-from nnpz.exceptions import AlreadySetException
+from nnpz.exceptions import AlreadySetException, InvalidDimensionsException
 from nnpz.reference_sample import SedDataProvider, IndexProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
 from nnpz.reference_sample.util import validate_data_files, locate_existing_data_files
@@ -76,35 +76,6 @@ class SedProvider(BaseProvider):
             self._swapProvider(sed_loc.file)
         return self._current_data_provider.readSed(sed_loc.offset)
 
-    def addSedData(self, obj_id: int, data: np.ndarray):
-        """
-        Adds the SED data of a reference sample object.
-
-        Args:
-            obj_id: The ID of the object to add the SED for. It must be an integer.
-            data: The data of the SED as a two dimensional array-like object.
-                The first dimension has size same as the number of the knots and
-                the second dimension has always size equal to two, with the
-                first element representing the wavelength and the second the
-                energy value.
-
-        Raises:
-            AlreadySetException: If the SED data are already set for the given ID
-            InvalidDimensionsException: If the given data dimensions are wrong
-            InvalidAxisException: If there are decreasing wavelength values
-
-        Note that if the latest SED data file size is bigger than 2GB, this
-        method will result to the creation of a new SED data file.
-        """
-        # Check that the SED is not already set
-        loc = self._index.get(obj_id, self._key)
-        if loc is not None:
-            raise AlreadySetException('SED for ID ' + str(obj_id) + ' is already set')
-
-        sed_file, provider = self._getWriteableDataProvider(data.shape[0])
-        new_pos = provider.appendSed(data)
-        self._index.add(obj_id, self._key, IndexProvider.ObjectLocation(sed_file, new_pos))
-
     def _getWriteableDataProvider(self, knots):
         """
         Get the index of the active SED provider, create a new one if needed
@@ -128,34 +99,62 @@ class SedProvider(BaseProvider):
         """
         self.extra.update(extra_data)
         other_files = sorted(locate_existing_data_files(data_pattern))
-        file_field = f'{self._key}_file'
-        offset_field = f'{self._key}_offset'
+
         for other_sed_i in other_files:
             other_sed_file = data_pattern.format(other_sed_i)
-            other_sed_size = os.path.getsize(other_sed_file)
             other_sed = np.load(other_sed_file, mmap_mode='r')
 
-            # Take the part of the index that points to the file other_sed_i
-            other_sed_idx_pos = np.where(other_index.raw[file_field] == other_sed_i)[0]
-            updated_index = np.array(
-                other_index.raw[['id', file_field, offset_field]][other_sed_idx_pos], copy=True)
+            # Ask for the IDs following disk order
+            other_ids = other_index.getIdsForFile(other_sed_i, self._key)
 
-            # The order of the index does not have to match the order on the file!
-            disk_order = np.argsort(updated_index[offset_field])
+            # Import the data
+            self.addData(other_ids, other_sed)
 
-            # Take the current active provider to store the imported data
-            sed_provider_idx, sed_provider = self._getWriteableDataProvider(other_sed.shape[1])
+    def addData(self, object_ids: List[int] = None, data: np.ndarray = None):
+        """
+        Add new data to the SED provider
 
-            # Fit whatever we can on the current file (approximately)
-            available_size = self._data_limit - sed_provider.size()
-            nfit = int(len(other_sed) * min(np.ceil(available_size / other_sed_size), 1))
-            updated_index[file_field][:nfit] = sed_provider_idx
-            updated_index[offset_field][disk_order[:nfit]] = sed_provider.appendSed(other_sed[:nfit])
+        Args:
+            object_ids:
+                Object IDs
+            data:
+                SED data
+        """
+        if len(data.shape) != 3:
+            raise InvalidDimensionsException('The SED data must have three axes')
+        if len(object_ids) != data.shape[0]:
+            raise InvalidDimensionsException(
+                'The number of SED entries does not match the number of objects'
+            )
 
-            # Create a new one and put in the rest
-            sed_provider_idx, sed_provider = self._getWriteableDataProvider(other_sed.shape[1])
-            updated_index[file_field][nfit:] = sed_provider_idx
-            updated_index[offset_field][disk_order[nfit:]] = sed_provider.appendSed(other_sed[nfit:])
+        record_size = data[0].nbytes
 
-            # Update the index
-            self._index.bulkAdd(updated_index)
+        # Index
+        file_field = f'{self._key}_file'
+        offset_field = f'{self._key}_offset'
+
+        index_data = np.zeros(
+            (len(object_ids),),
+            dtype=[('id', np.int64), (file_field, np.int64), (offset_field, np.int64)]
+        )
+
+        # Take the current active provider to store the imported data
+        sed_provider_idx, sed_provider = self._getWriteableDataProvider(data.shape[1])
+
+        # Fit whatever we can on the current file (approximately)
+        available_size = self._data_limit - sed_provider.size()
+        nfit = int(len(data) * min(np.ceil(available_size / record_size), 1))
+        index_data['id'][:nfit] = object_ids[:nfit]
+        index_data[file_field][:nfit] = sed_provider_idx
+        index_data[offset_field][:nfit] = sed_provider.appendSed(data[:nfit])
+        sed_provider.flush()
+
+        # Create a new one and put in the rest
+        sed_provider_idx, sed_provider = self._getWriteableDataProvider(data.shape[1])
+        index_data['id'][nfit:] = object_ids[nfit:]
+        index_data[file_field][nfit:] = sed_provider_idx
+        index_data[offset_field][nfit:] = sed_provider.appendSed(data[nfit:])
+        sed_provider.flush()
+
+        # Update the index
+        self._index.bulkAdd(index_data)
