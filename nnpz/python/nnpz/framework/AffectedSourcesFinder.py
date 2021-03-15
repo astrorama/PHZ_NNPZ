@@ -21,7 +21,9 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+import numpy as np
 from nnpz.neighbor_selection import NeighborSelectorInterface
+
 from .NeighborSet import NeighborSet
 
 
@@ -70,9 +72,16 @@ class AffectedSourcesFinder(object):
         for i, (in_data, flags) in enumerate(zip(input_coord_iter, flags_iter)):
             if progress_listener:
                 progress_listener(i + 1)
-            neighbor_indices, distances, scales = self.__selector.findNeighbors(in_data, flags)
-            for ref_i, distance, scale in zip(neighbor_indices, distances, scales):
+            n_indices, distances, scales = self.__selector.findNeighbors(in_data, flags)
+            # Add the neighbors from closes to furthest
+            sorted_idx = np.argsort(distances)
+            n_indices = n_indices[sorted_idx]
+            distances = distances[sorted_idx]
+            scales = scales[sorted_idx]
+            count = len(n_indices)
+
+            for pos, ref_i, distance, scale in zip(range(count), n_indices, distances, scales):
                 if ref_i not in result:
                     result[ref_i] = NeighborSet()
-                result[ref_i].append(i, distance=distance, scale=scale)
+                result[ref_i].append(i, distance=distance, scale=scale, position=pos)
         return result
