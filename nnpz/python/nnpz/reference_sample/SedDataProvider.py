@@ -105,7 +105,7 @@ class SedDataProvider(object):
         if pos > self.__entries:
             raise InvalidAxisException('Position {} for {} entries'.format(pos, self.__entries))
         if self.__cache is None:
-            self.__cache = np.zeros((self.__cache_size, self.__knots, 2))
+            self.__cache = np.zeros((self.__cache_size, self.__knots, 2), dtype=np.float32)
         cache_line, cache_offset = divmod(pos, self.__cache_size)
         if cache_line != self.__cache_line:
             cache_start = cache_line * self.__cache_size
