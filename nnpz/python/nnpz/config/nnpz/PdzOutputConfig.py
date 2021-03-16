@@ -69,9 +69,11 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
 
         pdz_quantiles = args.get('pdz_quantiles', [])
         pdz_mc_samples = args.get('pdz_mc_samples', 0)
-        pdf_sampling = ocp.PdfSampling(pdz_prov, quantiles=pdz_quantiles, mc_samples=pdz_mc_samples)
-        output.addColumnProvider(pdf_sampling)
-        output.addHeaderProvider(pdf_sampling)
+        if pdz_quantiles or pdz_mc_samples:
+            pdf_sampling = ocp.PdfSampling(pdz_prov, quantiles=pdz_quantiles,
+                                           mc_samples=pdz_mc_samples)
+            output.addColumnProvider(pdf_sampling)
+            output.addHeaderProvider(pdf_sampling)
 
         # Add point estimates
         if 'pdz_point_estimates' in args:
