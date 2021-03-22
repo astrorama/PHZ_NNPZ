@@ -43,6 +43,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         self.__ref_ids = ref_ids
         self.__current_ref_i = None
         self.__current_ref_pdz = None
+        self.__output_area = None
 
     def getColumnDefinition(self):
         return [
@@ -50,22 +51,23 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         ]
 
     def setWriteableArea(self, output_area):
-        self.__output_area = output_area
+        self.__output_area = output_area['REDSHIFT_PDF']
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         if reference_sample_i != self.__current_ref_i:
             ref_id = self.__ref_ids[reference_sample_i]
             self.__current_ref_i = reference_sample_i
-            self.__current_ref_pdz = np.array(self.__reference_sample.getPdzData(ref_id),
-                                              dtype=np.float64)
+            self.__current_ref_pdz = self.__reference_sample.getPdzData(ref_id).astype(np.float64)
             if not (self.__current_ref_pdz[:, 0] == self.__pdz_bins).all():
                 raise ValueError('Invalid number of PDZ bins')
 
         self.__pdzs[neighbor.index] += self.__current_ref_pdz[:, 1] * neighbor.weight
 
     def fillColumns(self):
-        integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
-        self.__output_area['REDSHIFT_PDF'] = (self.__pdzs.T * integrals).T
+        # Running trapz over all pdzs would be faster, but it can cause a big allocation
+        for i in range(len(self.__output_area)):
+            integral = 1. / np.trapz(self.__pdzs[i], self.__pdz_bins)
+            self.__output_area[i] = self.__pdzs[i] * integral
 
     def getPdzBins(self):
         """
