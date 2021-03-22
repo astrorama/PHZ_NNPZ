@@ -23,7 +23,7 @@ from __future__ import division, print_function
 
 import nnpz.io.output_column_providers as ocp
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import NeighborSelectorConfig, OutputHandlerConfig, TargetCatalogConfig
+from nnpz.config.nnpz import NeighborSelectorConfig, OutputHandlerConfig
 from nnpz.config.reference import ReferenceConfig
 
 
@@ -39,11 +39,10 @@ class NeighborListOutputConfig(ConfigManager.ConfigHandler):
     def __addColumnProvider(self, args):
         self.__neighbor_info_output = args.get('neighbor_info_output', False)
         if self.__neighbor_info_output:
-            target_ids = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)['target_ids']
             ref_ids = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)['reference_ids']
             output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
             nn = ConfigManager.getHandler(NeighborSelectorConfig).parseArgs(args)['neighbor_no']
-            output.addColumnProvider(ocp.NeighborList(len(target_ids), ref_ids, n_neighbors=nn))
+            output.addColumnProvider(ocp.NeighborList(ref_ids, n_neighbors=nn))
 
     def parseArgs(self, args):
         if not self.__added:

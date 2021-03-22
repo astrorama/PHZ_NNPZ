@@ -22,7 +22,6 @@ Author: Alejandro Alvarez Ayllon
 from __future__ import division, print_function
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
 
 
@@ -45,22 +44,28 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         self.__current_ref_i = None
         self.__current_ref_pdz = None
 
+    def getColumnDefinition(self):
+        return [
+            ('REDSHIFT_PDF', np.float32, len(self.__pdz_bins))
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__output_area = output_area
+
     def addContribution(self, reference_sample_i, neighbor, flags):
         if reference_sample_i != self.__current_ref_i:
             ref_id = self.__ref_ids[reference_sample_i]
             self.__current_ref_i = reference_sample_i
-            self.__current_ref_pdz = np.array(self.__reference_sample.getPdzData(ref_id), dtype=np.float64)
+            self.__current_ref_pdz = np.array(self.__reference_sample.getPdzData(ref_id),
+                                              dtype=np.float64)
             if not (self.__current_ref_pdz[:, 0] == self.__pdz_bins).all():
                 raise ValueError('Invalid number of PDZ bins')
 
         self.__pdzs[neighbor.index] += self.__current_ref_pdz[:, 1] * neighbor.weight
 
-    def getColumns(self):
+    def fillColumns(self):
         integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
-        normalized = (self.__pdzs.T * integrals).T
-        return [
-            Column(normalized, 'REDSHIFT_PDF', dtype=np.float32),
-        ]
+        self.__output_area['REDSHIFT_PDF'] = (self.__pdzs.T * integrals).T
 
     def getPdzBins(self):
         """

@@ -21,11 +21,9 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from astropy.table import Column
-
-from nnpz.io import OutputHandler
-from nnpz.io.output_column_providers import PdfSampling
 import numpy as np
+from nnpz.io import OutputHandler
+from scipy import interpolate
 
 
 class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
@@ -47,30 +45,39 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
         for e in self.__estimates:
             if not hasattr(self, 'getEstimate' + e.capitalize()):
                 raise Exception('Unknown redshift PDF estimate {}'.format(e))
+        self.__output_area = None
+
+    def getColumnDefinition(self):
+        return [
+            ('REDSHIFT_{}'.format(estimate.upper()), np.float32)
+            for estimate in self.__estimates
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__output_area = output_area
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
-    def getEstimateMedian(self, *_):
-        # We use the PdfSampling provider for getting the 50% quantile
-        sampl_prov = PdfSampling(self.__pdf_provider, [0.5])
-        quant_col = [x for x in sampl_prov.getColumns() if x.name == 'REDSHIFT_PDF_QUANTILES'][0]
-        median_data = quant_col.data
-        return [Column(median_data, "REDSHIFT_MEDIAN")]
+    def getEstimateMedian(self, bins, pdfs, out):
+        cum_prob = np.zeros(len(bins))
+        dbins = np.diff(bins)
 
-    def getEstimateMean(self, bins, pdfs):
-        avg = np.average(np.tile(bins, (len(pdfs), 1)), weights=pdfs, axis=1)
-        return [Column(avg, 'REDSHIFT_MEAN')]
+        for i, pdf in enumerate(pdfs):
+            np.cumsum(dbins * ((pdf[:-1] + pdf[1:]) / 2.), out=cum_prob[1:])
+            inv_cum = interpolate.interp1d(cum_prob / max(cum_prob), bins, kind='linear')
+            out[i] = inv_cum(0.5)
 
-    def getEstimateMode(self, bins, pdfs):
-        modes = bins[np.argmax(pdfs, axis=1)]
-        return [Column(modes, 'REDSHIFT_MODE')]
+    def getEstimateMean(self, bins, pdfs, out):
+        out[:] = np.average(np.tile(bins, (len(pdfs), 1)), weights=pdfs, axis=1)
 
-    def getColumns(self):
-        pdfs = self.__pdf_provider.getColumns()[0]
+    def getEstimateMode(self, bins, pdfs, out):
+        out[:] = bins[np.argmax(pdfs, axis=1)]
+
+    def fillColumns(self):
+        pdfs = self.__output_area['REDSHIFT_PDF']
         bins = self.__pdf_provider.getPdzBins()
-        columns = []
         for estimate in self.__estimates:
+            estimate_name = 'REDSHIFT_{}'.format(estimate.upper())
             get_impl = getattr(self, 'getEstimate' + estimate.capitalize())
-            columns.extend(get_impl(bins, pdfs))
-        return columns
+            get_impl(bins, pdfs, out=self.__output_area[estimate_name])

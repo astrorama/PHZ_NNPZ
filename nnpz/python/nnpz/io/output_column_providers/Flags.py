@@ -21,12 +21,13 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from astropy.table import Column
 import numpy as np
-
-from nnpz.io import OutputHandler
 from nnpz import NnpzFlag
+from nnpz.io import OutputHandler
 
+
+# FIXME: Probably better to have two different output handlers implementing
+#        separate/joint flag columns
 
 class Flags(OutputHandler.OutputColumnProviderInterface):
     """
@@ -43,26 +44,35 @@ class Flags(OutputHandler.OutputColumnProviderInterface):
     def __init__(self, flag_list, separate_columns=False):
         self.__flag_list = flag_list
         self.__separate_columns = separate_columns
+        self.__output_area = None
+
+    def getColumnDefinition(self):
+        if self.__separate_columns:
+            return [
+                (name, np.bool) for name in NnpzFlag.getFlagNames()
+            ]
+        return [
+            ('FLAGS_{}'.format(i + 1), np.uint8)
+            for i in range(NnpzFlag.getArraySize())
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__output_area = output_area
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
     def _separateColumns(self):
-        columns = []
         for name in NnpzFlag.getFlagNames():
-            data = np.asarray([f.isSet(NnpzFlag(name)) for f in self.__flag_list], dtype=np.bool)
-            columns.append(Column(data, name))
-        return columns
+            self.__output_area[name] = [f.isSet(NnpzFlag(name)) for f in self.__flag_list]
 
     def _byteColumns(self):
         flag_list_as_arrays = [f.asArray() for f in self.__flag_list]
-        columns = []
         for i in range(NnpzFlag.getArraySize()):
-            data = np.asarray([flag[i] for flag in flag_list_as_arrays], dtype=np.uint8)
-            columns.append(Column(data, 'FLAGS_{}'.format(i + 1)))
-        return columns
+            name = 'FLAGS_{}'.format(i + 1)
+            self.__output_area[name] = [flag[i] for flag in flag_list_as_arrays]
 
-    def getColumns(self):
+    def fillColumns(self):
         if self.__separate_columns:
             return self._separateColumns()
         return self._byteColumns()

@@ -22,24 +22,28 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 from astropy.io import fits
+import numpy as np
 
 
-def npDtype2FitsTForm(data):
+def npDtype2FitsTForm(dtype, shape):
     """
-        Generate a FITS format code appropriate for the type of this type of data.
+    Generate a FITS format code appropriate for the type of this type of data.
     Args:
-        data: numpy.array
-
+        dtype: type or numpy.dtype
+        shape: a tuple or an integer
     Returns: str
-
     """
-    if data.dtype.kind in ('S', 'U'):
-        fmt = "{}A".format(data.dtype.itemsize)
+    if isinstance(dtype, type):
+        dtype = np.dtype(dtype)
+    if not hasattr(shape, '__len__'):
+        shape = (shape,)
+    if dtype.kind in ('S', 'U'):
+        fmt = "{}A".format(dtype.itemsize)
     else:
-        dt = data.dtype.kind + str(data.dtype.alignment)
+        dt = dtype.kind + str(dtype.alignment)
         fmt = fits.column.NUMPY2FITS[dt]
-        if len(data.shape) > 1:
-            fmt = "{}{}".format(data.shape[1], fmt)
+        if len(shape) > 1:
+            fmt = "{}{}".format(shape[1], fmt)
     return fmt
 
 
@@ -53,7 +57,7 @@ def tableToHdu(table):
     columns = []
     for name in table.colnames:
         data = table[name].data
-        fmt = npDtype2FitsTForm(data)
+        fmt = npDtype2FitsTForm(data.dtype, data.shape)
         columns.append(fits.Column(name=name, array=data, format=fmt))
     hdu = fits.BinTableHDU.from_columns(columns)
     for key, value in table.meta.items():

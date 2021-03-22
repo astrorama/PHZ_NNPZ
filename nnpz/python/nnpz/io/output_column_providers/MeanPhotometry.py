@@ -22,9 +22,9 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-from astropy.table import Column
 from nnpz.exceptions import InvalidDimensionsException
 from nnpz.io import OutputHandler
+from nnpz.utils.numpy import recarray_flat_view
 
 
 class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
@@ -55,33 +55,44 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
         if len(filter_names) != data.shape[1]:
             raise InvalidDimensionsException('Number of filter names does not match the data')
 
-        self.__filter_names = filter_names
         self.__data = data
         self.__unreddener = unreddener
         self.__target_ebv = target_ebv
 
-        self.__total_weights = np.zeros(catalog_size, dtype=np.float64)
-        self.__total_values = np.zeros((catalog_size, len(filter_names)), dtype=np.float64)
-        self.__total_errors = np.zeros((catalog_size, len(filter_names)), dtype=np.float64)
+        self.__columns = [name + '_MEAN' for name in filter_names]
+        self.__err_columns = [name + '_MEAN_ERR' for name in filter_names]
+
+        self.__total_weights = np.zeros((catalog_size, 1), dtype=np.float64)
+        self.__total_values = None
+        self.__total_errors = None
+
+    def getColumnDefinition(self):
+        col_defs = []
+        for name in self.__columns:
+            col_defs.append((name, np.float32))
+        for err_name in self.__err_columns:
+            col_defs.append((err_name, np.float32))
+        return col_defs
+
+    def setWriteableArea(self, output_area):
+        self.__total_values = recarray_flat_view(output_area, self.__columns)
+        self.__total_errors = recarray_flat_view(output_area, self.__err_columns)
 
     def addContribution(self, reference_sample_i, neighbor, flags):
-        phot = self.__data[reference_sample_i]
+        ref_phot = self.__data[reference_sample_i]
         self.__total_weights[neighbor.index] += neighbor.weight
-        self.__total_values[neighbor.index] += neighbor.weight * neighbor.scale * phot[:, 0]
-        self.__total_errors[neighbor.index] += (neighbor.weight * neighbor.scale * phot[:, 1]) ** 2
+        self.__total_values[neighbor.index] += neighbor.weight * neighbor.scale * ref_phot[:, 0]
+        self.__total_errors[neighbor.index] += (neighbor.weight * neighbor.scale * ref_phot[:,
+                                                                                   1]) ** 2
 
-    def getColumns(self):
-        values = (self.__total_values.T / self.__total_weights).T
-        errors = (np.sqrt(self.__total_errors).T / self.__total_weights).T
+    def fillColumns(self):
+        self.__total_values /= self.__total_weights
+        np.sqrt(self.__total_errors, out=self.__total_errors)
+        self.__total_errors /= self.__total_weights
 
         if self.__unreddener:
-            photometry = np.stack([values, errors], axis=2)
+            # FIXME: This can probably be done better, too many copies are involved
+            photometry = np.stack([self.__total_values, self.__total_errors], axis=2)
             reddened = self.__unreddener.redden_data(photometry, self.__target_ebv)
-            values[:, :] = reddened[:, :, 0]
-            errors[:, :] = reddened[:, :, 1]
-
-        columns = []
-        for i, name in enumerate(self.__filter_names):
-            columns.append(Column(values[:, i], name + "_MEAN", dtype=np.float32))
-            columns.append(Column(errors[:, i], name + '_MEAN_ERR', dtype=np.float32))
-        return columns
+            self.__total_values[:, :] = reddened[:, :, 0]
+            self.__total_errors[:, :] = reddened[:, :, 1]
