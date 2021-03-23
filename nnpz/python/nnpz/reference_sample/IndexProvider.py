@@ -55,11 +55,15 @@ class IndexProvider(object):
 
         for key, pair in pairs.items():
             file_field, offset_field = pair
-            order = np.argsort(self.__data, order=(file_field, offset_field))
-            if (np.diff(order) < 0).any():
-                logger.warning(
-                    'The index for the provider "{}" does not follow the physicial layout'.format(key)
-                )
+            max_file = self.__data[file_field].max()
+            for file_id in range(1, max_file + 1):
+                offsets = self.__data[self.__data[file_field] == file_id][offset_field]
+                sorted_offsets = np.sort(offsets)
+                if not np.array_equal(offsets, sorted_offsets):
+                    logger.warning(
+                        'Index for provider "%s" does not follow the physical layout for file %d',
+                        key, file_id
+                    )
 
     def __init__(self, filename: Union[str, pathlib.Path]):
         """
