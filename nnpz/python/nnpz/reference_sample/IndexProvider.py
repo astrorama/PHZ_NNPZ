@@ -27,8 +27,11 @@ from collections import namedtuple
 from typing import Union
 
 import numpy as np
+from ElementsKernel import Logging
 from nnpz.exceptions import CorruptedFileException, DuplicateIdException
 from numpy.lib import recfunctions as rfn
+
+logger = Logging.getLogger(__name__)
 
 
 class IndexProvider(object):
@@ -37,6 +40,26 @@ class IndexProvider(object):
     """
 
     ObjectLocation = namedtuple('ObjectLocation', ['file', 'offset'])
+
+    def __checkLayout(self):
+        """
+        Make sure the layout is contiguous on disk
+        """
+        pairs = {}
+        for field in self.__data.dtype.fields:
+            if field.endswith('_file') or field.endswith('_offset'):
+                dataset = field.split('_')[0]
+                if not dataset in pairs:
+                    pairs[dataset] = []
+                pairs[dataset].append(field)
+
+        for key, pair in pairs.items():
+            file_field, offset_field = pair
+            order = np.argsort(self.__data, order=(file_field, offset_field))
+            if (np.diff(order) < 0).any():
+                logger.warning(
+                    'The index for the provider "{}" does not follow the physicial layout'.format(key)
+                )
 
     def __init__(self, filename: Union[str, pathlib.Path]):
         """
@@ -67,6 +90,9 @@ class IndexProvider(object):
             raise CorruptedFileException('Missing ids')
         if not all(map(lambda d: d != np.int64, self.__data.dtype.fields.values())):
             raise CorruptedFileException('Expected 64 bits integers')
+
+        # Make sure the disk layout is contiguous
+        self.__checkLayout()
 
         # Create a map for easier search and at the same time check if we have
         # duplicates. The map values are (i, sed_file, sed_pos, pdz_file, pdz_pos),
