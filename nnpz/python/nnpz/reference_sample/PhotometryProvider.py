@@ -24,7 +24,7 @@ from __future__ import division, print_function
 import os
 import numpy as np
 import astropy.io.fits as fits
-from astropy.table import Table
+from astropy.table import Table, join
 from nnpz.exceptions import FileNotFoundException, WrongFormatException, UnknownNameException, \
     MissingDataException
 
@@ -79,11 +79,12 @@ class PhotometryProvider(object):
                 data[:, i, 1] = phot_table[name + '_ERR']
         return data
 
-    def __init__(self, filename):
+    def __init__(self, filename, ref_ids=None):
         """Creates a new instance for accessing the given photometry file.
 
         Args:
             filename: The photometry file to read
+            ref_ids: (Optional) the order of the IDs that should be used
 
         Raises:
             FileNotFoundException: If the file does not exist
@@ -103,6 +104,13 @@ class PhotometryProvider(object):
 
         # Read the filter transmissions from the extension HDUs
         self.__filter_data = self.__readFilterTransmissions(hdus, self.__filter_list)
+
+        # Sort the rows following the ref sample layout
+        if ref_ids is not None:
+            phot_table = join(dict(ID=ref_ids, position=np.arange(len(ref_ids))), phot_table, 'ID')
+            phot_table.sort('position')
+            if np.any(phot_table['ID'] != ref_ids):
+                raise ValueError('ERROR: Reference sample photometry ID mismatch')
 
         # Get the IDs
         self.__ids = phot_table['ID']

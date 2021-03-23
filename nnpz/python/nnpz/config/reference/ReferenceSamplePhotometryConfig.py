@@ -57,10 +57,8 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
             self.__phot_filters = args['reference_sample_phot_filters']
 
             logger.info('Using reference sample photometry from %s', self.__phot_file)
-            self.__ref_phot_prov = PhotometryProvider(self.__phot_file)
-            if np.any(self.__ref_phot_prov.getIds() != ref_sample_dict['reference_ids']):
-                logger.error('ERROR: Reference sample photometry ID mismatch')
-                exit(-1)
+            self.__ref_phot_prov = PhotometryProvider(self.__phot_file,
+                                                      ref_sample_dict['reference_ids'])
 
             logger.info('Reference sample photometric bands: %s', self.__phot_filters)
             self.__ref_phot_data = self.__ref_phot_prov.getData(*self.__phot_filters)
