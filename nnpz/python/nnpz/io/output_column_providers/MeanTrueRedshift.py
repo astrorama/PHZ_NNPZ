@@ -22,7 +22,6 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
 
 
@@ -42,14 +41,20 @@ class MeanTrueRedshift(OutputHandler.OutputColumnProviderInterface):
     def __init__(self, catalog_size, ref_true_redshift_list):
         self.__ref_z = ref_true_redshift_list
         self.__total_weights = np.zeros(catalog_size, dtype=np.float64)
-        self.__sums = np.zeros(catalog_size, dtype=np.float64)
+        self.__output = None
+
+    def getColumnDefinition(self):
+        return [
+            ('REDSHIFT_MEAN', np.float32)
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__output = output_area['REDSHIFT_MEAN']
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         redshift = self.__ref_z[reference_sample_i]
         self.__total_weights[neighbor.index] += neighbor.weight
-        self.__sums[neighbor.index] += redshift * neighbor.weight
+        self.__output[neighbor.index] += redshift * neighbor.weight
 
-    def getColumns(self):
-        mean_z = self.__sums / self.__total_weights
-        col = Column(mean_z, 'REDSHIFT_MEAN')
-        return [col]
+    def fillColumns(self):
+        self.__output /= self.__total_weights

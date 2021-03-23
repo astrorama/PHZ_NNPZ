@@ -13,10 +13,9 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
 from nnpz.reference_sample import PhotometryProvider
 
@@ -60,6 +59,23 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
             (len(self.__catalog_photo), len(filter_map)), dtype=np.float64
         )
         self.__total_weights = np.zeros((len(self.__catalog_photo), 1), dtype=np.float64)
+        self.__output = {}
+
+    def getColumnDefinition(self):
+        col_defs = []
+        for output_names, input_names, in self.__filter_map.items():
+            t_obs_err = input_names[3]
+            col_defs.append((output_names[0], np.float32))
+            if t_obs_err:
+                col_defs.append((output_names[1], np.float32))
+        return col_defs
+
+    def setWriteableArea(self, output_area):
+        for output_names, input_names, in self.__filter_map.items():
+            t_obs_err = input_names[3]
+            self.__output[output_names[0]] = output_area[output_names[0]]
+            if t_obs_err:
+                self.__output[output_names[1]] = output_area[output_names[1]]
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         original = self.__ref_photo[reference_sample_i, :, 0]
@@ -70,23 +86,12 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
             self.__total_ratios[neighbor.index, r] += ratio * neighbor.weight
         self.__total_weights[neighbor.index] += neighbor.weight
 
-    def getColumns(self):
-        columns = []
+    def fillColumns(self):
         ratios = self.__total_ratios / self.__total_weights
 
         for r, (output_names, input_names) in enumerate(self.__filter_map.items()):
             r_obj, r_obs, t_obs, t_obs_err = input_names
-            columns.append(
-                Column(
-                    self.__catalog_photo[t_obs] * ratios[:, r],
-                    name=output_names[0], dtype=np.float32
-                )
-            )
+            np.multiply(self.__catalog_photo[t_obs], ratios[:, r],
+                        out=self.__output[output_names[0]])
             if t_obs_err:
-                columns.append(
-                    Column(
-                        self.__catalog_photo[t_obs_err],
-                        name=output_names[1], dtype=np.float32
-                    )
-                )
-        return columns
+                np.copyto(self.__output[output_names[1]], self.__catalog_photo[t_obs_err])

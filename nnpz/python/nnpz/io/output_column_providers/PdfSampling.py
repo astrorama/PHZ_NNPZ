@@ -33,7 +33,7 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
 
     Args:
         pdf_provider: OutputColumnProviderInterface
-            Must implement the methods getPdzBins and getColumns
+            Must implement the methods getPdzBins and getPdz
             (i.e. CoaddedPdz or TrueRedshiftPdz)
         quantiles: list of float
             Quantiles to compute (between 0 and 1)

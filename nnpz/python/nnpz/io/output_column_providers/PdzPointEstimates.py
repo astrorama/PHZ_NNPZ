@@ -32,7 +32,7 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
 
     Args:
         pdf_provider: OutputColumnProviderInterface
-            Must implement the methods getPdzBins and getColumns
+            Must implement the methods getPdzBins and getPdz
             (i.e. CoaddedPdz or TrueRedshiftPdz)
         estimates: list of str
             Point estimates to compute: from median, mean and mode
@@ -75,7 +75,7 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
         out[:] = bins[np.argmax(pdfs, axis=1)]
 
     def fillColumns(self):
-        pdfs = self.__output_area['REDSHIFT_PDF']
+        pdfs = self.__pdf_provider.getPdz()
         bins = self.__pdf_provider.getPdzBins()
         for estimate in self.__estimates:
             estimate_name = 'REDSHIFT_{}'.format(estimate.upper())

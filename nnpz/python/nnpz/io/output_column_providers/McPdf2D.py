@@ -64,7 +64,7 @@ class McPdf2D(OutputHandler.OutputColumnProviderInterface):
 
     def fillColumns(self):
         """
-        See OutputColumnProviderInterface.getColumns
+        See OutputColumnProviderInterface.fillColumns
         """
         samples = self.__sampler.getSamples()
 
