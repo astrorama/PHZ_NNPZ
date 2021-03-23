@@ -71,42 +71,6 @@ class PdzProvider(BaseProvider):
         pdz_data = self._current_data_provider.readPdz(pdz_loc.offset).reshape(-1, 1)
         return np.hstack([z_bins, pdz_data])
 
-    def addPdzData(self, obj_id, data):
-        """
-        Adds the PDZ data of a reference sample object.
-
-        Args:
-            obj_id: The ID of the object to add the PDZ for. It must be an integer.
-            data: The data of the PDZ as a two dimensional array-like object.
-                The first dimension has size same as the number of the knots and
-                the second dimension has always size equal to two, with the
-                first element representing the wavelength and the second the
-                probability value.
-
-        Raises:
-            AlreadySetException: If the PDZ data are aready set for the given ID
-            InvalidDimensionsException: If the given data dimensions are wrong
-            InvalidAxisException: If the wavelength values are not strictly increasing
-            InvalidAxisException: If the wavelength values given are not matching
-                the wavelength values of the other PDZs in the sample
-        """
-        # Check that the PDZ is not already set
-        loc = self._index.get(obj_id, self._key)
-        if loc is not None:
-            raise AlreadySetException('PDZ for ID ' + str(obj_id) + ' is already set')
-
-        # Convert the data to a numpy array for easier handling
-        data_arr = np.asarray(data, dtype=np.float32)
-        if len(data_arr.shape) != 2 or data_arr.shape[1] != 2:
-            raise InvalidDimensionsException()
-
-        pdz_file, provider = self._getWriteablePdzProvider(data_arr[:, 0])
-
-        # Add the PDZ data in the last file, normalizing first
-        integral = np.trapz(data_arr[:, 1], data_arr[:, 0])
-        new_pos = provider.appendPdz(data_arr[:, 1] / integral)
-        self._index.add(obj_id, self._key, IndexProvider.ObjectLocation(pdz_file, new_pos))
-
     def _getWriteablePdzProvider(self, binning):
         """
         Get the index of the last writeable PDZ provider, create a new one if needed
