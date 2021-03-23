@@ -242,8 +242,8 @@ class IndexProvider(object):
         this = self.__data
 
         # Get set of unique IDs
-        unique_ids = np.unique(np.concatenate([this['id'], other['id']]))
-        unique_ids.sort()
+        new_ids = ~np.isin(other['id'], this['id'])
+        all_ids = np.concatenate([this['id'], other['id'][new_ids]])
 
         # Get set of columns
         columns = set(this.dtype.names)
@@ -253,16 +253,16 @@ class IndexProvider(object):
 
         # Pre-allocate destination
         destination = np.full(
-            len(unique_ids), -1,
+            len(all_ids), -1,
             dtype=[('id', np.int64)] + list(map(lambda c: (c, np.int64), columns))
         )
 
         # Copy IDs over
-        destination['id'] = unique_ids
+        destination['id'] = all_ids
 
         # Copy columns from both sides, checking for duplicates
-        this_idx = np.searchsorted(destination['id'], this['id'])
-        other_idx = np.searchsorted(destination['id'], other['id'])
+        this_idx = np.asarray(list(map(lambda k: np.nonzero(all_ids == k)[0][0], this['id'])))
+        other_idx = np.asarray(list(map(lambda k: np.nonzero(all_ids == k)[0][0], other['id'])))
         for c in columns:
             # From self
             if c in this.dtype.names:
