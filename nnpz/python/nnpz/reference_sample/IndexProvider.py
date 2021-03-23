@@ -27,8 +27,11 @@ from collections import namedtuple
 from typing import Union
 
 import numpy as np
+from ElementsKernel import Logging
 from nnpz.exceptions import CorruptedFileException, DuplicateIdException
 from numpy.lib import recfunctions as rfn
+
+logger = Logging.getLogger(__name__)
 
 
 class IndexProvider(object):
@@ -37,6 +40,30 @@ class IndexProvider(object):
     """
 
     ObjectLocation = namedtuple('ObjectLocation', ['file', 'offset'])
+
+    def __checkLayout(self):
+        """
+        Make sure the layout is contiguous on disk
+        """
+        pairs = {}
+        for field in self.__data.dtype.fields:
+            if field.endswith('_file') or field.endswith('_offset'):
+                dataset = field.split('_')[0]
+                if not dataset in pairs:
+                    pairs[dataset] = []
+                pairs[dataset].append(field)
+
+        for key, pair in pairs.items():
+            file_field, offset_field = pair
+            max_file = self.__data[file_field].max()
+            for file_id in range(1, max_file + 1):
+                offsets = self.__data[self.__data[file_field] == file_id][offset_field]
+                sorted_offsets = np.sort(offsets)
+                if not np.array_equal(offsets, sorted_offsets):
+                    logger.warning(
+                        'Index for provider "%s" does not follow the physical layout for file %d',
+                        key, file_id
+                    )
 
     def __init__(self, filename: Union[str, pathlib.Path]):
         """
@@ -67,6 +94,9 @@ class IndexProvider(object):
             raise CorruptedFileException('Missing ids')
         if not all(map(lambda d: d != np.int64, self.__data.dtype.fields.values())):
             raise CorruptedFileException('Expected 64 bits integers')
+
+        # Make sure the disk layout is contiguous
+        self.__checkLayout()
 
         # Create a map for easier search and at the same time check if we have
         # duplicates. The map values are (i, sed_file, sed_pos, pdz_file, pdz_pos),
@@ -212,8 +242,8 @@ class IndexProvider(object):
         this = self.__data
 
         # Get set of unique IDs
-        unique_ids = np.unique(np.concatenate([this['id'], other['id']]))
-        unique_ids.sort()
+        new_ids = ~np.isin(other['id'], this['id'])
+        all_ids = np.concatenate([this['id'], other['id'][new_ids]])
 
         # Get set of columns
         columns = set(this.dtype.names)
@@ -223,16 +253,16 @@ class IndexProvider(object):
 
         # Pre-allocate destination
         destination = np.full(
-            len(unique_ids), -1,
+            len(all_ids), -1,
             dtype=[('id', np.int64)] + list(map(lambda c: (c, np.int64), columns))
         )
 
         # Copy IDs over
-        destination['id'] = unique_ids
+        destination['id'] = all_ids
 
         # Copy columns from both sides, checking for duplicates
-        this_idx = np.searchsorted(destination['id'], this['id'])
-        other_idx = np.searchsorted(destination['id'], other['id'])
+        this_idx = np.asarray(list(map(lambda k: np.nonzero(all_ids == k)[0][0], this['id'])))
+        other_idx = np.asarray(list(map(lambda k: np.nonzero(all_ids == k)[0][0], other['id'])))
         for c in columns:
             # From self
             if c in this.dtype.names:
