@@ -21,8 +21,8 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from astropy.io import fits
 import numpy as np
+from astropy.io import fits
 
 
 def npDtype2FitsTForm(dtype, shape):
@@ -43,8 +43,19 @@ def npDtype2FitsTForm(dtype, shape):
         dt = dtype.kind + str(dtype.alignment)
         fmt = fits.column.NUMPY2FITS[dt]
         if len(shape) > 1:
-            fmt = "{}{}".format(shape[1], fmt)
+            fmt = "{}{}".format(np.prod(shape[1:]), fmt)
     return fmt
+
+
+def shape2FitsTDim(shape):
+    """
+    Generate a  FITS TDIM value if shape is multidimensional
+    Args:
+        shape: Shape. The first axis is assumed to be the number of rows
+    """
+    if len(shape) <= 2:
+        return None
+    return '(' + ','.join(map(str, reversed(shape[1:]))) + ')'
 
 
 def tableToHdu(table):

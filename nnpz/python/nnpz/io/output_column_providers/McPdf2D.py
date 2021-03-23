@@ -16,7 +16,6 @@
 from typing import Tuple
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
 
@@ -44,6 +43,18 @@ class McPdf2D(OutputHandler.OutputColumnProviderInterface):
         self.__sampler = sampler
         self.__param_names = list(param_names)
         self.__binning = binning
+        self.__column = 'MC_PDF_2D_{}_{}'.format(*map(str.upper, self.__param_names))
+        self.__output = None
+
+    def getColumnDefinition(self):
+        shape = (self.__binning[0].shape[0] - 1, self.__binning[1].shape[0] - 1)
+        return [
+            (self.__column, np.float32, shape)
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__output = output_area[self.__column]
+        print(self.__output.shape)
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         """
@@ -51,24 +62,14 @@ class McPdf2D(OutputHandler.OutputColumnProviderInterface):
         """
         pass
 
-    def getColumns(self):
+    def fillColumns(self):
         """
         See OutputColumnProviderInterface.getColumns
         """
         samples = self.__sampler.getSamples()
-        pdfs = np.zeros((len(samples),
-                         self.__binning[0].shape[0] - 1,
-                         self.__binning[1].shape[0] - 1), dtype=np.float32)
 
         for i in range(len(samples)):
-            pdfs[i, :] = np.histogram2d(
+            self.__output[i, :] = np.histogram2d(
                 samples[i][self.__param_names[0]], samples[i][self.__param_names[1]],
                 bins=self.__binning, density=True
             )[0]
-
-        return [
-            Column(
-                data=pdfs.reshape(len(samples), -1),
-                name='MC_PDF_2D_{}_{}'.format(*map(str.upper, self.__param_names)),
-            )
-        ]

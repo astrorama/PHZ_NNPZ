@@ -53,7 +53,6 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         self.__samples_per_neighbor = mc_provider.getData(ref_ids[0]).shape[0]
         self.__neighbor_ids = np.zeros((catalog_size, n_neighbors), dtype=np.int)
         self.__neighbor_weights = np.zeros((catalog_size, n_neighbors), dtype=np.float)
-        self.__next_n = np.zeros(catalog_size, dtype=np.int)
         self.__take_n = take_n
         self.__provider = mc_provider
         self.__ref_ids = ref_ids
@@ -65,14 +64,24 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         """
         return self.__provider
 
+    def getColumnDefinition(self):
+        """
+        This provider does not generate any output
+        """
+        return []
+
+    def setWriteableArea(self, output_area):
+        """
+        This provider does not generate any output
+        """
+        pass
+
     def addContribution(self, reference_sample_i, neighbor, flags):
         """
         See OutputColumnProviderInterface.addContribution
         """
-        i = self.__next_n[neighbor.index]
-        self.__neighbor_ids[neighbor.index, i] = self.__ref_ids[reference_sample_i]
-        self.__neighbor_weights[neighbor.index, i] = neighbor.weight
-        self.__next_n[neighbor.index] += 1
+        self.__neighbor_ids[neighbor.index, neighbor.position] = self.__ref_ids[reference_sample_i]
+        self.__neighbor_weights[neighbor.index, neighbor.position] = neighbor.weight
 
     def generateSamples(self, index):
         """
@@ -98,8 +107,14 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
             self.__samples = np.stack(samples)
         return self.__samples
 
-    def getColumns(self):
+    def fillColumns(self):
         """
         This provider does not generate any output
         """
         return []
+
+    def getSampleCount(self):
+        return self.__take_n
+
+    def getDtype(self, name):
+        return self.__provider.getDtype(name)

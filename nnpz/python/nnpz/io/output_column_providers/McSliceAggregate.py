@@ -16,7 +16,6 @@
 from typing import Callable
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
 
@@ -37,6 +36,18 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
         self.__suffix = suffix
         self.__aggregator = aggregator
         self.__binning = binning
+        self.__column = 'MC_SLICE_AGGREGATE_{}_{}_{}'.format(
+            self.__target_param.upper(), self.__slice_param.upper(), self.__suffix
+        )
+        self.__output = None
+
+    def getColumnDefinition(self):
+        return [
+            (self.__column, np.float32, len(self.__binning) - 1)
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__output = output_area[self.__column]
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         """
@@ -44,27 +55,16 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
         """
         pass
 
-    def getColumns(self):
+    def fillColumns(self):
         """
         See OutputColumnProviderInterface.getColumns
         """
         samples = self.__sampler.getSamples()
 
-        aggregated = np.zeros((len(samples), len(self.__binning) - 1), dtype=np.float32)
-
-        for i in range(aggregated.shape[1]):
+        for i in range(self.__output.shape[1]):
             rmin, rmax = self.__binning[i:i + 2]
             mask = (samples[self.__slice_param] < rmin) | (samples[self.__slice_param] >= rmax)
             data = np.ma.array(samples[self.__target_param], mask=mask, copy=False)
             # Technically NaN is more adequate for the mean of an empty set, but this breaks
             # boost on later stages of the PHZ pipeline :(
-            aggregated[:, i] = self.__aggregator(data, axis=1).filled(-99.)
-
-        return [
-            Column(
-                data=aggregated,
-                name='MC_SLICE_AGGREGATE_{}_{}_{}'.format(
-                    self.__target_param.upper(), self.__slice_param.upper(), self.__suffix
-                )
-            )
-        ]
+            self.__output[:, i] = self.__aggregator(data, axis=1).filled(-99.)

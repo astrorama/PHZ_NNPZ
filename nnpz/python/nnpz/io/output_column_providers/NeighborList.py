@@ -61,3 +61,7 @@ class NeighborList(OutputHandler.OutputColumnProviderInterface):
         self.__neighbors[neighbor.index, neighbor.position] = self.__ref_ids[reference_sample_i]
         self.__weights[neighbor.index, neighbor.position] = neighbor.weight
         self.__scales[neighbor.index, neighbor.position] = neighbor.scale
+
+    def fillColumns(self):
+        pass
+

@@ -22,10 +22,8 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-from scipy import interpolate
-from astropy.table import Column
-
 from nnpz.io import OutputHandler
+from scipy import interpolate
 
 
 class PdfSampling(OutputHandler.OutputColumnProviderInterface,
@@ -53,31 +51,35 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
         self.__pdf_provider = pdf_provider
         self.__qs = quantiles if quantiles else []
         self.__mc_no = mc_samples
+        self.__quantiles = None
+        self.__mc = None
+
+    def getColumnDefinition(self):
+        def_cols = []
+        if self.__qs:
+            def_cols.append(('REDSHIFT_PDF_QUANTILES', np.float32, len(self.__qs)))
+        if self.__mc_no > 0:
+            def_cols.append(('REDSHIFT_PDF_MC', np.float32, self.__mc_no))
+        return def_cols
+
+    def setWriteableArea(self, output_area):
+        if self.__qs:
+            self.__quantiles = output_area['REDSHIFT_PDF_QUANTILES']
+        if self.__mc_no > 0:
+            self.__mc = output_area['REDSHIFT_PDF_MC']
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
-    def getColumns(self):
+    def fillColumns(self):
         bins = self.__pdf_provider.getPdzBins()
-        pdfs = self.__pdf_provider.getColumns()[0].data
-
-        cols = []
+        pdfs = self.__pdf_provider.getPdz()
 
         if self.__qs:
-            fixed_probs = np.asarray([self.__sample(pdf, bins, self.__qs) for pdf in pdfs],
-                                     dtype=np.float32)
-            cols.append(Column(fixed_probs, "REDSHIFT_PDF_QUANTILES"))
+            for i, pdf in enumerate(pdfs):
+                self.__quantiles[:] = self.__sample(pdf, bins, self.__qs)
 
         if self.__mc_no > 0:
-            samples = np.random.rand(self.__mc_no)
-            mc_vals = np.asarray([self.__sample(pdf, bins, samples) for pdf in pdfs],
-                                 dtype=np.float32)
-            cols.append(Column(mc_vals, "REDSHIFT_PDF_MC"))
-
-        return cols
-
-    def getHeaderKeywords(self):
-        keys = {}
-        if self.__qs:
-            keys["PDFQUAN"] = ' '.join([str(q) for q in self.__qs])
-        return keys
+            for i, pdf in enumerate(pdfs):
+                samples = np.random.rand(self.__mc_no)
+                self.__mc[:] = self.__sample(pdf, bins, samples)

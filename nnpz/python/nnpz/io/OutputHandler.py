@@ -27,7 +27,7 @@ import os
 from astropy.io import fits
 from astropy.table import Table
 
-from nnpz.utils.fits import npDtype2FitsTForm, tableToHdu, columnsToFitsColumn
+from nnpz.utils.fits import npDtype2FitsTForm, shape2FitsTDim, tableToHdu, columnsToFitsColumn
 
 
 class OutputHandler(object):
@@ -86,6 +86,7 @@ class OutputHandler(object):
             normalization), or can only generate the output when all contributions have
             been added, this is the moment to do so.
             """
+            raise NotImplementedError(self)
 
     class OutputExtensionTableProviderInterface(object):
         """
@@ -149,7 +150,8 @@ class OutputHandler(object):
                 name, dtype, shape = col_def if len(col_def) == 3 else col_def + (1,)
                 # npDtype2FitsTForm expects the shape to account for the row "dimension"
                 shape = (1,) + shape if isinstance(shape, tuple) else (1, shape,)
-                col_spec.append(fits.Column(name=name, format=npDtype2FitsTForm(dtype, shape)))
+                col_spec.append(fits.Column(name=name, format=npDtype2FitsTForm(dtype, shape),
+                                            dim=shape2FitsTDim(shape)))
         # Allocate
         self.__output = fits.BinTableHDU.from_columns(
             col_spec, nrows=nrows,
