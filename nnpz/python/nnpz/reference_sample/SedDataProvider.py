@@ -26,8 +26,8 @@ import pathlib
 from typing import Union
 
 import numpy as np
-from nnpz.exceptions import InvalidDimensionsException, InvalidAxisException, \
-    UninitializedException, CorruptedFileException
+from nnpz.exceptions import CorruptedFileException, InvalidAxisException, \
+    InvalidDimensionsException, UninitializedException
 
 
 class SedDataProvider(object):
@@ -104,17 +104,11 @@ class SedDataProvider(object):
         """
         if pos > self.__entries:
             raise InvalidAxisException('Position {} for {} entries'.format(pos, self.__entries))
-        if self.__cache is None:
-            self.__cache = np.zeros((self.__cache_size, self.__knots, 2), dtype=np.float32)
-        cache_line, cache_offset = divmod(pos, self.__cache_size)
+        cache_line = pos // self.__cache_size
         if cache_line != self.__cache_line:
-            cache_start = cache_line * self.__cache_size
-            read_size = min(self.__cache_size, self.__entries - cache_start)
-            cache_end = cache_start + read_size
-            data = np.load(self.__filename, mmap_mode='r')
-            np.copyto(self.__cache[:read_size], data[cache_start:cache_end], casting='same_kind')
             self.__cache_line = cache_line
-        return cache_offset
+            self.__cache = np.load(self.__filename, mmap_mode='r')
+        return pos
 
     def readSed(self, pos: int) -> np.ndarray:
         """
