@@ -19,6 +19,9 @@ from astropy.table import Column, Table
 from nnpz.framework.NeighborSet import NeighborSet
 from nnpz.io.output_column_providers.UniformPhotometry import UniformPhotometry
 
+# noinspection PyUnresolvedReferences
+from .fixtures import mock_output_handler
+
 
 class DummyPhotometry(object):
     def __init__(self):
@@ -57,7 +60,8 @@ def catalog_photometry():
     ])
 
 
-def test_uniform_photometry(reference_photometry, reference_matched_photometry, catalog_photometry):
+def test_uniform_photometry(reference_photometry, reference_matched_photometry, catalog_photometry,
+                            mock_output_handler):
     uniform = UniformPhotometry(
         catalog_photometry, reference_photometry, {
             ('MY_A_A', 'MY_A_A_ERR'): ('A', 'A', 'FLUX_A', 'FLUX_A_ERR'),
@@ -66,6 +70,8 @@ def test_uniform_photometry(reference_photometry, reference_matched_photometry, 
             ('MY_C_A', 'MY_C_A_ERR'): ('C', 'A', 'FLUX_A', 'FLUX_A_ERR')
         }
     )
+    mock_output_handler.addColumnProvider(uniform)
+    mock_output_handler.initialize(len(catalog_photometry))
 
     ns = NeighborSet()
     [ns.append(0) for _ in range(len(reference_matched_photometry))]
@@ -75,25 +81,25 @@ def test_uniform_photometry(reference_photometry, reference_matched_photometry, 
         t.matched_photo = p
         uniform.addContribution(i, t, None)
 
-    columns = uniform.getColumns()
-    assert len(columns) == 8
-    assert all(map(lambda c: len(c) == 1, columns))
+    uniform.fillColumns()
+    columns = mock_output_handler.getDataForProvider(uniform)
+    assert len(columns.dtype.fields) == 8
 
-    assert columns[0].name == 'MY_A_A'
-    assert columns[1].name == 'MY_A_A_ERR'
-    assert columns[2].name == 'MY_B_B'
-    assert columns[3].name == 'MY_B_B_ERR'
-    assert columns[4].name == 'MY_C_C'
-    assert columns[5].name == 'MY_C_C_ERR'
-    assert columns[6].name == 'MY_C_A'
-    assert columns[7].name == 'MY_C_A_ERR'
+    assert 'MY_A_A' in columns.dtype.fields
+    assert 'MY_A_A_ERR' in columns.dtype.fields
+    assert 'MY_B_B' in columns.dtype.fields
+    assert 'MY_B_B_ERR' in columns.dtype.fields
+    assert 'MY_C_C' in columns.dtype.fields
+    assert 'MY_C_C_ERR' in columns.dtype.fields
+    assert 'MY_C_A' in columns.dtype.fields
+    assert 'MY_C_A_ERR' in columns.dtype.fields
 
-    assert np.isclose(columns[0][0], catalog_photometry['FLUX_A'][0] * 0.75)
-    assert np.isclose(columns[2][0], catalog_photometry['FLUX_B'][0] * 0.62745)
-    assert np.isclose(columns[4][0], catalog_photometry['FLUX_C'][0] * 0.75)
+    assert np.isclose(columns['MY_A_A'][0], catalog_photometry['FLUX_A'][0] * 0.75)
+    assert np.isclose(columns['MY_B_B'][0], catalog_photometry['FLUX_B'][0] * 0.62745)
+    assert np.isclose(columns['MY_C_C'][0], catalog_photometry['FLUX_C'][0] * 0.75)
     # In this case the output uniform photometry is C*, so the ratio is computed
     # as C* / A
     #   First  reference: 3.5187345 / (1*0.5626045) = 6.254366077768664
     #   Second reference: 2.6067620 / (2*0.9424200) = 1.3830150039260625
     #   So the mean ratio is 3.818690540847363
-    assert np.isclose(columns[6][0], catalog_photometry['FLUX_A'][0] * 3.818690540847363)
+    assert np.isclose(columns['MY_C_A'][0], catalog_photometry['FLUX_A'][0] * 3.818690540847363)
