@@ -74,6 +74,7 @@ def mainMethod(args):
     # This stage is identical to nnpz, iterating the affected map in increasing
     # order of the reference sample indices.
     output = conf_manager.getObject('output_handler')
+    output.initialize(nrows=len(nnpz_idx))
 
     progress_listener = ProgressListener(
         len(affected) - 1, 'Adding contributions to output...', logger=logger
