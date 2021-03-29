@@ -25,7 +25,7 @@ from .fixtures import mock_output_handler
 
 class DummyPhotometry(object):
     def __init__(self):
-        self._data = np.zeros((2, 2), dtype=[('A', np.float), ('B', np.float), ('C', np.float)])
+        self._data = np.zeros((2, 2), dtype=[('A', np.float32), ('B', np.float32), ('C', np.float32)])
         self._data['A'][:, 0] = [0.5626045, 0.94242]
         self._data['B'][:, 0] = [1.7679665, 1.8930919]
         self._data['C'][:, 0] = [3.5187345, 2.606762]

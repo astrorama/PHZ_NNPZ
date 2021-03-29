@@ -62,7 +62,7 @@ class McCounter(OutputHandler.OutputColumnProviderInterface):
         samples = self.__sampler.getSamples()[self.__param_name]
 
         # Compute the binning as [i-0.5, i+0.5)
-        bins = np.append(self.__binning, self.__binning[-1] + 1).astype(np.float)
+        bins = np.append(self.__binning, self.__binning[-1] + 1).astype(np.float32)
         bins -= 0.5
 
         # For each object, take a random weighted sample and generate the histogram

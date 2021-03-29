@@ -51,8 +51,8 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
     def __init__(self, catalog_size: int, n_neighbors: int, take_n: int,
                  mc_provider: MontecarloProvider, ref_ids: np.ndarray):
         self.__samples_per_neighbor = mc_provider.getData(ref_ids[0]).shape[0]
-        self.__neighbor_ids = np.zeros((catalog_size, n_neighbors), dtype=np.int)
-        self.__neighbor_weights = np.zeros((catalog_size, n_neighbors), dtype=np.float)
+        self.__neighbor_ids = np.zeros((catalog_size, n_neighbors), dtype=np.int32)
+        self.__neighbor_weights = np.zeros((catalog_size, n_neighbors), dtype=np.float32)
         self.__take_n = take_n
         self.__provider = mc_provider
         self.__ref_ids = ref_ids

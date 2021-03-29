@@ -7,7 +7,8 @@ from nnpz.io.output_column_providers.McSampler import McSampler
 class MockProvider:
 
     def __init__(self):
-        self.__data = np.zeros((3, 50), dtype=[('P1', np.float), ('P2', np.float), ('I1', np.int)])
+        self.__data = np.zeros((3, 50),
+                               dtype=[('P1', np.float32), ('P2', np.float32), ('I1', np.int32)])
         for i in range(len(self.__data)):
             random = np.random.multivariate_normal(
                 (i, i * 2), cov=[[0.0, 0.], [0., 0.0]], size=50

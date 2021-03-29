@@ -153,7 +153,7 @@ def mc_data_fixture(pdz_list_fixture):
     result = {}
     for i, pdz_data in pdz_list_fixture.items():
         data = np.zeros((len(pdz_data), 100), dtype=[
-            ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+            ('A', np.float32), ('B', np.float32), ('C', np.float32), ('D', np.float32)
         ])
         for c in data.dtype.names:
             data[c] = np.random.rand(*data.shape)

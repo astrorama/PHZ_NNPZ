@@ -47,13 +47,13 @@ def test_recomputedPhotometry(reference_sample_fixture, reference_photo_fixture,
     assert len(phot.dtype) == len(reference_photo_fixture.getFilterList())
     assert phot['Y'].shape == (2,)
     assert phot['Y'][0] > 1.
-    assert phot['g'][0] <= np.finfo(np.float).eps
-    assert phot['vis'][0] <= np.finfo(np.float).eps
+    assert phot['g'][0] <= np.finfo(np.float32).eps
+    assert phot['vis'][0] <= np.finfo(np.float32).eps
 
     # The second one shifts VIS +1500, so it touches the peak of the SED
     phot = recomputed(0, 1, None)
     assert phot['Y'][0] > 1.
-    assert phot['g'][0] <= np.finfo(np.float).eps
+    assert phot['g'][0] <= np.finfo(np.float32).eps
     assert phot['vis'][0] > 1.
 
     # The third one shift VIS +1500 (touches first peak) and g +1000 (touches second peak)
@@ -64,15 +64,15 @@ def test_recomputedPhotometry(reference_sample_fixture, reference_photo_fixture,
 
     # The fourth one shift VIS +1500, g +1000 and Y -999, so Y stops touching the peak
     phot = recomputed(0, 3, None)
-    assert phot['Y'][0] <= np.finfo(np.float).eps
+    assert phot['Y'][0] <= np.finfo(np.float32).eps
     assert phot['g'][0] > 1.
     assert phot['vis'][0] > 1.
 
     # The last one has nan, it should behave as the first
     phot = recomputed(0, 4, None)
     assert phot['Y'][0] > 1.
-    assert phot['g'][0] <= np.finfo(np.float).eps
-    assert phot['vis'][0] <= np.finfo(np.float).eps
+    assert phot['g'][0] <= np.finfo(np.float32).eps
+    assert phot['vis'][0] <= np.finfo(np.float32).eps
 
 
 ###############################################################################
@@ -98,5 +98,5 @@ def test_recomputedPhotometryNanMeans(reference_sample_fixture, reference_photo_
         phot = recomputed(0, i, None)
         assert len(phot.dtype) == len(reference_photo_fixture.getFilterList())
         assert phot['Y'][0] > 1.
-        assert phot['vis'][0] <= np.finfo(np.float).eps
-        assert phot['g'][0] <= np.finfo(np.float).eps
+        assert phot['vis'][0] <= np.finfo(np.float32).eps
+        assert phot['g'][0] <= np.finfo(np.float32).eps

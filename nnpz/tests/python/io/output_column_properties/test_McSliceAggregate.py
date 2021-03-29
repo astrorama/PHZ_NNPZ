@@ -24,7 +24,7 @@ def test_slice(sampler: McSampler, mock_provider: MockProvider,
                mock_output_handler: MockOutputHandler):
     slicer = McSliceAggregate(
         sampler, target_param='P1', slice_param='I1', suffix='AVG',
-        aggregator=np.mean, binning=np.arange(0, 6, dtype=np.float) - 0.5
+        aggregator=np.mean, binning=np.arange(0, 6, dtype=np.float32) - 0.5
     )
     mock_output_handler.addColumnProvider(slicer)
     mock_output_handler.initialize(nrows=2)
