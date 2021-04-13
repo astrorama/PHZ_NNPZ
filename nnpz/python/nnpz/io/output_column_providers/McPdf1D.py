@@ -15,7 +15,6 @@
 #
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
 
@@ -42,6 +41,15 @@ class McPdf1D(OutputHandler.OutputColumnProviderInterface):
         self.__sampler = sampler
         self.__param_name = param_name
         self.__binning = binning
+        self.__column = 'MC_PDF_1D_{}'.format(self.__param_name.upper())
+
+    def getColumnDefinition(self):
+        return [
+            (self.__column, np.float32, len(self.__binning) - 1)
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__output = output_area[self.__column]
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         """
@@ -49,19 +57,14 @@ class McPdf1D(OutputHandler.OutputColumnProviderInterface):
         """
         pass
 
-    def getColumns(self):
+    def fillColumns(self):
         """
-        See OutputColumnProviderInterface.getColumns
+        See OutputColumnProviderInterface.fillColumns
         """
         samples = self.__sampler.getSamples()
         # For each object, take a random weighted sample and generate the histogram
-        pdfs = np.zeros((len(samples), self.__binning.shape[0] - 1), dtype=np.float32)
 
-        for i in range(pdfs.shape[0]):
-            pdfs[i, :] = np.histogram(
+        for i in range(len(self.__output)):
+            self.__output[i, :] = np.histogram(
                 samples[i][self.__param_name], bins=self.__binning, density=True
             )[0]
-
-        return [
-            Column(pdfs, 'MC_PDF_1D_{}'.format(self.__param_name.upper()))
-        ]

@@ -26,9 +26,6 @@ def test_take_samples(reference_ids, contributions, mock_provider):
     for ref_i, contrib in contributions:
         sampler.addContribution(ref_i, contrib, None)
 
-    columns = sampler.getColumns()
-    assert len(columns) == 0
-
     # First object can not have any sample from 2, and the weight is higher for 1
     samples = sampler.generateSamples(0)
     assert samples.shape == (200,)

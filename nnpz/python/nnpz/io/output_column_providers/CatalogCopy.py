@@ -40,9 +40,20 @@ class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
             self.__columns = columns
         else:
             self.__columns = self.__catalog.colnames
+        self.__output_area = None
+
+    def setWriteableArea(self, output_area):
+        self.__output_area = output_area
+
+    def getColumnDefinition(self):
+        defs = []
+        for c in self.__columns:
+            defs.append((c, self.__catalog[c].dtype, self.__catalog[c].shape[1:]))
+        return defs
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         pass
 
-    def getColumns(self):
-        return [c for _, c in self.__catalog[self.__columns].columns.items()]
+    def fillColumns(self):
+        for c in self.__columns:
+            self.__output_area[c] = self.__catalog[c]

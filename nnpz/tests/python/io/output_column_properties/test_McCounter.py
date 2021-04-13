@@ -21,14 +21,16 @@ from nnpz.io.output_column_providers.McCounter import McCounter
 from .fixtures import *
 
 
-def test_count_samples(sampler):
+def test_count_samples(sampler, mock_output_handler):
     counter = McCounter(sampler, param_name='I1', binning=np.arange(0, 10))
-    columns = counter.getColumns()
+    mock_output_handler.addColumnProvider(counter)
+    mock_output_handler.initialize(nrows=2)
+    counter.fillColumns()
+    columns = mock_output_handler.getDataForProvider(counter)
 
-    assert len(columns) == 1
-    column = columns[0]
-    assert isinstance(column, Column)
-    assert column.name == 'MC_COUNT_I1'
+    assert len(columns.dtype.fields) == 1
+    assert 'MC_COUNT_I1' in columns.dtype.fields
+    column = columns['MC_COUNT_I1']
     assert column.shape == (2, 10)
     # First object can not have any sample from 2, and the weight is higher for 1
     assert column[0, 2] == 0

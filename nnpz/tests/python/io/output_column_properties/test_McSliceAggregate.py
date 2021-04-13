@@ -14,28 +14,30 @@
 # MA 02110-1301 USA
 #
 
-from astropy.table import Column
-
 # noinspection PyUnresolvedReferences
 from nnpz.io.output_column_providers.McSliceAggregate import McSliceAggregate
 
 from .fixtures import *
 
 
-def test_slice(sampler, mock_provider):
+def test_slice(sampler: McSampler, mock_provider: MockProvider,
+               mock_output_handler: MockOutputHandler):
     slicer = McSliceAggregate(
         sampler, target_param='P1', slice_param='I1', suffix='AVG',
-        aggregator=np.mean, binning=np.arange(0, 6, dtype=np.float) - 0.5
+        aggregator=np.mean, binning=np.arange(0, 6, dtype=np.float32) - 0.5
     )
-    columns = slicer.getColumns()
+    mock_output_handler.addColumnProvider(slicer)
+    mock_output_handler.initialize(nrows=2)
+    slicer.fillColumns()
+    columns = mock_output_handler.getDataForProvider(slicer)
+
     ref0 = mock_provider.getData(0)
     ref1 = mock_provider.getData(1)
     ref2 = mock_provider.getData(2)
 
-    assert len(columns) == 1
-    column = columns[0]
-    assert isinstance(column, Column)
-    assert column.name == 'MC_SLICE_AGGREGATE_P1_I1_AVG'
+    assert len(columns.dtype.fields) == 1
+    assert 'MC_SLICE_AGGREGATE_P1_I1_AVG' in columns.dtype.fields
+    column = columns['MC_SLICE_AGGREGATE_P1_I1_AVG']
     assert column.shape == (2, 5)
 
     # First object can not have any sample from 2

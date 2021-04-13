@@ -22,8 +22,10 @@ Author: Alejandro Alvarez Ayllon
 from __future__ import division, print_function
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
+
+smallest_f32 = np.finfo(np.float32).tiny
+biggest_f32 = np.finfo(np.float32).max
 
 
 class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
@@ -40,27 +42,55 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         super(CoaddedPdz, self).__init__()
         self.__reference_sample = reference_sample
         self.__pdz_bins = reference_sample.getPdzData(ref_ids[0])[:, 0]
-        self.__pdzs = np.zeros((catalog_size, len(self.__pdz_bins)), dtype=np.float64)
         self.__ref_ids = ref_ids
         self.__current_ref_i = None
         self.__current_ref_pdz = None
+        self.__pdzs = None
+        self.__scales = np.ones(catalog_size, dtype=np.float64)
+
+    def getColumnDefinition(self):
+        return [
+            ('REDSHIFT_PDF', np.float32, len(self.__pdz_bins))
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__pdzs = output_area['REDSHIFT_PDF']
 
     def addContribution(self, reference_sample_i, neighbor, flags):
+        # If the weight is barely a floating point error, ignore
+        if neighbor.weight <= 1e-300:
+            return
+
         if reference_sample_i != self.__current_ref_i:
             ref_id = self.__ref_ids[reference_sample_i]
             self.__current_ref_i = reference_sample_i
-            self.__current_ref_pdz = np.array(self.__reference_sample.getPdzData(ref_id), dtype=np.float64)
-            if not (self.__current_ref_pdz[:, 0] == self.__pdz_bins).all():
-                raise ValueError('Invalid number of PDZ bins')
+            self.__current_ref_pdz = self.__reference_sample.getPdzData(ref_id)[:, 1].astype(
+                np.float64)
 
-        self.__pdzs[neighbor.index] += self.__current_ref_pdz[:, 1] * neighbor.weight
+        # Note that pdz is float64, so we use it as working area
+        with np.errstate(over='ignore'):
+            pdz = self.__current_ref_pdz * neighbor.weight * self.__scales[neighbor.index]
+        pdz += self.__pdzs[neighbor.index]
 
-    def getColumns(self):
-        integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
-        normalized = (self.__pdzs.T * integrals).T
-        return [
-            Column(normalized, 'REDSHIFT_PDF', dtype=np.float32),
-        ]
+        # Re-scale if necessary so it fits on 32 bits floating point
+        if np.all(pdz <= smallest_f32) & np.any(pdz > 0):
+            self.__scales[neighbor.index] = 1 / np.max(pdz)
+            pdz *= self.__scales[neighbor.index]
+        # If a previous neighbor had a weight order of magnitudes lower than this one,
+        # we need to lower the scaling
+        elif np.any(pdz >= biggest_f32):
+            np.copyto(pdz, self.__pdzs[neighbor.index])
+            pdz /= self.__scales[neighbor.index]
+            pdz += self.__current_ref_pdz * neighbor.weight
+            self.__scales[neighbor.index] = 1 / np.max(pdz)
+            pdz *= self.__scales[neighbor.index]
+        self.__pdzs[neighbor.index] = pdz
+
+    def fillColumns(self):
+        # Running trapz over all pdzs would be faster, but it can cause a big allocation
+        for i in range(len(self.__pdzs)):
+            integral = 1. / np.trapz(self.__pdzs[i], self.__pdz_bins)
+            self.__pdzs[i] = self.__pdzs[i] * integral
 
     def getPdzBins(self):
         """
@@ -68,3 +98,6 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
             PDZ bins
         """
         return self.__pdz_bins
+
+    def getPdz(self):
+        return self.__pdzs

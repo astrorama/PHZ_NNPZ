@@ -4,14 +4,16 @@ from nnpz.io.output_column_providers.McPdf1D import McPdf1D
 from .fixtures import *
 
 
-def test_pdf1d(sampler):
+def test_pdf1d(sampler: McSampler, mock_output_handler: MockOutputHandler):
     pdf = McPdf1D(sampler, param_name='P1', binning=np.array([-0.5, 0.5, 1.5, 2.5, 3.5]))
+    mock_output_handler.addColumnProvider(pdf)
+    mock_output_handler.initialize(nrows=2)
+    pdf.fillColumns()
+    columns = mock_output_handler.getDataForProvider(pdf)
 
-    columns = pdf.getColumns()
-    assert isinstance(columns, list)
-    column = columns[0]
-    assert isinstance(column, Column)
-    assert column.name == 'MC_PDF_1D_P1'
+    assert len(columns.dtype.fields) == 1
+    assert 'MC_PDF_1D_P1' in columns.dtype.fields
+    column = columns['MC_PDF_1D_P1']
     assert column.shape == (2, 4)
     # First object can not have any sample from 2, and the weight is higher for 1
     assert column[0][3] == 0

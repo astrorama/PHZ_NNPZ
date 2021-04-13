@@ -22,8 +22,6 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-from astropy.table import Column
-
 from nnpz.io import OutputHandler
 
 
@@ -52,7 +50,15 @@ class TrueRedshiftPdz(OutputHandler.OutputColumnProviderInterface):
         self.__z_max = z_max
         self.__pdz_bins = np.linspace(z_min, z_max, bins_no, dtype=np.float64)
         self.__step = self.__pdz_bins[1] - self.__pdz_bins[0]
-        self.__pdzs = np.zeros((catalog_size, len(self.__pdz_bins)), dtype=np.float64)
+        self.__pdzs = None
+
+    def getColumnDefinition(self):
+        return [
+            ('REDSHIFT_PDF', np.float32, len(self.__pdz_bins))
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__pdzs = output_area['REDSHIFT_PDF']
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         redshift = self.__ref_z[reference_sample_i]
@@ -66,11 +72,13 @@ class TrueRedshiftPdz(OutputHandler.OutputColumnProviderInterface):
 
         pdz[pdz_i] += neighbor.weight
 
-    def getColumns(self):
-        integrals = 1. / np.trapz(self.__pdzs, self.__pdz_bins, axis=1)
-        normalized = (self.__pdzs.T * integrals).T
-        col = Column(normalized, 'REDSHIFT_PDF', dtype=np.float32)
-        return [col]
+    def fillColumns(self):
+        for i in range(len(self.__pdzs)):
+            integral = np.trapz(self.__pdzs[i], self.__pdz_bins)
+            self.__pdzs[i] /= integral
 
     def getPdzBins(self):
         return self.__pdz_bins
+
+    def getPdz(self):
+        return self.__pdzs

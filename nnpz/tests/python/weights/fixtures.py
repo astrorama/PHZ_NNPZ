@@ -130,7 +130,7 @@ def target_fixture(filters_fixture):
 def reference_photo_fixture(temp_dir_fixture, filters_fixture):
     photo_path = os.path.join(temp_dir_fixture, 'Photometry.fits')
 
-    nnpz_photo = dict(ID=np.arange(5, dtype=np.int))
+    nnpz_photo = dict(ID=np.arange(5, dtype=np.int32))
     for filter_name in filters_fixture.keys():
         nnpz_photo[filter_name] = np.zeros(5, dtype=np.float32)
     nnpz_photo = fits.BinTableHDU(

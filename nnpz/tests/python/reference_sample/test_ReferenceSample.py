@@ -443,7 +443,7 @@ def test_addProvider(reference_sample_dir_fixture):
 
     # Given
     expected_data = np.zeros((2, 100), dtype=[
-        ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+        ('A', np.float32), ('B', np.float32), ('C', np.float32), ('D', np.float32)
     ])
     for c in expected_data.dtype.names:
         expected_data[c] = np.random.rand(*expected_data.shape)
@@ -480,7 +480,7 @@ def test_addProviderExists(reference_sample_dir_fixture):
 
     # Given
     expected_data = np.zeros((2, 100), dtype=[
-        ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+        ('A', np.float32), ('B', np.float32), ('C', np.float32), ('D', np.float32)
     ])
     for c in expected_data.dtype.names:
         expected_data[c] = np.random.rand(*expected_data.shape)
@@ -516,7 +516,7 @@ def test_addProviderOverwrite(reference_sample_dir_fixture):
 
     # Given
     expected_data = np.zeros((2, 100), dtype=[
-        ('A', np.float), ('B', np.float), ('C', np.float), ('D', np.float)
+        ('A', np.float32), ('B', np.float32), ('C', np.float32), ('D', np.float32)
     ])
     for c in expected_data.dtype.names:
         expected_data[c] = np.random.rand(*expected_data.shape)

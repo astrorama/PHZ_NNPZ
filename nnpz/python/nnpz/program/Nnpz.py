@@ -105,6 +105,7 @@ def mainMethod(args):
     progress_listener = ProgressListener(
         len(affected) - 1, 'Adding contributions to output...', logger=logger
     )
+    output.initialize(len(target_data))
     for progress, ref_i in enumerate(sorted(affected)):
         progress_listener(progress)
         for target in affected[ref_i]:

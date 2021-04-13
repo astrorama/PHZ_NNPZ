@@ -21,8 +21,9 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from astropy.table import Column
+from typing import Sequence
 
+import numpy as np
 from nnpz.io import OutputHandler
 
 NEIGHBOR_IDS_COLNAME = 'NEIGHBOR_IDS'
@@ -36,19 +37,31 @@ class NeighborList(OutputHandler.OutputColumnProviderInterface):
     applied scaling
     """
 
-    def __init__(self, catalog_size, ref_ids):
-        self.__neighbors = [[] for i in range(catalog_size)]
-        self.__weights = [[] for i in range(catalog_size)]
-        self.__scales = [[] for i in range(catalog_size)]
+    def __init__(self, ref_ids: Sequence, n_neighbors: int):
+        super(NeighborList, self).__init__()
         self.__ref_ids = ref_ids
+        self.__n_neighbors = n_neighbors
+        self.__neighbors = None
+        self.__weights = None
+        self.__scales = None
+
+    def getColumnDefinition(self):
+        return [
+            (NEIGHBOR_IDS_COLNAME, np.int64, self.__n_neighbors),
+            (NEIGHBOR_WEIGHTS_COLNAME, np.float32, self.__n_neighbors),
+            (NEIGHBOR_SCALES_COLNAME, np.float32, self.__n_neighbors)
+        ]
+
+    def setWriteableArea(self, output_area):
+        self.__neighbors = output_area[NEIGHBOR_IDS_COLNAME]
+        self.__weights = output_area[NEIGHBOR_WEIGHTS_COLNAME]
+        self.__scales = output_area[NEIGHBOR_SCALES_COLNAME]
 
     def addContribution(self, reference_sample_i, neighbor, flags):
-        self.__neighbors[neighbor.index].append(self.__ref_ids[reference_sample_i])
-        self.__weights[neighbor.index].append(neighbor.weight)
-        self.__scales[neighbor.index].append(neighbor.scale)
+        self.__neighbors[neighbor.index, neighbor.position] = self.__ref_ids[reference_sample_i]
+        self.__weights[neighbor.index, neighbor.position] = neighbor.weight
+        self.__scales[neighbor.index, neighbor.position] = neighbor.scale
 
-    def getColumns(self):
-        neighbor_col = Column(self.__neighbors, NEIGHBOR_IDS_COLNAME)
-        weight_col = Column(self.__weights, NEIGHBOR_WEIGHTS_COLNAME)
-        scale_col = Column(self.__scales, NEIGHBOR_SCALES_COLNAME)
-        return [neighbor_col, weight_col, scale_col]
+    def fillColumns(self):
+        pass
+
