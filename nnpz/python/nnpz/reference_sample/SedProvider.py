@@ -1,11 +1,10 @@
-import os
 from typing import List, Union
 
 import numpy as np
-from nnpz.exceptions import AlreadySetException, InvalidDimensionsException
-from nnpz.reference_sample import SedDataProvider, IndexProvider
+from nnpz.exceptions import InvalidDimensionsException
+from nnpz.reference_sample import IndexProvider, SedDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
-from nnpz.reference_sample.util import validate_data_files, locate_existing_data_files
+from nnpz.reference_sample.util import locate_existing_data_files, validate_data_files
 
 
 class SedProvider(BaseProvider):
@@ -13,6 +12,8 @@ class SedProvider(BaseProvider):
     Provides a SED per reference object. SEDs may have different number of knots.
     There is no limitation on the variety of number of knots, but it is expected
     to be limited to a reduced set (i.e. all SEDs of a family normally have the same resolution)
+
+    The SedProvider will keep at least one file per number of knots open
 
     Args:
         *args:
@@ -24,8 +25,8 @@ class SedProvider(BaseProvider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._data_files = validate_data_files(self._data_pattern, self._index, self._key)
-        self._current_data_provider = None
-        self._current_data_index = None
+        self._current_index_for_knots = dict()
+        self._data_map = dict()
         self._last_index_for_knots = dict()
         for data_file in self._data_files:
             sed_data_prov = SedDataProvider(self._data_pattern.format(data_file))
@@ -37,17 +38,25 @@ class SedProvider(BaseProvider):
         Write the changes to disk.
         """
         self._index.flush()
-        if self._current_data_provider:
-            self._current_data_provider.flush()
+        for provider in self._data_map.values():
+            provider.flush()
 
-    def _swapProvider(self, index):
-        if index != self._current_data_index:
-            if self._current_data_provider is not None:
-                self._current_data_provider.flush()
-            self._current_data_index = index
-            self._current_data_provider = SedDataProvider(
-                self._data_pattern.format(index)
-            )
+    def _swapProvider(self, index: int):
+        if index in self._data_map:
+            return self._data_map[index]
+
+        # Load provider
+        data_provider = SedDataProvider(self._data_pattern.format(index))
+        knots = data_provider.getKnots()
+
+        # Close previous for the same size
+        prev_index = self._current_index_for_knots.get(knots, None)
+        if prev_index is not None:
+            del self._data_map[prev_index]
+
+        # Store reference to the new one
+        self._current_index_for_knots[knots] = index
+        self._data_map[index] = data_provider
 
     def getSedData(self, obj_id: int) -> Union[np.ndarray, None]:
         """
@@ -72,9 +81,8 @@ class SedProvider(BaseProvider):
         sed_loc = self._index.get(obj_id, self._key)
         if not sed_loc:
             return None
-        if not self._current_data_index or self._current_data_index != sed_loc.file:
-            self._swapProvider(sed_loc.file)
-        return self._current_data_provider.readSed(sed_loc.offset)
+        self._swapProvider(sed_loc.file)
+        return self._data_map[sed_loc.file].readSed(sed_loc.offset)
 
     def _getWriteableDataProvider(self, knots):
         """
@@ -86,12 +94,14 @@ class SedProvider(BaseProvider):
         self._swapProvider(self._last_index_for_knots[knots])
 
         # Check if the last file exceeded the size limit and create a new one
-        if self._current_data_provider.size() >= self._data_limit:
+        index = self._last_index_for_knots[knots]
+        if self._data_map[index].size() >= self._data_limit:
             self._last_data_index += 1
             self._last_index_for_knots[knots] = self._last_data_index
             self._swapProvider(self._last_data_index)
+            index = self._last_index_for_knots[knots]
 
-        return self._current_data_index, self._current_data_provider
+        return self._last_index_for_knots[knots], self._data_map[index]
 
     def importData(self, other_index: IndexProvider, data_pattern: str, extra_data: dict):
         """

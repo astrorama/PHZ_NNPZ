@@ -23,11 +23,11 @@ from __future__ import division, print_function
 
 import os
 import pathlib
-from typing import Union, Iterable
+from typing import Iterable, Union
 
 import numpy as np
-from nnpz.exceptions import AlreadySetException, InvalidDimensionsException, \
-    InvalidAxisException, UninitializedException, CorruptedFileException
+from nnpz.exceptions import AlreadySetException, CorruptedFileException, InvalidAxisException, \
+    InvalidDimensionsException, UninitializedException
 
 
 class PdzDataProvider(object):
@@ -132,17 +132,11 @@ class PdzDataProvider(object):
         """
         if pos > self.__entries:
             raise InvalidAxisException('Position {} for {} entries'.format(pos, self.__entries))
-        if self.__cache is None:
-            self.__cache = np.zeros((self.__cache_size, len(self.__redshift_bins)), dtype=np.float32)
-        cache_line, cache_offset = divmod(pos, self.__cache_size)
+        cache_line = pos // self.__cache_size
         if cache_line != self.__cache_line:
-            cache_start = cache_line * self.__cache_size
-            read_size = min(self.__cache_size, self.__entries - cache_start)
-            cache_end = cache_start + read_size
-            data = np.load(self.__filename, mmap_mode='r')
-            np.copyto(self.__cache[:read_size], data[cache_start:cache_end], casting='same_kind')
             self.__cache_line = cache_line
-        return cache_offset
+            self.__cache = np.load(self.__filename, mmap_mode='r')
+        return pos
 
     def readPdz(self, pos: int) -> np.ndarray:
         """
