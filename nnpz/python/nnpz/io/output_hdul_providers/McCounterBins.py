@@ -27,6 +27,9 @@ class McCounterBins(OutputHandler.OutputExtensionTableProviderInterface):
         self.__param_name = param_name
         self.__binning = binning
 
+    def addContribution(self, reference_sample_i, neighbor, flags):
+        pass
+
     def getExtensionTables(self):
         return {
             'BINS_MC_COUNT_{}'.format(self.__param_name.upper()): Table({

@@ -32,6 +32,9 @@ class McSliceAggregateBins(OutputHandler.OutputExtensionTableProviderInterface):
         self.__suffix = suffix
         self.__slice_binning = slice_binning
 
+    def addContribution(self, reference_sample_i, neighbor, flags):
+        pass
+
     def getExtensionTables(self):
         return {
             'BINS_MC_SLICE_AGGREGATE_{}_{}_{}'.format(
