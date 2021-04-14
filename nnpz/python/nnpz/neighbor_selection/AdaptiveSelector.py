@@ -49,12 +49,15 @@ class AdaptiveSelector(NeighborSelectorInterface):
         self.__invalid_bands = [i for i in range(n_bands) if i not in self.__valid_bands]
         if len(self.__valid_bands) != n_bands:
             if filter_names:
-                logger.warning('Discarding columns {} from the neighbor search'.format(
+                logger.warning(
+                    'Discarding columns %s from the neighbor search',
                     ', '.join([filter_names[i][0] for i in self.__invalid_bands])
-                ))
+                )
             else:
-                logger.warning('Discarding {} bands from the neighbor search'.format(
-                    n_bands - len(self.__valid_bands)))
+                logger.warning(
+                    'Discarding %d bands from the neighbor search',
+                    n_bands - len(self.__valid_bands)
+                )
 
     def _findNeighborsImpl(self, coordinate, flags):
         return self.__selector.findNeighbors(coordinate[self.__valid_bands, :], flags)

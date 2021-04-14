@@ -61,7 +61,7 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         else:
             catalog_path = ref_config['reference_sample_phot_file']
 
-        logger.info('Using absolute weights "{}" from {}'.format(column_name, catalog_path))
+        logger.info('Using absolute weights "%s" from %s', column_name, catalog_path)
 
         reader = CatalogReader(catalog_path)
         absolute_weights = reader.get(prop.Column(column_name))
@@ -84,7 +84,7 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         self._checkParameterExists('weight_method', args)
         method = args['weight_method']
         if not method in _calculator_map:
-            logger.error('Unknown weight calculation method: {}'.format(method))
+            logger.error('Unknown weight calculation method: %s', method)
             exit(1)
         self.__calculator = _calculator_map[method]
 

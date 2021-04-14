@@ -36,7 +36,7 @@ class ReferenceSampleConfig(ConfigManager.ConfigHandler):
     def __createSample(self, args):
         if 'reference_sample_dir' in args:
             sample_dir = args['reference_sample_dir']
-            logger.info('Reading reference sample from {}...'.format(sample_dir))
+            logger.info('Reading reference sample from %s...', sample_dir)
             self.__sample = ReferenceSample(
                 sample_dir,
                 providers=args.get('reference_sample_providers', None)
