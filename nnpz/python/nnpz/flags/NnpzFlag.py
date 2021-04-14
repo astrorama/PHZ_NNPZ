@@ -80,7 +80,7 @@ class NnpzFlag(with_metaclass(_NnpzFlagType, object)):
         self.__array = np.zeros(_array_size, dtype=np.uint8)
         for flag in flag_list:
             if isinstance(flag, NnpzFlag):
-                self.__array |= flag._NnpzFlag__array
+                self.__array |= flag.__array
             else:
                 arr_i, flag_bits = _flag_info_map[flag]
                 self.__array[arr_i] |= flag_bits
@@ -98,36 +98,36 @@ class NnpzFlag(with_metaclass(_NnpzFlagType, object)):
         return str(self)
 
     def __eq__(self, other):
-        return np.all(self.__array == other._NnpzFlag__array)
+        return np.all(self.__array == other.__array)
 
     def __invert__(self):
-        self.__array == ~self.__array
+        return ~self.__array
 
     def __and__(self, other):
         res = NnpzFlag()
-        res._NnpzFlag__array = self.__array & other._NnpzFlag__array
+        res.__array = self.__array & other.__array
         return res
 
     def __or__(self, other):
         res = NnpzFlag()
-        res._NnpzFlag__array = self.__array | other._NnpzFlag__array
+        res._NnpzFlag__array = self.__array | other.__array
         return res
 
     def __xor__(self, other):
         res = NnpzFlag()
-        res._NnpzFlag__array = self.__array ^ other._NnpzFlag__array
+        res._NnpzFlag__array = self.__array ^ other.__array
         return res
 
     def __iand__(self, other):
-        self.__array &= other._NnpzFlag__array
+        self.__array &= other.__array
         return self
 
     def __ior__(self, other):
-        self.__array |= other._NnpzFlag__array
+        self.__array |= other.__array
         return self
 
     def __ixor__(self, other):
-        self.__array ^= other._NnpzFlag__array
+        self.__array ^= other.__array
         return self
 
     def isClear(self):
