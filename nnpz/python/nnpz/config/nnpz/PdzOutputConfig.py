@@ -50,6 +50,9 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
             logger.warning('PDZ and neighbor list disabled at the same time!')
             return
 
+        if not self.__add_pdz_output:
+            return
+
         # First handle the case where we have a reference sample directory. In
         # this case the PDZ is the weighted co-add of the sample PDZs.
         if 'reference_sample' in ref_options:
