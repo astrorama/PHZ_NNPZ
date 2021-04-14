@@ -27,7 +27,7 @@ import os
 from astropy.io import fits
 from astropy.table import Table
 
-from nnpz.utils.fits import npDtype2FitsTForm, shape2FitsTDim, tableToHdu, columnsToFitsColumn
+from nnpz.utils.fits import npDtype2FitsTForm, shape2FitsTDim, tableToHdu
 
 
 class OutputHandler(object):

@@ -77,14 +77,3 @@ def tableToHdu(table):
         hdu.header.append((key, value))
     return hdu
 
-
-def columnsToFitsColumn(columns):
-    """
-    Converts a list of astropy Table Columns to fits.Column
-    """
-    fits_cols = []
-    for col in columns:
-        data = col.data
-        fmt = npDtype2FitsTForm(data)
-        fits_cols.append(fits.Column(name=col.name, array=data, format=fmt))
-    return fits_cols
