@@ -68,8 +68,8 @@ class McPdf2D(OutputHandler.OutputColumnProviderInterface):
         """
         samples = self.__sampler.getSamples()
 
-        for i in range(len(samples)):
+        for i, sample in enumerate(samples):
             self.__output[i, :] = np.histogram2d(
-                samples[i][self.__param_names[0]], samples[i][self.__param_names[1]],
+                sample[self.__param_names[0]], sample[self.__param_names[1]],
                 bins=self.__binning, density=True
             )[0]

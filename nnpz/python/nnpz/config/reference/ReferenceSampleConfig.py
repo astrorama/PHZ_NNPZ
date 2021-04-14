@@ -50,8 +50,7 @@ class ReferenceSampleConfig(ConfigManager.ConfigHandler):
         if self.__sample is not None:
             return {'reference_sample': self.__sample,
                     'reference_ids': self.__sample.getIds()}
-        else:
-            return {}
+        return {}
 
 
 ConfigManager.addHandler(ReferenceSampleConfig)

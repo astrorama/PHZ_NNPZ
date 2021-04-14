@@ -49,7 +49,7 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
         # Make sure the list of neighbors is generated in that case!
         self.__add_pdz_output = args.get('pdz_output', True)
         if not self.__add_pdz_output and not neighbor_options['neighbor_info_output']:
-            logger.warn('PDZ and neighbor list disabled at the same time!')
+            logger.warning('PDZ and neighbor list disabled at the same time!')
             return
 
         # First handle the case where we have a reference sample directory. In

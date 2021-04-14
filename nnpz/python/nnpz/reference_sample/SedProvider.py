@@ -43,7 +43,7 @@ class SedProvider(BaseProvider):
 
     def _swapProvider(self, index: int):
         if index in self._data_map:
-            return self._data_map[index]
+            return
 
         # Load provider
         data_provider = SedDataProvider(self._data_pattern.format(index))

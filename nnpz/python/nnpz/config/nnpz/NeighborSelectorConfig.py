@@ -52,9 +52,9 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
     def __getPrior(prior):
         if hasattr(prior, '__call__'):
             return prior
-        elif prior == 'uniform':
+        if prior == 'uniform':
             return lambda a: 1
-        elif os.path.exists(prior):
+        if os.path.exists(prior):
             table = Table.read(prior, format='ascii')
             return interpolate.interp1d(table.columns[0], table.columns[1], kind='linear')
         raise Exception('Unknown prior')

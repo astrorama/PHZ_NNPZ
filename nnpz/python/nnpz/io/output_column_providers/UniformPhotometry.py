@@ -49,8 +49,8 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
     def __init__(self, catalog_photo: np.ndarray, reference_photo: PhotometryProvider,
                  filter_map: Dict[Tuple[str, str], Tuple[str, str, str, str]]):
         self.__catalog_photo = catalog_photo
-        obj_filters = set([t[0] for t in filter_map.values()])
-        obs_filters = set([t[1] for t in filter_map.values()])
+        obj_filters = {t[0] for t in filter_map.values()}
+        obs_filters = {t[1] for t in filter_map.values()}
         self.__ref_filters = list(obj_filters.union(obs_filters))
         self.__ref_filters_idx = dict([(f, i) for i, f in enumerate(self.__ref_filters)])
         self.__ref_photo = reference_photo.getData(*self.__ref_filters)
