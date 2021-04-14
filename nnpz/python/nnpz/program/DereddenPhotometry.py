@@ -61,7 +61,7 @@ def mainMethod(args):
     """
     filter_provider = ListFileFilterProvider(args.filter_list)
     filter_names = filter_provider.getFilterNames()
-    filter_dict = dict([(fn, filter_provider.getFilterTransmission(fn)) for fn in filter_names])
+    filter_dict = {fn: filter_provider.getFilterTransmission(fn) for fn in filter_names}
     _logger.info('De-reddening filters')
     for fn in filter_names:
         _logger.info('\t%s', fn)

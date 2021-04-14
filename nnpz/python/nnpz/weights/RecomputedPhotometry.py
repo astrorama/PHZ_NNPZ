@@ -89,9 +89,7 @@ class RecomputedPhotometry(WeightPhotometryProvider):
         # filter transmission, which is the integration of their transmission over the wavelength
         # This integration is *invariant* even when filter shifts are applied, so we can save
         # quite a lot of computation if we just initialize it here
-        filter_trans_map = dict(
-            [(f, ref_phot.getFilterTransmission(f)) for f in ref_phot.getFilterList()]
-        )
+        filter_trans_map = {f: ref_phot.getFilterTransmission(f) for f in ref_phot.getFilterList()}
         self.__phot_pre_post = PhotometryTypeMap[phot_type][0](filter_trans_map)
 
         if self.__ebv_list is not None:

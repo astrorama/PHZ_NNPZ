@@ -52,7 +52,7 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
         obj_filters = {t[0] for t in filter_map.values()}
         obs_filters = {t[1] for t in filter_map.values()}
         self.__ref_filters = list(obj_filters.union(obs_filters))
-        self.__ref_filters_idx = dict([(f, i) for i, f in enumerate(self.__ref_filters)])
+        self.__ref_filters_idx = {f: i for i, f in enumerate(self.__ref_filters)}
         self.__ref_photo = reference_photo.getData(*self.__ref_filters)
         self.__filter_map = filter_map
         self.__total_ratios = np.zeros(

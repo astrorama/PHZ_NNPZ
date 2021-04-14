@@ -83,9 +83,7 @@ def defineSpecificProgramOptions():
 
 def createPhotometryBuilder(phot_type, gal_ebv, parallel, filter_provider):
     filter_names = filter_provider.getFilterNames()
-    filter_trans = dict(
-        [(fname, filter_provider.getFilterTransmission(fname)) for fname in filter_names]
-    )
+    filter_trans = {fname: filter_provider.getFilterTransmission(fname) for fname in filter_names}
     pre_post_processor = PhotometryTypeMap[phot_type][0](filter_trans)
     if gal_ebv is not None:
         pre_post_processor = GalacticReddeningPrePostProcessor(pre_post_processor, gal_ebv)
