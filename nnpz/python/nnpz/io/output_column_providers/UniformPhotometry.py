@@ -90,7 +90,7 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
         ratios = self.__total_ratios / self.__total_weights
 
         for r, (output_names, input_names) in enumerate(self.__filter_map.items()):
-            r_obj, r_obs, t_obs, t_obs_err = input_names
+            _, _, t_obs, t_obs_err = input_names
             np.multiply(self.__catalog_photo[t_obs], ratios[:, r],
                         out=self.__output[output_names[0]])
             if t_obs_err:

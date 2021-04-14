@@ -188,7 +188,6 @@ def buildMontecarloPhotometry(args, ref_sample):
     logger.info('Successfully read filter transmissions')
 
     # Create the photometry builder to use for computing the photometry values
-    n_items = args.input_size if args.input_size is not None else len(ref_sample)
     phot_builder = createPhotometryBuilder(args.type, args.gal_ebv, args.parallel, filters_provider)
     n_phot = 0
 
@@ -283,11 +282,11 @@ def mainMethod(args):
 
     # MC Sampling
     if args.mc_filters:
-        n_mc_phot, mc_phot_mean, mc_phot_std, mc_filter_map = buildMontecarloPhotometry(
+        _, mc_phot_mean, mc_phot_std, mc_filter_map = buildMontecarloPhotometry(
             args, ref_sample
         )
     else:
-        n_mc_phot, mc_phot_mean, mc_phot_std, mc_filter_map = 0, {}, {}, {}
+        _, mc_phot_mean, mc_phot_std, mc_filter_map = 0, {}, {}, {}
 
     # Create the output
     logger.info('')

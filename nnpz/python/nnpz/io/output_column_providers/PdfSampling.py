@@ -76,10 +76,10 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
         pdfs = self.__pdf_provider.getPdz()
 
         if self.__qs:
-            for i, pdf in enumerate(pdfs):
+            for pdf in pdfs:
                 self.__quantiles[:] = self.__sample(pdf, bins, self.__qs)
 
         if self.__mc_no > 0:
-            for i, pdf in enumerate(pdfs):
+            for pdf in pdfs:
                 samples = np.random.rand(self.__mc_no)
                 self.__mc[:] = self.__sample(pdf, bins, samples)
