@@ -15,7 +15,6 @@
 #
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
 

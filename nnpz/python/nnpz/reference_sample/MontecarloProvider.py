@@ -1,9 +1,10 @@
+from typing import Iterable
+
 import numpy as np
 from nnpz.exceptions import UninitializedException
 from nnpz.reference_sample import MontecarloDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
 from nnpz.reference_sample.util import validate_data_files
-from typing import Iterable
 
 
 class MontecarloProvider(BaseProvider):

@@ -22,7 +22,7 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 from nnpz.config import ConfigManager
-from nnpz.config.reference import (ReferenceSampleConfig, ReferenceCatalogConfig,
+from nnpz.config.reference import (ReferenceCatalogConfig, ReferenceSampleConfig,
                                    ReferenceSamplePhotometryConfig)
 
 

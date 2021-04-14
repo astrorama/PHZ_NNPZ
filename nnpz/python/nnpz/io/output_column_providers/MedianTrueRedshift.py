@@ -22,7 +22,6 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-from astropy.table import Column
 from nnpz.io import OutputHandler
 
 

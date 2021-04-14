@@ -25,12 +25,12 @@ import nnpz.io.catalog_properties as prop
 import numpy as np
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import WeightPhotometryProviderConfig, NeighborSelectorConfig
+from nnpz.config.nnpz import NeighborSelectorConfig, WeightPhotometryProviderConfig
 from nnpz.config.reference import ReferenceConfig
 from nnpz.framework import ReferenceSampleWeightCalculator
 from nnpz.framework.ReferenceSampleWeightCorrector import ReferenceSampleWeightCorrector
 from nnpz.io import CatalogReader
-from nnpz.weights import (LikelihoodWeight, InverseEuclideanWeight, InverseChi2Weight)
+from nnpz.weights import (InverseChi2Weight, InverseEuclideanWeight, LikelihoodWeight)
 
 logger = Logging.getLogger('Configuration')
 

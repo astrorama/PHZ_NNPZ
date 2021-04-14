@@ -16,14 +16,12 @@
 
 import argparse
 
-import numpy as np
 from ElementsKernel.Logging import getLogger
 from astropy.table import Table
-from nnpz.framework import ProgressListener
 from nnpz.io.catalog_properties import Photometry
+from nnpz.photometry import ListFileFilterProvider
 from nnpz.photometry.SourceIndependantGalacticUnReddening import \
     SourceIndependantGalacticUnReddening
-from nnpz.photometry import ListFileFilterProvider
 
 _logger = getLogger(__name__)
 

@@ -22,15 +22,15 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import os.path
-import sys
 
 import nnpz.neighbor_selection.brute_force_methods as bfm
+import sys
 from ElementsKernel import Logging
 from astropy.table import Table
 from nnpz.config import ConfigManager
 from nnpz.config.nnpz import TargetCatalogConfig
-from nnpz.neighbor_selection import (KDTreeSelector, BruteForceSelector,
-                                     EuclideanRegionBruteForceSelector)
+from nnpz.neighbor_selection import (BruteForceSelector, EuclideanRegionBruteForceSelector,
+                                     KDTreeSelector)
 from nnpz.neighbor_selection.AdaptiveSelector import AdaptiveSelector
 from nnpz.scaling import Chi2Scaling
 from scipy import interpolate

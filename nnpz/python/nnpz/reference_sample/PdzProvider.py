@@ -1,10 +1,10 @@
+from typing import List, Union
+
 import numpy as np
-import os
-from nnpz.exceptions import AlreadySetException, InvalidAxisException, InvalidDimensionsException
+from nnpz.exceptions import InvalidAxisException, InvalidDimensionsException
 from nnpz.reference_sample import IndexProvider, PdzDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
 from nnpz.reference_sample.util import locate_existing_data_files, validate_data_files
-from typing import List, Union
 
 
 class PdzProvider(BaseProvider):

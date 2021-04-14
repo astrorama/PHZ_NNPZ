@@ -21,7 +21,6 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-import numpy as np
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.config.reference import ReferenceSampleConfig

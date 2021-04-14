@@ -28,7 +28,7 @@ from nnpz.exceptions import UnknownNameException
 from nnpz.io import CatalogReader
 from nnpz.io.catalog_properties import Column
 from nnpz.io.output_column_providers.NeighborList import NEIGHBOR_IDS_COLNAME, \
-    NEIGHBOR_WEIGHTS_COLNAME, NEIGHBOR_SCALES_COLNAME
+    NEIGHBOR_SCALES_COLNAME, NEIGHBOR_WEIGHTS_COLNAME
 
 logger = Logging.getLogger('Configuration')
 

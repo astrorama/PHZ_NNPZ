@@ -22,7 +22,6 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import sys
-
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 

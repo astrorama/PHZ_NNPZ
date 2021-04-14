@@ -21,8 +21,6 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-import itertools
-
 import numpy as np
 from ElementsKernel import Logging
 from ElementsKernel.Auxiliary import getAuxiliaryPath

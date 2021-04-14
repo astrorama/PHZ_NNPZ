@@ -21,12 +21,10 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-import sys
-
 import nnpz.io.output_column_providers as ocp
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import OutputHandlerConfig, TargetCatalogConfig, NeighborListOutputConfig
+from nnpz.config.nnpz import NeighborListOutputConfig, OutputHandlerConfig, TargetCatalogConfig
 from nnpz.config.reference import ReferenceConfig
 from nnpz.io.output_hdul_providers.PdzBins import PdzBins
 

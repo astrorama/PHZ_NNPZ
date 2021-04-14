@@ -22,8 +22,9 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import abc
-import numpy as np
 from warnings import warn
+
+import numpy as np
 from nnpz.exceptions import WrongTypeException
 from nnpz.neighbor_selection import NeighborSelectorInterface
 
