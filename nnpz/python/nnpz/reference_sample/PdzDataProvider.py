@@ -181,7 +181,7 @@ class PdzDataProvider(object):
         data_arr = np.asarray(data, dtype=np.float32)
         if len(data_arr.shape) > 2:
             raise InvalidDimensionsException('PDZ data must be a 1D or 2D array')
-        elif len(data_arr.shape) == 1:
+        if len(data_arr.shape) == 1:
             data_arr = data_arr.reshape(1, -1)
 
         if data_arr.shape[1] != len(self.__redshift_bins):

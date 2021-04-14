@@ -64,4 +64,3 @@ class NeighborList(OutputHandler.OutputColumnProviderInterface):
 
     def fillColumns(self):
         pass
-

@@ -93,7 +93,7 @@ class MontecarloDataProvider(object):
             raise InvalidDimensionsException(
                 f'Expected one or two axes, got {len(data.shape)}'
             )
-        elif len(data.shape) == 1:
+        if len(data.shape) == 1:
             data = data.reshape(1, *data.shape)
 
         if self.__data is None:

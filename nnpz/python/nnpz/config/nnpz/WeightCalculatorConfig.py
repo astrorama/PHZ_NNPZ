@@ -44,7 +44,9 @@ _calculator_map = {
 class WeightCalculatorConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
+        self.__ref_sample_weight_calculator = None
         self.__calculator = None
+        self.__calculator_alternative = None
 
     def __setupAbsoluteWeights(self, args):
         ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
@@ -77,7 +79,8 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         )
 
     def __createCalculator(self, args):
-        photo_provider_config = ConfigManager.getHandler(WeightPhotometryProviderConfig).parseArgs(args)
+        photo_provider_config = ConfigManager.getHandler(WeightPhotometryProviderConfig).parseArgs(
+            args)
         neighbor_sel_config = ConfigManager.getHandler(NeighborSelectorConfig).parseArgs(args)
         ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
 

@@ -54,6 +54,7 @@ class KDTreeSelector(NeighborSelectorInterface):
         super(KDTreeSelector, self).__init__()
         self.__neighbors_no = neighbors_no
         self.__balanced_tree = balanced_tree
+        self.__kdtree = None
 
     def _initializeImpl(self, ref_data):
         """Initializes the selector with the given data.

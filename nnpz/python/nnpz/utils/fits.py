@@ -76,4 +76,3 @@ def tableToHdu(table):
             continue
         hdu.header.append((key, value))
     return hdu
-

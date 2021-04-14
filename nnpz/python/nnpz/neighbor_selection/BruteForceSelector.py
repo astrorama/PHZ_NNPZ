@@ -107,6 +107,8 @@ class BruteForceSelector(NeighborSelectorInterface):
         self.__distance = distance_method
         self.__selection = selection_method
         self.__scaling = scaling_method
+        self.__ref_data_values = None
+        self.__ref_data_errors = None
 
     def _initializeImpl(self, ref_data):
         """

@@ -22,6 +22,12 @@ class McPdfConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__added = False
+        self.__catalog_size = None
+        self.__neighbor_no = None
+        self.__output = None
+        self.__ref_ids = None
+        self.__ref_sample = None
+        self.__take_n = None
         self.__mc_1d_pdf = []
         self.__mc_2d_pfd = []
         self.__args = []

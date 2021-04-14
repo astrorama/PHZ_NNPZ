@@ -44,6 +44,7 @@ class NnpzCatalogConfig(ConfigManager.ConfigHandler):
         self.__weights = None
         self.__idxs = None
         self.__astropy_table = None
+        self.__scales = None
 
     def _loadNnpzCatalog(self, args):
         self._checkParameterExists('nnpz_catalog', args)
