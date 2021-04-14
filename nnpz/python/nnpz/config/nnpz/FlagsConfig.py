@@ -37,7 +37,7 @@ class FlagsConfig(ConfigManager.ConfigHandler):
 
     def __createFlagList(self, args):
         target_size = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)['target_size']
-        self.__flag_list = [NnpzFlag() for i in range(target_size)]
+        self.__flag_list = [NnpzFlag() for _ in range(target_size)]
 
     def __addColumnProvider(self, args):
         separate_columns = False
