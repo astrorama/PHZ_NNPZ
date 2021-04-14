@@ -23,13 +23,13 @@ from nnpz.reference_sample import PhotometryProvider
 class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
     """
     Generate a list of columns with an uniform photometry:
-    \f[
-    g_o^* = g_o \left( \frac{g_r^*}{g_r} \right)
-    \f]
+    \\f[
+    g_o^* = g_o \\left( \\frac{g_r^*}{g_r} \\right)
+    \\f]
 
-    Where \f$g_r^*\f$ is the reference modeled flux for the objective band, and \f$g_r\f$ the
+    Where \\f$g_r^*\\f$ is the reference modeled flux for the objective band, and \\f$g_r\\f$ the
     reference modeled flux for the observed band (including any correction as reddening).
-    \f$g_o\f$ is the observed flux for the target object
+    \\f$g_o\\f$ is the observed flux for the target object
 
     Args:
         catalog_photo:
