@@ -82,7 +82,10 @@ class IndexProvider(object):
 
         if os.path.exists(filename):
             try:
-                self.__data = np.load(filename, mmap_mode='r+')
+                try:
+                    self.__data = np.load(filename, mmap_mode='r+')
+                except PermissionError:
+                    self.__data = np.load(filename, mmap_mode='r')
             except ValueError:
                 raise CorruptedFileException()
         else:
