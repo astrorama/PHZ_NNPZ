@@ -111,6 +111,9 @@ class CatalogReader(object):
 
         return prop(self.__catalog)
 
+    def size(self):
+        return len(self.__catalog)
+
     def getAsAstropyTable(self):
         """Returns the underlying astropy table"""
 
