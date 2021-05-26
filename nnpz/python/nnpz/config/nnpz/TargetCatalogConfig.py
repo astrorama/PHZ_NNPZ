@@ -22,7 +22,6 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import nnpz.io.catalog_properties as prop
-import sys
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
 from nnpz.io import CatalogReader
@@ -58,10 +57,6 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         logger.info('Reading target catalog: %s', target_cat)
         target_reader = CatalogReader(target_cat)
-        if target_reader.size() == 0:
-            logger.error('Empty target catalog!')
-            sys.exit(-1)
-
         self.__target_ids = target_reader.get(prop.ID(self.__target_id_column))
         self.__target_phot_data = target_reader.get(
             prop.Photometry(self.__target_filters, missing_phot_flags)
