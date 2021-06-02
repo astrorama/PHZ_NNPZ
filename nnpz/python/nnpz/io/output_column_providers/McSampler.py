@@ -93,7 +93,7 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         # If all neighbors have 0 weight, just fill with nan or 0 (depending on the type)
         if nb_total_weight <= 0:
             prototype = self.__provider.getData(self.__neighbor_ids[0, 0])
-            prototype = np.repeat(prototype, len(self.__neighbor_ids[index]))
+            prototype = np.repeat(prototype, self.__take_n // prototype.shape[0] + 1)
             return np.zeros_like(prototype[:self.__take_n])
 
         nb_sample_weight /= nb_total_weight
