@@ -87,12 +87,19 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         """
         Generated the weighted random sample for the target object i
         """
-        nb_samples = []
-        for nid in self.__neighbor_ids[index]:
-            nb_samples.append(self.__provider.getData(nid))
-        nb_samples = np.concatenate(nb_samples)
         nb_sample_weight = np.repeat(self.__neighbor_weights[index], self.__samples_per_neighbor)
-        nb_sample_weight /= nb_sample_weight.sum()
+        nb_total_weight = nb_sample_weight.sum()
+
+        # If all neighbors have 0 weight, just fill with nan or 0 (depending on the type)
+        if nb_total_weight <= 0:
+            prototype = self.__provider.getData(self.__neighbor_ids[0, 0])
+            prototype = np.repeat(prototype, len(self.__neighbor_ids[index]))
+            return np.zeros_like(prototype[:self.__take_n])
+
+        nb_sample_weight /= nb_total_weight
+
+        nb_samples = [self.__provider.getData(nid) for nid in self.__neighbor_ids[index]]
+        nb_samples = np.concatenate(nb_samples)
         chosen = np.random.choice(nb_samples.shape[0], size=self.__take_n, p=nb_sample_weight)
         return nb_samples[chosen]
 
