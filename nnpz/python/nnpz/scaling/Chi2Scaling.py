@@ -25,8 +25,10 @@ that minimizes the chi^2 distance between reference an target object.
 from __future__ import division, print_function
 
 import numpy as np
-
+from ElementsKernel import Logging
 from scipy.optimize import newton
+
+logger = Logging.getLogger(__name__)
 
 
 # Chi2
@@ -81,6 +83,13 @@ class Chi2Scaling(object):
         the prior passed to the constructor
         """
 
+        # Mask out nans!
+        mask = np.isfinite(coord_values)
+        coord_values = coord_values[mask]
+        coord_errors = coord_errors[mask]
+        ref_values = ref_values[:, mask]
+        ref_errors = ref_errors[:, mask]
+
         # Target function to be minimized
         def chi2_prior(scale, *args):
             # pylint: disable=no-value-for-parameter
@@ -131,7 +140,7 @@ class Chi2Scaling(object):
                 not_nan = np.isfinite(new_scale)
                 reference_mask[reference_mask] = not_nan
                 scale[reference_mask] = new_scale[not_nan]
-            except RuntimeError:
-                pass
+            except RuntimeError as e:
+                logger.warning(e)
 
         return scale
