@@ -80,10 +80,10 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
     def addContribution(self, reference_sample_i, neighbor, flags):
         original = self.__ref_photo[reference_sample_i, :, 0]
         matched = neighbor.matched_photo[0]
-
-        for r, (r_obj, r_obs, _, _) in enumerate(self.__filter_map.values()):
-            ratio = original[self.__ref_filters_idx[r_obj]] / matched[r_obs]
-            self.__total_ratios[neighbor.index, r] += ratio * neighbor.weight
+        with np.errstate(divide='ignore'):
+            for r, (r_obj, r_obs, _, _) in enumerate(self.__filter_map.values()):
+                ratio = original[self.__ref_filters_idx[r_obj]] / matched[r_obs]
+                self.__total_ratios[neighbor.index, r] += ratio * neighbor.weight
         self.__total_weights[neighbor.index] += neighbor.weight
 
     def fillColumns(self):

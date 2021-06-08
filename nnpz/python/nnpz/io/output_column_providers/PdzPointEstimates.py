@@ -65,8 +65,11 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
 
         for i, pdf in enumerate(pdfs):
             np.cumsum(dbins * ((pdf[:-1] + pdf[1:]) / 2.), out=cum_prob[1:])
-            inv_cum = interpolate.interp1d(cum_prob / max(cum_prob), bins, kind='linear')
-            out[i] = inv_cum(0.5)
+            if max(cum_prob):
+                inv_cum = interpolate.interp1d(cum_prob / max(cum_prob), bins, kind='linear')
+                out[i] = inv_cum(0.5)
+            else:
+                out[i] = np.nan
 
     def getEstimateMean(self, bins, pdfs, out):
         out[:] = np.average(np.tile(bins, (len(pdfs), 1)), weights=pdfs, axis=1)
