@@ -46,8 +46,11 @@ class AdaptiveSelector(NeighborSelectorInterface):
         self.__valid_bands = [
             i for i in range(n_bands) if not np.all(np.isnan(target_phot[:, i, 0]))
         ]
+        # If by chance all bands are empty, that's likely an empty catalog, so do not remove any!
+        if not self.__valid_bands:
+            self.__valid_bands = range(n_bands)
         self.__invalid_bands = [i for i in range(n_bands) if i not in self.__valid_bands]
-        if len(self.__valid_bands) != n_bands:
+        if len(self.__valid_bands) < n_bands:
             if filter_names:
                 logger.warning(
                     'Discarding columns %s from the neighbor search',
