@@ -49,21 +49,32 @@ class IndexProvider(object):
         for field in self.__data.dtype.fields:
             if field.endswith('_file') or field.endswith('_offset'):
                 dataset = field.split('_')[0]
-                if not dataset in pairs:
+                if dataset not in pairs:
                     pairs[dataset] = []
                 pairs[dataset].append(field)
 
+        provs = []
+        prov_nfiles = []
+        need_sort = False
         for key, pair in pairs.items():
             file_field, offset_field = pair
             max_file = self.__data[file_field].max()
+            provs.append((file_field, offset_field))
+            prov_nfiles.append(max_file)
             for file_id in range(1, max_file + 1):
                 offsets = self.__data[self.__data[file_field] == file_id][offset_field]
                 sorted_offsets = np.sort(offsets)
                 if not np.array_equal(offsets, sorted_offsets):
+                    need_sort = True
                     logger.warning(
                         'Index for provider "%s" does not follow the physical layout for file %d',
                         key, file_id
                     )
+        if need_sort:
+            sort_idx = np.flip(np.argsort(prov_nfiles))
+            sort_keys = [key for i in sort_idx for key in provs[i]]
+            logger.warning('Sorting index based on %s', str(sort_keys))
+            self.__data.sort(order=sort_keys)
 
     def __init__(self, filename: Union[str, pathlib.Path]):
         """
@@ -85,7 +96,7 @@ class IndexProvider(object):
                 try:
                     self.__data = np.load(filename, mmap_mode='r+')
                 except PermissionError:
-                    self.__data = np.load(filename, mmap_mode='r')
+                    self.__data = np.load(filename)
             except ValueError:
                 raise CorruptedFileException()
         else:
