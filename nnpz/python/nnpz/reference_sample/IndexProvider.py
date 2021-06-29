@@ -96,7 +96,7 @@ class IndexProvider(object):
                 try:
                     self.__data = np.load(filename, mmap_mode='r+')
                 except PermissionError:
-                    self.__data = np.load(filename, mmap_mode='r')
+                    self.__data = np.load(filename)
             except ValueError:
                 raise CorruptedFileException()
         else:
