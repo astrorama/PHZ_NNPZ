@@ -67,6 +67,9 @@ def mainMethod(args):
     # Get the flag list
     result_flags = conf_manager.getObject('flag_list')
 
+    # Get the output handler
+    output = conf_manager.getObject('output_handler')
+
     # Check if the Galactic reddening handling is on if so create de-reddend data
     if conf_manager.getObject('apply_galactic_absorption'):
         logger.info('Using Galactic reddening correction.')
@@ -82,34 +85,52 @@ def mainMethod(args):
 
     # Construct the neighbor finder and build the affected sources map
     finder = AffectedSourcesFinder(selector)
-    progress_listener = ProgressListener(
-        len(target_data), 'Finding neighbors... ', logger=logger
-    )
-    affected = finder.findAffected(de_reddened_target_data, result_flags, progress_listener)
-
-    # Compute the weights
-    progress_listener = ProgressListener(
-        len(affected), 'Computing neighbor weights...', logger=logger
-    )
 
     weight_calculator = conf_manager.getObject('weight_calculator')
-    weight_calculator.computeWeights(affected, target_data, result_flags, progress_listener)
 
-    # Get the output handler
-    output = conf_manager.getObject('output_handler')
-
-    # Loop through the maps and add the contributions to the output
-    # Note that we iterate the affected map in increasing order of the reference
-    # sample indices. This is done to use as much the cache of the disk, by accessing
-    # the PDZs sequentially.
-    progress_listener = ProgressListener(
-        len(affected) - 1, 'Adding contributions to output...', logger=logger
-    )
+    # Output
+    logger.info('Allocating output')
     output.initialize(len(target_data))
-    for progress, ref_i in enumerate(sorted(affected)):
-        progress_listener(progress)
-        for target in affected[ref_i]:
-            output.addContribution(ref_i, target, result_flags[target.index])
+
+    overall_progress_listener = ProgressListener(
+        len(target_data), 'Finding neighbors... ', logger=logger
+    )
+
+    # Split the input in chunks to keep memory under control
+    chunk_size = conf_manager.getObject('target_chunk_size')
+    nchunks, remainder = divmod(len(de_reddened_target_data), chunk_size)
+    if remainder > 0:
+        nchunks += 1
+
+    logger.info('Running over %d chunks', nchunks)
+
+    for chunk in range(nchunks):
+        offset = chunk * chunk_size
+        logger.info('Chunk %d / %d', chunk + 1, nchunks)
+        chunk_data = de_reddened_target_data[offset:offset + chunk_size]
+
+        affected = finder.findAffected(chunk_data, result_flags, overall_progress_listener,
+                                       offset=offset)
+
+        # Compute the weights
+        progress_listener = ProgressListener(
+            len(affected), '\tComputing neighbor weights...', logger=logger
+        )
+
+        weight_calculator.computeWeights(affected, target_data, result_flags, progress_listener)
+
+        # Loop through the maps and add the contributions to the output
+        # Note that we iterate the affected map in increasing order of the reference
+        # sample indices. This is done to use as much the cache of the disk, by accessing
+        # the PDZs sequentially.
+        progress_listener = ProgressListener(
+            len(affected) - 1, '\tAdding contributions to output...', logger=logger
+        )
+
+        for progress, ref_i in enumerate(sorted(affected)):
+            progress_listener(progress)
+            for target in affected[ref_i]:
+                output.addContribution(ref_i, target, result_flags[target.index])
 
     # Create the output catalog
     output_file = conf_manager.getObject('output_file')
