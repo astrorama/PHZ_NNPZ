@@ -87,6 +87,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             self.__target_astropy_table = self.__target_astropy_table[input_size]
 
         self.__target_size = len(self.__target_ids)
+        self.__target_chunk_size = args.get('input_chunk_size', self.__target_size)
 
     def parseArgs(self, args):
 
@@ -101,7 +102,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             'target_ebv': self.__target_ebv,
             'target_filter_mean_wavelength': self.__target_filter_mean_wavelength,
             'target_astropy_table': self.__target_astropy_table,
-            'target_size': self.__target_size
+            'target_size': self.__target_size,
+            'target_chunk_size': self.__target_chunk_size
         }
 
 

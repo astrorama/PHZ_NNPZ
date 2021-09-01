@@ -50,7 +50,7 @@ class AffectedSourcesFinder(object):
             )
         self.__selector = neighbor_selector
 
-    def findAffected(self, input_coord_iter, flags_iter, progress_listener=None):
+    def findAffected(self, input_coord_iter, flags_iter, progress_listener=None, offset=0):
         """Finds the input affected by each of the reference sample objects.
 
         Args:
@@ -69,7 +69,7 @@ class AffectedSourcesFinder(object):
             by this reference object.
         """
         result = {}
-        for i, (in_data, flags) in enumerate(zip(input_coord_iter, flags_iter)):
+        for i, (in_data, flags) in enumerate(zip(input_coord_iter, flags_iter), start=offset):
             if progress_listener:
                 progress_listener(i + 1)
             n_indices, distances, scales = self.__selector.findNeighbors(in_data, flags)
