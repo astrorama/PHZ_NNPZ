@@ -40,6 +40,8 @@ from nnpz import ReferenceSample
 
 logger = Logging.getLogger('BuildPhotometry')
 
+DEFAULT_SHIFTS = np.concatenate([np.arange(-100, 0), np.arange(1, 101)])
+
 
 def defineSpecificProgramOptions():
     """
@@ -78,10 +80,12 @@ def defineSpecificProgramOptions():
                         help='Limit the computation to this many sources')
     parser.add_argument('--chunk-size', dest='chunk_size', type=int, default=5000,
                         help='Compute MC photometry this many objects at once')
+    parser.add_argument('--shifts', type=float, nargs='+', default=DEFAULT_SHIFTS,
+                        help='Use these shifts to compute the correction factors')
     return parser
 
 
-def createPhotometryBuilder(phot_type, gal_ebv, parallel, filter_provider):
+def createPhotometryBuilder(phot_type, gal_ebv, parallel, filter_provider, shifts):
     filter_names = filter_provider.getFilterNames()
     filter_trans = {fname: filter_provider.getFilterTransmission(fname) for fname in filter_names}
     pre_post_processor = PhotometryTypeMap[phot_type][0](filter_trans)
@@ -90,9 +94,9 @@ def createPhotometryBuilder(phot_type, gal_ebv, parallel, filter_provider):
 
     if parallel:
         phot_builder = ReferenceSamplePhotometryParallelBuilder(
-            filter_provider, pre_post_processor, parallel)
+            filter_provider, pre_post_processor, shifts, ncores=parallel)
     else:
-        phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor)
+        phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor, shifts)
 
     phot_builder.setFilters(filter_names)
     return phot_builder
@@ -117,7 +121,8 @@ def buildPhotometry(args, ref_sample):
     logger.info('Successfully read filter transmissions')
 
     # Create the photometry builder to use for computing the photometry values
-    phot_builder = createPhotometryBuilder(args.type, args.gal_ebv, args.parallel, filter_provider)
+    phot_builder = createPhotometryBuilder(args.type, args.gal_ebv, args.parallel, filter_provider,
+                                           args.shifts)
 
     # Compute the photometry values
     logger.info('')
@@ -128,7 +133,7 @@ def buildPhotometry(args, ref_sample):
     # for the full sample
     n_items = args.input_size if args.input_size is not None else len(ref_sample)
     progress = ProgressListener(n_items, logger=logger)
-    phot_map = phot_builder.buildPhotometry(
+    phot_map, corr_map = phot_builder.buildPhotometry(
         itertools.islice(ref_sample.iterate(), args.input_size),
         progress
     )
@@ -138,7 +143,7 @@ def buildPhotometry(args, ref_sample):
     logger.info('Successfully computed photometry for %d objects',
                 len(phot_map[filter_name_list[0]]))
 
-    return n_phot, phot_map, filter_map
+    return n_phot, phot_map, corr_map, filter_map
 
 
 def generate_shifted_seds(nsamples, objects):
@@ -186,7 +191,8 @@ def buildMontecarloPhotometry(args, ref_sample):
     logger.info('Successfully read filter transmissions')
 
     # Create the photometry builder to use for computing the photometry values
-    phot_builder = createPhotometryBuilder(args.type, args.gal_ebv, args.parallel, filters_provider)
+    phot_builder = createPhotometryBuilder(args.type, args.gal_ebv, args.parallel, filters_provider,
+                                           None)
     n_phot = 0
 
     # Get set of objects
@@ -223,7 +229,8 @@ def buildMontecarloPhotometry(args, ref_sample):
         obj_ids, seds = generate_shifted_seds(args.mc_samples, chunk)
 
         # Build the photometry
-        phot_map = phot_builder.buildPhotometry(
+        # We ignore corrections for the MC method
+        phot_map, _ = phot_builder.buildPhotometry(
             seds, progress_listener=ProgressListener(len(seds), logger=logger)
         )
 
@@ -276,7 +283,7 @@ def mainMethod(args):
     logger.info('Successfully opened reference sample')
 
     # Build photometry
-    n_phot, phot_map, filter_map = buildPhotometry(args, ref_sample)
+    n_phot, phot_map, corr_map, filter_map = buildPhotometry(args, ref_sample)
 
     # MC Sampling
     if args.mc_filters:
@@ -305,6 +312,10 @@ def mainMethod(args):
     for filter_name, photo in phot_map.items():
         phot_col_names.append(filter_name)
         phot_col_data.append(table.Column(photo))
+
+    for filter_name, corr in corr_map.items():
+        phot_col_names.append(filter_name + '_CORR')
+        phot_col_data.append(table.Column(corr))
 
     for mu_name, mu in mc_phot_mean.items():
         phot_col_names.append(mu_name)

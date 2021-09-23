@@ -22,6 +22,11 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
+from numpy.polynomial.polynomial import Polynomial
+
+
+def correction_func(a, b):
+    return a ** 2 + b + 1
 
 
 class PhotometryCalculator(object):
@@ -29,7 +34,7 @@ class PhotometryCalculator(object):
     Class for computing the photometry for a filter reference system
     """
 
-    def __init__(self, filter_map, pre_post_processor):
+    def __init__(self, filter_map, pre_post_processor, shifts: np.ndarray):
         """Creates a new instance of the PhotometryCalculator.
 
         Args:
@@ -42,9 +47,15 @@ class PhotometryCalculator(object):
                 type of the photometry produced, by performing unit conversions
                 before and after integrating the SED. It must implement the
                 PhotometryPrePostProcessorInterface.
+            shifts: Compute the photometry with these shifts in order to compute
+                the correction factors.
         """
+        if shifts is not None and 0 in shifts:
+            raise ValueError('Ĉ(Δλ) is not defined for Δλ=0! Please, remove 0 from the shifts')
+
         self.__filter_trans_map = filter_map
         self.__pre_post_processor = pre_post_processor
+        self.__shifts = shifts
 
         # Compute the ranges of the filters and the total range
         self.__filter_range_map = {}
@@ -56,7 +67,19 @@ class PhotometryCalculator(object):
         ranges_arr = np.asarray(list(self.__filter_range_map.values()))
         self.__total_range = (ranges_arr[:, 0].min(), ranges_arr[:, 1].max())
 
-    def compute(self, sed):
+    def __compute_value(self, filter_name: str, filter_trans: np.ndarray, sed: np.ndarray,
+                        shift: float):
+        lambd = filter_trans[:, 0] + shift
+        # Interpolate the SED
+        interp_sed = np.interp(lambd, sed[:, 0], sed[:, 1], left=0, right=0)
+        # Compute the SED through the filter
+        filtered_sed = interp_sed * filter_trans[:, 1]
+        # Compute the intensity of the filtered object
+        intensity = np.trapz(filtered_sed, x=lambd)
+        # Post-process the intensity
+        return self.__pre_post_processor.postProcess(intensity, filter_name)
+
+    def compute(self, sed, return_raw: bool = False):
         """Computes the photometry for the given SED.
 
         Args:
@@ -66,6 +89,8 @@ class PhotometryCalculator(object):
                 second dimension has always size equal to two, with the first
                 element representing the wavelength expressed in Angstrom and
                 the second the energy value, expressed in erg/s/cm^2/Angstrom.
+
+            return_raw: If True, return the photometry points computed at the given shifts.
 
         Returns:
             A structured array with the filter names as attributes, and one dimension with two
@@ -92,32 +117,36 @@ class PhotometryCalculator(object):
             any computations on the photometry values (like filter normalization
             etc) that have to be performed after the SED integration.
         """
+        dtype = [(filter_name, np.float32) for filter_name in self.__filter_trans_map]
 
         # Pre-process the SED
         sed = self.__pre_post_processor.preProcess(sed)
 
+        photometry_correction = np.zeros(2, dtype=dtype)
+        photometry_raw = np.zeros(len(self.__shifts), dtype=dtype)
+
         # Iterate through the filters and compute the photometry values
-        dtype = [(filter_name, np.float32) for filter_name in self.__filter_trans_map]
         photometry_map = np.zeros(2, dtype=dtype)
         for filter_name in self.__filter_trans_map:
             filter_trans = self.__filter_trans_map[filter_name]
-
-            # Interpolate the SED
-            interp_sed = np.interp(filter_trans[:, 0], sed[:, 0], sed[:, 1], left=0, right=0)
-
-            # Compute the SED through the filter
-            filtered_sed = interp_sed * filter_trans[:, 1]
-
-            # Compute the intensity of the filtered object
-            intensity = np.trapz(filtered_sed, x=filter_trans[:, 0])
-
-            # Post-process the intensity
-            photometry = self.__pre_post_processor.postProcess(intensity, filter_name)
-
             # Add the computed photometry in the results
-            photometry_map[filter_name][0] = photometry
+            photometry_map[filter_name][0] = self.__compute_value(filter_name, filter_trans, sed,
+                                                                  shift=0)
+            if self.__shifts is not None:
+                # Compute the points at different shifts
+                for si, shift in enumerate(self.__shifts):
+                    photometry_raw[filter_name][si] = self.__compute_value(filter_name, filter_trans,
+                                                                           sed, shift=shift)
+                # Apply Stephane's formula
+                Ct = photometry_raw[filter_name] / photometry_map[filter_name][0]
+                C_hat_t = (Ct - 1) / self.__shifts
 
-        return photometry_map
+                # Obtain a and b
+                photometry_correction[filter_name] = np.polyfit(self.__shifts, C_hat_t, deg=1)
+
+        if return_raw:
+            return photometry_map, photometry_correction, photometry_raw
+        return photometry_map, photometry_correction
 
     def __call__(self, sed):
         """

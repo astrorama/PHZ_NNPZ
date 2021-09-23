@@ -37,6 +37,7 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
         """
         A generator for only the sed attribute of a reference object.
         """
+
         def __init__(self, objects):
             self.__objects = objects
 
@@ -44,7 +45,7 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
             for o in self.__objects:
                 yield o.sed
 
-    def __init__(self, filter_provider, pre_post_processor, ncores=None):
+    def __init__(self, filter_provider, pre_post_processor, shifts, ncores=None):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
 
         Args:
@@ -52,6 +53,7 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
                 the filter data are being retrieved
             pre_post_processor: An instance of PhotometryPrePostProcessorInterface
                 which defines the type of photometry being produced
+            shifts: To be used for the computation of the correction factors
             ncores:
                 Number of cores to use
 
@@ -62,7 +64,7 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
                 implementation of PhotometryPrePostProcessorInterface
         """
         super(ReferenceSamplePhotometryParallelBuilder, self).__init__(
-            filter_provider, pre_post_processor)
+            filter_provider, pre_post_processor, shifts)
         self.__ncores = os.cpu_count() if not ncores else ncores
 
     def buildPhotometry(self, sample_iter, progress_listener=None):
@@ -89,19 +91,21 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
         """
 
         # Create the calculator which will be used for the photometry computation
-        calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor)
+        calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor, self._shifts)
 
         # Create the result map with empty list assigned to each filter
         photo_list_map = {}
+        corr_list_map = {}
         for f in self._filter_map:
             photo_list_map[f] = []
+            corr_list_map[f] = []
 
         logger.info('Computing photometries using %d processes', self.__ncores)
         with multiprocessing.Pool(self.__ncores) as pool:
             elements = pool.imap(calculator,
                                  ReferenceSamplePhotometryParallelBuilder.SedIter(sample_iter),
                                  chunksize=100)
-            for progress, photo in enumerate(elements):
+            for progress, (photo, corr) in enumerate(elements):
 
                 # Report the progress
                 if progress_listener is not None:
@@ -110,10 +114,13 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
                 # Update the photo_list_map
                 for f in photo.dtype.names:
                     photo_list_map[f].append(photo[f][0])
+                    corr_list_map[f].append(corr[f])
 
         # Convert the photometry lists to numpy arrays
         result_map = {}
+        corr_map = {}
         for f in photo_list_map:
             result_map[f] = np.asarray(photo_list_map[f], dtype=np.float32)
+            corr_map[f] = np.asarray(corr_list_map[f], dtype=np.float32)
 
-        return result_map
+        return result_map, corr_map

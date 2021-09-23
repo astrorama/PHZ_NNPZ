@@ -33,7 +33,7 @@ class ReferenceSamplePhotometryBuilder(object):
     Class for creating photometry from a reference sample
     """
 
-    def __init__(self, filter_provider, pre_post_processor):
+    def __init__(self, filter_provider, pre_post_processor, shifts: np.array):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
 
         Args:
@@ -41,7 +41,8 @@ class ReferenceSamplePhotometryBuilder(object):
                 the filter data are being retrieved
             pre_post_processor: An instance of PhotometryPrePostProcessorInterface
                 which defines the type of photometry being produced
-
+            shifts: Compute the photometry with these shifts in order to compute
+                the correction factors.
         Raises:
             WrongTypeException: If the filter_provider is not an implementation
                 of FilterProviderInterface
@@ -58,6 +59,7 @@ class ReferenceSamplePhotometryBuilder(object):
 
         self._filter_provider = filter_provider
         self._pre_post_processor = pre_post_processor
+        self._shifts = shifts
 
         # By default we produce photometry for every available filter
         self.setFilters(filter_provider.getFilterNames())
@@ -103,18 +105,20 @@ class ReferenceSamplePhotometryBuilder(object):
         """
 
         # Create the calculator which will be used for the photometry computation
-        calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor)
+        calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor, self._shifts)
 
         # Create the result map with empty list assigned to each filter
         photo_list_map = {}
+        photo_corr_map = {}
         for f in self._filter_map:
             photo_list_map[f] = []
+            photo_corr_map[f] = []
 
         # Iterate through all the elements the iterator points to
         for progress, element in enumerate(sample_iter):
 
             # Report the progress
-            if not progress_listener is None:
+            if progress_listener is not None:
                 progress_listener(progress)
 
             # If we have reached a missing SED stop the iteration
@@ -122,13 +126,16 @@ class ReferenceSamplePhotometryBuilder(object):
                 break
 
             # Compute the photometry and update the photo_list_map
-            photo = calculator.compute(element.sed)
+            photo, correction = calculator.compute(element.sed)
             for f in photo.dtype.names:
                 photo_list_map[f].append(photo[f][0])
+                photo_corr_map[f].append(correction[f])
 
         # Convert the photometry lists to numpy arrays
         result_map = {}
+        corr_map = {}
         for f in photo_list_map:
             result_map[f] = np.asarray(photo_list_map[f], dtype=np.float32)
+            corr_map[f] = np.asarray(photo_corr_map[f], dtype=np.float32)
 
-        return result_map
+        return result_map, corr_map
