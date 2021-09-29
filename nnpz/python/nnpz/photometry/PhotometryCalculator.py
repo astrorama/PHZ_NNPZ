@@ -67,13 +67,17 @@ class PhotometryCalculator(object):
         ranges_arr = np.asarray(list(self.__filter_range_map.values()))
         self.__total_range = (ranges_arr[:, 0].min(), ranges_arr[:, 1].max())
 
-    def __compute_value(self, filter_name: str, filter_trans: np.ndarray, sed: np.ndarray,
-                        shift: float):
-        lambd = filter_trans[:, 0] + shift
+    def __compute_value(self, filter_name: str, trans: np.ndarray, sed: np.ndarray,
+                        shifts: np.ndarray):
+        # Adapt shapes
+        shifts = shifts.reshape(-1, 1)
+        lambd_shape = len(shifts), len(trans[:, 0])
+        # Wavelength for each shift
+        lambd = np.broadcast_to(trans[:, 0], shape=lambd_shape) + shifts
         # Interpolate the SED
         interp_sed = np.interp(lambd, sed[:, 0], sed[:, 1], left=0, right=0)
         # Compute the SED through the filter
-        filtered_sed = interp_sed * filter_trans[:, 1]
+        filtered_sed = interp_sed * trans[:, 1]
         # Compute the intensity of the filtered object
         intensity = np.trapz(filtered_sed, x=lambd)
         # Post-process the intensity
@@ -131,12 +135,10 @@ class PhotometryCalculator(object):
             filter_trans = self.__filter_trans_map[filter_name]
             # Add the computed photometry in the results
             photometry_map[filter_name][0] = self.__compute_value(filter_name, filter_trans, sed,
-                                                                  shift=0)
+                                                                  shifts=np.asarray([0]))
             if self.__shifts is not None:
-                # Compute the points at different shifts
-                for si, shift in enumerate(self.__shifts):
-                    photometry_raw[filter_name][si] = self.__compute_value(filter_name, filter_trans,
-                                                                           sed, shift=shift)
+                photometry_raw[filter_name][:] = self.__compute_value(filter_name, filter_trans,
+                                                                      sed, shifts=self.__shifts)
                 # Apply Stephane's formula
                 Ct = photometry_raw[filter_name] / photometry_map[filter_name][0]
                 C_hat_t = (Ct - 1) / self.__shifts
