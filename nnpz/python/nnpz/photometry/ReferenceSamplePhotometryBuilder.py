@@ -21,11 +21,11 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+import itertools
 import numpy as np
 from nnpz.exceptions import WrongTypeException
-
-from nnpz.photometry import FilterProviderInterface, PhotometryPrePostProcessorInterface, \
-    PhotometryCalculator
+from nnpz.photometry import FilterProviderInterface, PhotometryCalculator, \
+    PhotometryPrePostProcessorInterface
 
 
 class ReferenceSamplePhotometryBuilder(object):
@@ -33,7 +33,7 @@ class ReferenceSamplePhotometryBuilder(object):
     Class for creating photometry from a reference sample
     """
 
-    def __init__(self, filter_provider, pre_post_processor, shifts: np.array):
+    def __init__(self, filter_provider, pre_post_processor, shifts: np.array, batch_size: int = 50):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
 
         Args:
@@ -43,6 +43,7 @@ class ReferenceSamplePhotometryBuilder(object):
                 which defines the type of photometry being produced
             shifts: Compute the photometry with these shifts in order to compute
                 the correction factors.
+            batch_size: Process the input in batches of this size
         Raises:
             WrongTypeException: If the filter_provider is not an implementation
                 of FilterProviderInterface
@@ -60,6 +61,8 @@ class ReferenceSamplePhotometryBuilder(object):
         self._filter_provider = filter_provider
         self._pre_post_processor = pre_post_processor
         self._shifts = shifts
+        self._shifts = shifts
+        self._batch_size = batch_size
 
         # By default we produce photometry for every available filter
         self.setFilters(filter_provider.getFilterNames())
@@ -81,10 +84,11 @@ class ReferenceSamplePhotometryBuilder(object):
         for f in filter_list:
             self._filter_map[f] = self._filter_provider.getFilterTransmission(f)
 
-    def buildPhotometry(self, sample_iter, progress_listener=None):
+    def buildPhotometry(self, n_items, sample_iter, progress_listener=None):
         """Computes the photometry of the SEDs the given iterator traverses.
 
         Args:
+            n_items: Number of items to be processed, used to pre-allocate arrays
             sample_iter: An iterator to reference sample objects (or any type
                 which provides the sed property)
             progress_listener: A function which is called at each iteration with
@@ -103,39 +107,30 @@ class ReferenceSamplePhotometryBuilder(object):
         For more details in the computation recipe see the documentation of the
         PhotometryCalculator class.
         """
+        dtype = [(filter_name, np.float32) for filter_name in self._filter_map]
 
         # Create the calculator which will be used for the photometry computation
         calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor, self._shifts)
 
         # Create the result map with empty list assigned to each filter
-        photo_list_map = {}
-        photo_corr_map = {}
-        for f in self._filter_map:
-            photo_list_map[f] = []
-            photo_corr_map[f] = []
+        photo_list_map = np.zeros(n_items, dtype=dtype)
+        photo_corr_map = np.zeros((n_items, 2), dtype=dtype)
 
-        # Iterate through all the elements the iterator points to
-        for progress, element in enumerate(sample_iter):
-
-            # Report the progress
-            if progress_listener is not None:
-                progress_listener(progress)
-
-            # If we have reached a missing SED stop the iteration
-            if element.sed is None:
-                break
-
+        offset = 0
+        batch = list(itertools.islice(sample_iter, self._batch_size))
+        while batch:
+            batch_slice = slice(offset, offset + self._batch_size)
+            # Tile the SEDs
+            seds = np.stack([o.sed for o in batch], axis=0)
             # Compute the photometry and update the photo_list_map
-            photo, correction = calculator.compute(element.sed)
-            for f in photo.dtype.names:
-                photo_list_map[f].append(photo[f][0])
-                photo_corr_map[f].append(correction[f])
+            photo, correction = calculator.compute(seds)
+            photo_list_map[batch_slice] = photo[:, 0]
+            photo_corr_map[batch_slice] = correction
 
-        # Convert the photometry lists to numpy arrays
-        result_map = {}
-        corr_map = {}
-        for f in photo_list_map:
-            result_map[f] = np.asarray(photo_list_map[f], dtype=np.float32)
-            corr_map[f] = np.asarray(photo_corr_map[f], dtype=np.float32)
+            # Next batch
+            batch = list(itertools.islice(sample_iter, self._batch_size))
+            offset += self._batch_size
+            if progress_listener:
+                progress_listener(min(offset, n_items))
 
-        return result_map, corr_map
+        return photo_list_map, photo_corr_map
