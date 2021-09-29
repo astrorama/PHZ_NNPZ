@@ -120,7 +120,7 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
 
                 # Update the photo_list_map
                 batch_slice = slice(progress * self._batch_size, (progress + 1) * self._batch_size)
-                photo_list_map[batch_slice] = photo[:, 0]
+                photo_list_map[batch_slice] = photo
                 photo_corr_map[batch_slice] = corr
 
         return photo_list_map, photo_corr_map

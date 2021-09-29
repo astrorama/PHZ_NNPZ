@@ -31,7 +31,7 @@ class PhotometryCalculator(object):
     Class for computing the photometry for a filter reference system
     """
 
-    def __init__(self, filter_map, pre_post_processor, shifts: np.ndarray):
+    def __init__(self, filter_map, pre_post_processor, shifts: np.ndarray = None):
         """Creates a new instance of the PhotometryCalculator.
 
         Args:
@@ -82,7 +82,8 @@ class PhotometryCalculator(object):
         # Post-process the intensity
         return self.__pre_post_processor.postProcess(intensity, filter_name)
 
-    def compute(self, sed, return_raw: bool = False):
+    def compute(self, sed, out_photo: np.ndarray = None, out_corr: np.ndarray = None,
+                return_raw: bool = False):
         """Computes the photometry for the given SED.
 
         Args:
@@ -94,10 +95,6 @@ class PhotometryCalculator(object):
                 the second the energy value, expressed in erg/s/cm^2/Angstrom.
 
             return_raw: If True, return the photometry points computed at the given shifts.
-
-        Returns:
-            A structured array with the filter names as attributes, and one dimension with two
-            positions: value and error
 
         The type of the photometry values computed depends on the type of the
         pre_post_processor passed to the constructor.
@@ -125,32 +122,40 @@ class PhotometryCalculator(object):
         # Pre-process the SED
         sed = self.__pre_post_processor.preProcess(sed)
 
-        photometry_correction = np.zeros((len(sed), 2), dtype=dtype)
+        if out_photo is None:
+            out_photo = np.zeros(len(sed), dtype=dtype)
+        if out_corr is None:
+            out_corr = np.zeros((len(sed), 2), dtype=dtype)
+
         photometry_raw = np.zeros((len(sed), len(self.__shifts)), dtype=dtype)
 
         # Iterate through the filters and compute the photometry values
-        photometry_map = np.zeros((len(sed), 2), dtype=dtype)
         for filter_name in self.__filter_trans_map:
             filter_trans = self.__filter_trans_map[filter_name]
             # Add the computed photometry in the results
-            photometry_map[filter_name][:, 0] = self.__compute_value(
+            out_photo[filter_name] = self.__compute_value(
                 filter_name, filter_trans, sed,
                 shifts=np.asarray([0])).reshape(-1)
 
             if self.__shifts is not None:
-                photometry_raw[filter_name][:, :] = self.__compute_value(filter_name, filter_trans,
-                                                                         sed, shifts=self.__shifts)
+                photometry_raw[filter_name] = self.__compute_value(filter_name, filter_trans,
+                                                                   sed, shifts=self.__shifts)
                 # Apply Stephane's formula
-                Ct = photometry_raw[filter_name] / photometry_map[filter_name][:, 0:1]
-                C_hat_t = (Ct - 1) / self.__shifts
+                Ct = photometry_raw[filter_name] / out_photo[filter_name].reshape(-1, 1)
+                # C_hat_t = (Ct - 1) / self.__shifts
+                Ct -= 1
+                Ct /= self.__shifts
 
                 # Obtain a and b
-                photometry_correction[filter_name] = np.apply_along_axis(
-                    lambda a: np.polyfit(self.__shifts, a, deg=1), arr=C_hat_t, axis=1)
+                out_corr[filter_name] = np.apply_along_axis(
+                    lambda a: np.polyfit(self.__shifts, a, deg=1), arr=Ct, axis=1)
 
         if return_raw:
-            return photometry_map, photometry_correction, photometry_raw
-        return photometry_map, photometry_correction
+            return out_photo, out_corr, photometry_raw
+        elif self.__shifts is not None:
+            return out_photo, out_corr
+        else:
+            return out_photo
 
     def __call__(self, sed):
         """

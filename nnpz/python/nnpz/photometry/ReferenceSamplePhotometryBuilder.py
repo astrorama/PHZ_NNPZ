@@ -33,7 +33,7 @@ class ReferenceSamplePhotometryBuilder(object):
     Class for creating photometry from a reference sample
     """
 
-    def __init__(self, filter_provider, pre_post_processor, shifts: np.array, batch_size: int = 50):
+    def __init__(self, filter_provider, pre_post_processor, shifts: np.array, batch_size: int = 100):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
 
         Args:
@@ -84,7 +84,8 @@ class ReferenceSamplePhotometryBuilder(object):
         for f in filter_list:
             self._filter_map[f] = self._filter_provider.getFilterTransmission(f)
 
-    def buildPhotometry(self, n_items, sample_iter, progress_listener=None):
+    def buildPhotometry(self, n_items, sample_iter, progress_listener=None,
+                        out_photo: np.ndarray = None, out_corr: np.ndarray = None):
         """Computes the photometry of the SEDs the given iterator traverses.
 
         Args:
@@ -113,8 +114,10 @@ class ReferenceSamplePhotometryBuilder(object):
         calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor, self._shifts)
 
         # Create the result map with empty list assigned to each filter
-        photo_list_map = np.zeros(n_items, dtype=dtype)
-        photo_corr_map = np.zeros((n_items, 2), dtype=dtype)
+        if out_photo is None:
+            out_photo = np.zeros(n_items, dtype=dtype)
+        if out_corr is None:
+            out_corr = np.zeros((n_items, 2), dtype=dtype)
 
         offset = 0
         batch = list(itertools.islice(sample_iter, self._batch_size))
@@ -123,9 +126,9 @@ class ReferenceSamplePhotometryBuilder(object):
             # Tile the SEDs
             seds = np.stack([o.sed for o in batch], axis=0)
             # Compute the photometry and update the photo_list_map
-            photo, correction = calculator.compute(seds)
-            photo_list_map[batch_slice] = photo[:, 0]
-            photo_corr_map[batch_slice] = correction
+            calculator.compute(seds,
+                               out_photo=out_photo[batch_slice],
+                               out_corr=out_corr[batch_slice])
 
             # Next batch
             batch = list(itertools.islice(sample_iter, self._batch_size))
@@ -133,4 +136,4 @@ class ReferenceSamplePhotometryBuilder(object):
             if progress_listener:
                 progress_listener(min(offset, n_items))
 
-        return photo_list_map, photo_corr_map
+        return out_photo, out_corr
