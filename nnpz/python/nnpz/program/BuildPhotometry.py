@@ -134,7 +134,7 @@ def buildPhotometry(args, ref_sample):
     n_items = args.input_size if args.input_size is not None else len(ref_sample)
     progress = ProgressListener(n_items, logger=logger)
     phot_map, corr_map = phot_builder.buildPhotometry(
-        n_items, itertools.islice(ref_sample.iterate(), args.input_size),
+        itertools.islice(ref_sample.iterate(), args.input_size),
         progress
     )
     n_phot = len(phot_map[filter_name_list[0]])
@@ -309,13 +309,13 @@ def mainMethod(args):
     phot_col_names = ['ID']
     phot_col_data = [table.Column(ids)]
 
-    for filter_name in phot_map.dtype.names:
+    for filter_name, photo in phot_map.items():
         phot_col_names.append(filter_name)
-        phot_col_data.append(table.Column(phot_map[filter_name]))
+        phot_col_data.append(table.Column(photo))
 
-    for filter_name in corr_map.dtype.names:
+    for filter_name, corr in corr_map.items():
         phot_col_names.append(filter_name + '_CORR')
-        phot_col_data.append(table.Column(corr_map[filter_name]))
+        phot_col_data.append(table.Column(corr))
 
     for mu_name, mu in mc_phot_mean.items():
         phot_col_names.append(mu_name)

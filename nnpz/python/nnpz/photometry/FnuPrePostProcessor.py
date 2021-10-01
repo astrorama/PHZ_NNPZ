@@ -58,7 +58,7 @@ class FnuPrePostProcessor(PhotometryPrePostProcessorInterface):
     def preProcess(self, sed):
         """Multiply the SED with the wavelength"""
         res = sed.copy()
-        res[:, :, 1] = res[:, :, 1] * res[:, :, 0]
+        res[:, 1] = res[:, 1] * res[:, 0]
         return res
 
     def postProcess(self, intensity, filter_name):
