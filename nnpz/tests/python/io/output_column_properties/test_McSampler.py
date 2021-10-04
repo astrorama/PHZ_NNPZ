@@ -15,6 +15,8 @@
 #
 
 # noinspection PyUnresolvedReferences
+import numpy as np
+
 from .fixtures import *
 
 
@@ -78,5 +80,36 @@ def test_take_weight_0(reference_ids, contributions, mock_provider):
     assert counts[0] > counts[1]
     assert counts[2] > counts[1]
     assert counts.sum() == 200
+
+
+###############################################################################
+
+def test_take_weight_nans(reference_ids, contributions, mock_provider):
+    sampler = McSampler(
+        2, n_neighbors=3, take_n=200, mc_provider=mock_provider,
+        ref_ids=reference_ids
+    )
+    for ref_i, contrib in contributions:
+        if contrib.index == 0:
+            contrib.weight = np.nan
+        sampler.addContribution(ref_i, contrib, None)
+
+    # All samples are 0 for the first source (should behave as weight 0)
+    samples = sampler.generateSamples(0)
+    assert samples.shape == (200,)
+    assert samples.dtype.names == ('P1', 'P2', 'I1')
+    assert (samples['P1'] == 0).all()
+    assert (samples['P2'] == 0).all()
+    assert (samples['I1'] == 0).all()
+
+    # Second object must be the same as before
+    samples = sampler.generateSamples(1)
+    assert samples.shape == (200,)
+    assert samples.dtype.names == ('P1', 'P2', 'I1')
+    vals, counts = np.unique(samples['P1'], return_counts=True)
+    assert counts[0] > counts[1]
+    assert counts[2] > counts[1]
+    assert counts.sum() == 200
+
 
 ###############################################################################
