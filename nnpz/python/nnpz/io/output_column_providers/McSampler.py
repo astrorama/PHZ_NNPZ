@@ -88,6 +88,9 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         Generated the weighted random sample for the target object i
         """
         nb_sample_weight = np.repeat(self.__neighbor_weights[index], self.__samples_per_neighbor)
+        # Replace NaN with 0
+        nb_sample_weight = np.nan_to_num(nb_sample_weight, copy=False)
+        # Total weight
         nb_total_weight = nb_sample_weight.sum()
 
         # If all neighbors have 0 weight, just fill with nan or 0 (depending on the type)
