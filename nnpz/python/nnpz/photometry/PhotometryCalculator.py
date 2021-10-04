@@ -140,11 +140,13 @@ class PhotometryCalculator(object):
                 photometry_raw[filter_name][:] = self.__compute_value(filter_name, filter_trans,
                                                                       sed, shifts=self.__shifts)
                 # Apply Stephane's formula
-                Ct = photometry_raw[filter_name] / photometry_map[filter_name][0]
-                C_hat_t = (Ct - 1) / self.__shifts
-
-                # Obtain a and b
-                photometry_correction[filter_name] = np.polyfit(self.__shifts, C_hat_t, deg=1)
+                if photometry_map[filter_name][0] > 0:
+                    Ct = photometry_raw[filter_name] / photometry_map[filter_name][0]
+                    C_hat_t = (Ct - 1) / self.__shifts
+                    # Obtain a and b
+                    photometry_correction[filter_name] = np.polyfit(self.__shifts, C_hat_t, deg=1)
+                else:
+                    photometry_correction[filter_name] = 0.
 
         if return_raw:
             return photometry_map, photometry_correction, photometry_raw
