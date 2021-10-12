@@ -23,9 +23,9 @@ from __future__ import division, print_function
 
 import numpy as np
 from nnpz.exceptions import WrongTypeException
-
-from nnpz.photometry import FilterProviderInterface, PhotometryPrePostProcessorInterface, \
-    PhotometryCalculator
+from nnpz.photometry.FilterProviderInterface import FilterProviderInterface
+from nnpz.photometry.PhotometryPrePostProcessorInterface import PhotometryPrePostProcessorInterface
+from nnpz.photometry.PhotometryWithCorrectionsCalculator import PhotometryWithCorrectionsCalculator
 
 
 class ReferenceSamplePhotometryBuilder(object):
@@ -33,7 +33,7 @@ class ReferenceSamplePhotometryBuilder(object):
     Class for creating photometry from a reference sample
     """
 
-    def __init__(self, filter_provider, pre_post_processor, shifts: np.array):
+    def __init__(self, filter_provider, pre_post_processor, ebv: float, shifts: np.array):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
 
         Args:
@@ -41,6 +41,7 @@ class ReferenceSamplePhotometryBuilder(object):
                 the filter data are being retrieved
             pre_post_processor: An instance of PhotometryPrePostProcessorInterface
                 which defines the type of photometry being produced
+            ebv: To be used for the computation of the EBV correction factor
             shifts: Compute the photometry with these shifts in order to compute
                 the correction factors.
         Raises:
@@ -59,6 +60,7 @@ class ReferenceSamplePhotometryBuilder(object):
 
         self._filter_provider = filter_provider
         self._pre_post_processor = pre_post_processor
+        self._ebv = ebv
         self._shifts = shifts
 
         # By default we produce photometry for every available filter
@@ -105,14 +107,18 @@ class ReferenceSamplePhotometryBuilder(object):
         """
 
         # Create the calculator which will be used for the photometry computation
-        calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor, self._shifts)
+        calculator = PhotometryWithCorrectionsCalculator(self._filter_map,
+                                                         self._pre_post_processor, self._ebv,
+                                                         self._shifts)
 
         # Create the result map with empty list assigned to each filter
-        photo_list_map = {}
-        photo_corr_map = {}
+        photo_list = {}
+        ebv_corr_list = {}
+        shift_corr_list = {}
         for f in self._filter_map:
-            photo_list_map[f] = []
-            photo_corr_map[f] = []
+            photo_list[f] = []
+            ebv_corr_list[f] = []
+            shift_corr_list[f] = []
 
         # Iterate through all the elements the iterator points to
         for progress, element in enumerate(sample_iter):
@@ -126,16 +132,19 @@ class ReferenceSamplePhotometryBuilder(object):
                 break
 
             # Compute the photometry and update the photo_list_map
-            photo, correction = calculator.compute(element.sed)
+            photo, ebv_corr, shift_corr = calculator.compute(element.sed)
             for f in photo.dtype.names:
-                photo_list_map[f].append(photo[f][0])
-                photo_corr_map[f].append(correction[f])
+                photo_list[f].append(photo[f][0])
+                ebv_corr_list[f].append(ebv_corr[f])
+                shift_corr_list[f].append(shift_corr[f])
 
         # Convert the photometry lists to numpy arrays
-        result_map = {}
-        corr_map = {}
-        for f in photo_list_map:
-            result_map[f] = np.asarray(photo_list_map[f], dtype=np.float32)
-            corr_map[f] = np.asarray(photo_corr_map[f], dtype=np.float32)
+        photo_map = {}
+        ebv_corr_map = {}
+        shift_corr_map = {}
+        for f in photo_list:
+            photo_map[f] = np.asarray(photo_list[f], dtype=np.float32)
+            ebv_corr_map[f] = np.asarray(ebv_corr_list[f], dtype=np.float32)
+            shift_corr_map[f] = np.asarray(shift_corr_list[f], dtype=np.float32)
 
-        return result_map, corr_map
+        return photo_map, ebv_corr_map, shift_corr_map

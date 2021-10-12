@@ -22,21 +22,20 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import argparse
-import itertools
 import os
+from typing import Tuple
+
+import itertools
 import numpy as np
-from astropy.io import fits
-from astropy import table
-
 from ElementsKernel import Logging
+from astropy import table
+from astropy.io import fits
+from nnpz import ReferenceSample
 from nnpz.framework import ProgressListener
-
-from nnpz.photometry import PhotometryTypeMap, DirectoryFilterProvider, ListFileFilterProvider, \
-    GalacticReddeningPrePostProcessor, ReferenceSamplePhotometryParallelBuilder, \
-    ReferenceSamplePhotometryBuilder
+from nnpz.photometry import DirectoryFilterProvider, ListFileFilterProvider, PhotometryTypeMap, \
+    ReferenceSamplePhotometryBuilder, ReferenceSamplePhotometryParallelBuilder
 from nnpz.utils.SedGenerator import SedGenerator
 from nnpz.utils.fits import tableToHdu
-from nnpz import ReferenceSample
 
 logger = Logging.getLogger('BuildPhotometry')
 
@@ -72,8 +71,8 @@ def defineSpecificProgramOptions():
                         help='The output FITS file to create the photometry in')
     parser.add_argument('--overwrite', default=False, action='store_true',
                         help='Overwrite the output file')
-    parser.add_argument('--gal-ebv', dest='gal_ebv', type=float,
-                        help='The E(B-V) value of the galactic absorption to apply to the SEDs')
+    parser.add_argument('--gal-ebv', dest='gal_ebv', type=float, default=0.3,
+                        help='The E(B-V) value used to compute the correction factor')
     parser.add_argument('--parallel', dest='parallel', type=int, default=None,
                         help='Number of parallel processes to spawn')
     parser.add_argument('--input-size', dest='input_size', type=int, default=None,
@@ -89,20 +88,19 @@ def createPhotometryBuilder(phot_type, gal_ebv, parallel, filter_provider, shift
     filter_names = filter_provider.getFilterNames()
     filter_trans = {fname: filter_provider.getFilterTransmission(fname) for fname in filter_names}
     pre_post_processor = PhotometryTypeMap[phot_type][0](filter_trans)
-    if gal_ebv is not None:
-        pre_post_processor = GalacticReddeningPrePostProcessor(pre_post_processor, gal_ebv)
 
     if parallel:
         phot_builder = ReferenceSamplePhotometryParallelBuilder(
-            filter_provider, pre_post_processor, shifts, ncores=parallel)
+            filter_provider, pre_post_processor, gal_ebv, shifts, ncores=parallel)
     else:
-        phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor, shifts)
+        phot_builder = ReferenceSamplePhotometryBuilder(filter_provider, pre_post_processor,
+                                                        gal_ebv, shifts)
 
     phot_builder.setFilters(filter_names)
     return phot_builder
 
 
-def buildPhotometry(args, ref_sample):
+def buildPhotometry(args, ref_sample) -> Tuple[int, np.ndarray, np.ndarray, np.ndarray, dict]:
     """
     Build the photometry using the reference redshift (max of the PDZ)
     """
@@ -133,7 +131,7 @@ def buildPhotometry(args, ref_sample):
     # for the full sample
     n_items = args.input_size if args.input_size is not None else len(ref_sample)
     progress = ProgressListener(n_items, logger=logger)
-    phot_map, corr_map = phot_builder.buildPhotometry(
+    phot_map, ebv_corr_map, shift_corr_map = phot_builder.buildPhotometry(
         itertools.islice(ref_sample.iterate(), args.input_size),
         progress
     )
@@ -143,7 +141,7 @@ def buildPhotometry(args, ref_sample):
     logger.info('Successfully computed photometry for %d objects',
                 len(phot_map[filter_name_list[0]]))
 
-    return n_phot, phot_map, corr_map, filter_map
+    return n_phot, phot_map, ebv_corr_map, shift_corr_map, filter_map
 
 
 def generate_shifted_seds(nsamples, objects):
@@ -283,7 +281,7 @@ def mainMethod(args):
     logger.info('Successfully opened reference sample')
 
     # Build photometry
-    n_phot, phot_map, corr_map, filter_map = buildPhotometry(args, ref_sample)
+    n_phot, phot_map, ebv_corr_map, shift_corr_map, filter_map = buildPhotometry(args, ref_sample)
 
     # MC Sampling
     if args.mc_filters:
@@ -313,8 +311,12 @@ def mainMethod(args):
         phot_col_names.append(filter_name)
         phot_col_data.append(table.Column(photo))
 
-    for filter_name, corr in corr_map.items():
-        phot_col_names.append(filter_name + '_CORR')
+    for filter_name, corr in ebv_corr_map.items():
+        phot_col_names.append(filter_name + '_EBV_CORR')
+        phot_col_data.append(table.Column(corr))
+
+    for filter_name, corr in shift_corr_map.items():
+        phot_col_names.append(filter_name + '_SHIFT_CORR')
         phot_col_data.append(table.Column(corr))
 
     for mu_name, mu in mc_phot_mean.items():

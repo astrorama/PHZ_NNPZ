@@ -23,7 +23,8 @@ import os
 
 import numpy as np
 from ElementsKernel import Logging
-from nnpz.photometry import ReferenceSamplePhotometryBuilder, PhotometryCalculator
+from nnpz.photometry.PhotometryWithCorrectionsCalculator import PhotometryWithCorrectionsCalculator
+from nnpz.photometry.ReferenceSamplePhotometryBuilder import ReferenceSamplePhotometryBuilder
 
 logger = Logging.getLogger('BuildPhotometry')
 
@@ -45,7 +46,8 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
             for o in self.__objects:
                 yield o.sed
 
-    def __init__(self, filter_provider, pre_post_processor, shifts, ncores=None):
+    def __init__(self, filter_provider, pre_post_processor, ebv: float, shifts: np.ndarray,
+                 ncores: int = None):
         """Creates a new instance of ReferenceSamplePhotometryBuilder
 
         Args:
@@ -53,7 +55,8 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
                 the filter data are being retrieved
             pre_post_processor: An instance of PhotometryPrePostProcessorInterface
                 which defines the type of photometry being produced
-            shifts: To be used for the computation of the correction factors
+            ebv: To be used for the computation of the EBV correction factor
+            shifts: To be used for the computation of the filter variation correction factors
             ncores:
                 Number of cores to use
 
@@ -64,7 +67,7 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
                 implementation of PhotometryPrePostProcessorInterface
         """
         super(ReferenceSamplePhotometryParallelBuilder, self).__init__(
-            filter_provider, pre_post_processor, shifts)
+            filter_provider, pre_post_processor, ebv, shifts)
         self.__ncores = os.cpu_count() if not ncores else ncores
 
     def buildPhotometry(self, sample_iter, progress_listener=None):
@@ -91,21 +94,25 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
         """
 
         # Create the calculator which will be used for the photometry computation
-        calculator = PhotometryCalculator(self._filter_map, self._pre_post_processor, self._shifts)
+        calculator = PhotometryWithCorrectionsCalculator(self._filter_map,
+                                                         self._pre_post_processor, self._ebv,
+                                                         self._shifts)
 
         # Create the result map with empty list assigned to each filter
-        photo_list_map = {}
-        corr_list_map = {}
+        photo_list = {}
+        ebv_corr_list = {}
+        shift_corr_list = {}
         for f in self._filter_map:
-            photo_list_map[f] = []
-            corr_list_map[f] = []
+            photo_list[f] = []
+            ebv_corr_list[f] = []
+            shift_corr_list[f] = []
 
         logger.info('Computing photometries using %d processes', self.__ncores)
         with multiprocessing.Pool(self.__ncores) as pool:
             elements = pool.imap(calculator,
                                  ReferenceSamplePhotometryParallelBuilder.SedIter(sample_iter),
                                  chunksize=100)
-            for progress, (photo, corr) in enumerate(elements):
+            for progress, (photo, ebv_corr, shift_corr) in enumerate(elements):
 
                 # Report the progress
                 if progress_listener is not None:
@@ -113,14 +120,17 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
 
                 # Update the photo_list_map
                 for f in photo.dtype.names:
-                    photo_list_map[f].append(photo[f][0])
-                    corr_list_map[f].append(corr[f])
+                    photo_list[f].append(photo[f][0])
+                    ebv_corr_list[f].append(ebv_corr[f])
+                    shift_corr_list[f].append(shift_corr[f])
 
         # Convert the photometry lists to numpy arrays
         result_map = {}
-        corr_map = {}
-        for f in photo_list_map:
-            result_map[f] = np.asarray(photo_list_map[f], dtype=np.float32)
-            corr_map[f] = np.asarray(corr_list_map[f], dtype=np.float32)
+        ebv_corr_map = {}
+        shift_corr_map = {}
+        for f in photo_list:
+            result_map[f] = np.asarray(photo_list[f], dtype=np.float32)
+            ebv_corr_map[f] = np.asarray(ebv_corr_list[f], dtype=np.float32)
+            shift_corr_map[f] = np.asarray(shift_corr_list[f], dtype=np.float32)
 
-        return result_map, corr_map
+        return result_map, ebv_corr_map, shift_corr_map
