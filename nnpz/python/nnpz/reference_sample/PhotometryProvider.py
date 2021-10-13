@@ -76,14 +76,17 @@ class PhotometryProvider(object):
         """
 
         data = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
-        corr = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
+        ebv_corr = np.zeros((len(phot_table), len(filter_list)), dtype=np.float32)
+        shift_corr = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
         for i, name in enumerate(filter_list):
             data[:, i, 0] = phot_table[name]
             if name + '_ERR' in phot_table.colnames:
                 data[:, i, 1] = phot_table[name + '_ERR']
-            if name + '_CORR' in phot_table.colnames:
-                corr[:, i, :] = phot_table[name + '_CORR']
-        return data, corr
+            if name + '_EBV_CORR' in phot_table.colnames:
+                ebv_corr[:, i] = phot_table[name + '_EBV_CORR']
+            if name + '_SHIFT_CORR' in phot_table.colnames:
+                shift_corr[:, i, :] = phot_table[name + '_SHIFT_CORR']
+        return data, ebv_corr, shift_corr
 
     def __init__(self, filename, ref_ids=None):
         """Creates a new instance for accessing the given photometry file.
@@ -122,10 +125,12 @@ class PhotometryProvider(object):
         self.__ids = phot_table['ID']
 
         # Read the photometry values
-        self.__phot_data, self.__corr_data = self.__readPhotometryData(phot_table,
-                                                                       self.__filter_list)
+        self.__phot_data, self.__ebv_corr_data, self.__shift_corr_data = self.__readPhotometryData(
+            phot_table,
+            self.__filter_list)
         self.__phot_data.flags.writeable = False
-        self.__corr_data.flags.writeable = False
+        self.__ebv_corr_data.flags.writeable = False
+        self.__shift_corr_data.flags.writeable = False
 
     def getType(self):
         """Returns the type of photometry in the file.
@@ -212,9 +217,9 @@ class PhotometryProvider(object):
         # Return a view rather than a copy
         return self.__phot_data[:, filter_idx, :]
 
-    def getCorrectionFactors(self, *filter_list):
+    def getEBVCorrectionFactors(self, *filter_list):
         """
-        Get the correction factors
+        Get the EBV correction factors
         """
         try:
             if len(filter_list) == 0:
@@ -228,4 +233,22 @@ class PhotometryProvider(object):
             raise UnknownNameException('File does not contain corrections for {}'.format(missing))
 
             # Return a view rather than a copy
-        return self.__corr_data[:, filter_idx, :]
+        return self.__ebv_corr_data[:, filter_idx]
+
+    def getShiftCorrectionFactors(self, *filter_list):
+        """
+        Get the filter variation correction factors
+        """
+        try:
+            if len(filter_list) == 0:
+                # numpy will avoid a copy if the index is a slice, while it will *always*
+                # copy if it is a list
+                filter_idx = slice(len(self.__filter_list))
+            else:
+                filter_idx = np.array(list(map(lambda f: self.__filter_list.index(f), filter_list)))
+        except ValueError as e:
+            missing = str(e).split()[0]
+            raise UnknownNameException('File does not contain corrections for {}'.format(missing))
+
+        # Return a view rather than a copy
+        return self.__shift_corr_data[:, filter_idx, :]

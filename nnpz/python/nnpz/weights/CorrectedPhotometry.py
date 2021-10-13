@@ -41,7 +41,8 @@ class CorrectedPhotometry(WeightPhotometryProvider):
                  filter_trans_mean_lists: dict = None):
         self.__filters = ref_phot.getFilterList()
         self.__ref_photo = ref_phot.getData(*self.__filters)
-        self.__ref_corr = ref_phot.getCorrectionFactors(*self.__filters)
+        self.__ref_ebv_corr = ref_phot.getEBVCorrectionFactors(*self.__filters)
+        self.__ref_shift_corr = ref_phot.getShiftCorrectionFactors(*self.__filters)
         self.__ebv_list = ebv_list
 
         # Requires the shift value, not the mean
@@ -56,10 +57,6 @@ class CorrectedPhotometry(WeightPhotometryProvider):
                 shifts = np.zeros(src_trans_mean.shape)
                 shifts[not_nan_mean] = src_trans_mean[not_nan_mean] - trans_mean
                 self.__filter_shifts[filter_name] = shifts
-
-        # EBV
-        self.__ebv_reddening = SourceIndependantGalacticUnReddening(filter_trans_map,
-                                                                    self.__filters)
 
     def __call__(self, ref_i: int, cat_i: int, flags: NnpzFlag):
         """
@@ -76,17 +73,16 @@ class CorrectedPhotometry(WeightPhotometryProvider):
         """
         dtype = [(filter_name, np.float32) for filter_name in self.__filters]
         photo = self.__ref_photo[ref_i:ref_i + 1]
+        ebv = self.__ebv_list[cat_i][np.newaxis]
 
         # First, apply the filter correction
         for fi, fname in enumerate(self.__filters):
-            corr_a, corr_b = self.__ref_corr[ref_i, fi]
+            corr_a, corr_b = self.__ref_shift_corr[ref_i, fi]
             shift = self.__filter_shifts[fname][cat_i] if fname in self.__filter_shifts else 0
             corr = corr_a * shift * shift + corr_b * shift + 1
             photo[:, fi] *= corr
-
-        # Then, the galactic reddening
-        ebv = self.__ebv_list[cat_i][np.newaxis]
-        photo = self.__ebv_reddening.redden_data(photo, target_ebv=ebv)
+            # Then, the galactic reddening
+            photo[:, fi] *= 10 ** (-0.4 * self.__ref_ebv_corr[ref_i, fi] * ebv)
 
         # To structured array
         out = np.ndarray(2, dtype=dtype)
