@@ -22,6 +22,7 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
+import scipy.integrate
 from numpy.polynomial.polynomial import Polynomial
 
 
@@ -67,17 +68,33 @@ class PhotometryCalculator(object):
         ranges_arr = np.asarray(list(self.__filter_range_map.values()))
         self.__total_range = (ranges_arr[:, 0].min(), ranges_arr[:, 1].max())
 
+    def __compute_interp_grid(self, trans, sed):
+        # Places where the transmission is > 0
+        tmask = trans[:, 1] > 0
+        trans_lambda = trans[tmask, 0]
+        mnt, mxt = trans_lambda.min(), trans_lambda.max()
+        # Use the smallest step size of the SED, divided by 2
+        smask = (sed[:, 0] >= mnt) & (sed[:, 0] <= mxt)
+        sed_lambda = sed[smask, 0]
+        step_size = np.min(np.diff(sed_lambda))
+        return np.arange(mnt, mxt, step_size)
+
     def __compute_value(self, filter_name: str, trans: np.ndarray, sed: np.ndarray,
                         shifts: np.ndarray):
         # Adapt shapes
         shifts = shifts.reshape(-1, 1)
-        lambd_shape = len(shifts), len(trans[:, 0])
+        # Compute a "good" interpolation grid
+        interp_grid = self.__compute_interp_grid(trans, sed)
+        # Interpolate transmission
+        interp_trans = np.interp(interp_grid, trans[:, 0], trans[:, 1])
+        # Broadcast shape
+        lambd_shape = len(shifts), len(interp_grid)
         # Wavelength for each shift
-        lambd = np.broadcast_to(trans[:, 0], shape=lambd_shape) + shifts
+        lambd = np.broadcast_to(interp_grid, shape=lambd_shape) + shifts
         # Interpolate the SED
         interp_sed = np.interp(lambd, sed[:, 0], sed[:, 1], left=0, right=0)
         # Compute the SED through the filter
-        filtered_sed = interp_sed * trans[:, 1]
+        filtered_sed = interp_sed * interp_trans
         # Compute the intensity of the filtered object
         intensity = np.trapz(filtered_sed, x=lambd)
         # Post-process the intensity
