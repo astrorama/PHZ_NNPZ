@@ -22,8 +22,6 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import numpy as np
-import scipy.integrate
-from numpy.polynomial.polynomial import Polynomial
 
 
 def correction_func(a, b):
@@ -75,8 +73,10 @@ class PhotometryCalculator(object):
         mnt, mxt = trans_lambda.min(), trans_lambda.max()
         # Use the smallest step size of the SED, divided by 2
         smask = (sed[:, 0] >= mnt) & (sed[:, 0] <= mxt)
+        if not np.any(smask):
+            return trans[0:2, 0]
         sed_lambda = sed[smask, 0]
-        step_size = np.min(np.diff(sed_lambda))
+        step_size = np.min(np.diff(sed_lambda), initial=np.diff(trans_lambda).min())
         return np.arange(mnt, mxt, step_size)
 
     def __compute_value(self, filter_name: str, trans: np.ndarray, sed: np.ndarray,
