@@ -72,20 +72,21 @@ class CorrectedPhotometry(WeightPhotometryProvider):
             A map with keys the filter names and values the photometry values
         """
         dtype = [(filter_name, np.float32) for filter_name in self.__filters]
-        photo = self.__ref_photo[ref_i:ref_i + 1]
+        rest_photo = self.__ref_photo[ref_i]
+        corrected_photo = np.zeros(2, dtype=dtype)
         ebv = self.__ebv_list[cat_i][np.newaxis]
 
         # First, apply the filter correction
         for fi, fname in enumerate(self.__filters):
-            corr_a, corr_b = self.__ref_shift_corr[ref_i, fi]
+            shift_corr_a, shift_corr_b = self.__ref_shift_corr[ref_i, fi]
+            ebv_corr = self.__ref_ebv_corr[ref_i, fi]
+            # Copy value
+            corrected_photo[fname] = rest_photo[fi]
+            # Correct shift
             shift = self.__filter_shifts[fname][cat_i] if fname in self.__filter_shifts else 0
-            corr = corr_a * shift * shift + corr_b * shift + 1
-            photo[:, fi] *= corr
+            shift_corr = shift_corr_a * shift * shift + shift_corr_b * shift + 1
+            corrected_photo[fname] *= shift_corr
             # Then, the galactic reddening
-            photo[:, fi] *= 10 ** (-0.4 * self.__ref_ebv_corr[ref_i, fi] * ebv)
+            corrected_photo[fname] *= 10 ** (-0.4 * ebv_corr * ebv)
 
-        # To structured array
-        out = np.ndarray(2, dtype=dtype)
-        for fi, fname in enumerate(self.__filters):
-            out[fname] = photo[0, fi]
-        return out
+        return corrected_photo
