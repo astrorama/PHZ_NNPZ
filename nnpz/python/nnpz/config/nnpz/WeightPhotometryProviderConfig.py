@@ -86,11 +86,12 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
             sys.exit(1)
 
         ref_phot = reference_config['reference_photometry']
+        ref_filters = reference_config['reference_filters']
         ebv = target_config['target_ebv']
         trans_mean = target_config['target_filter_mean_wavelength']
 
         self.__photometry_provider = CorrectedPhotometry(
-            ref_phot, ebv_list=ebv, filter_trans_mean_lists=trans_mean
+            ref_phot, ref_filters, ebv_list=ebv, filter_trans_mean_lists=trans_mean
         )
 
     def __createPhotometryProvider(self, args):

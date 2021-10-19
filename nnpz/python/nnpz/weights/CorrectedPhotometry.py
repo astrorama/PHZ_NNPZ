@@ -13,6 +13,8 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+from typing import List
+
 import numpy as np
 from ElementsKernel import Logging
 from nnpz import NnpzFlag
@@ -31,15 +33,17 @@ class CorrectedPhotometry(WeightPhotometryProvider):
 
     Args:
         ref_phot: A PhotometrtyProvider instance
+        ref_filters: List of filters to use
         ebv_list: None, or a 1D array with the (E(B-V) corresponding to each entry in the
                 target catalog
         filter_trans_mean_lists: A map with the filter_name as key, and a list/array with the
                 filter mean corresponding to each entry in the target catalog
     """
 
-    def __init__(self, ref_phot: PhotometryProvider, ebv_list: np.ndarray = None,
+    def __init__(self, ref_phot: PhotometryProvider, ref_filters: List[str],
+                 ebv_list: np.ndarray = None,
                  filter_trans_mean_lists: dict = None):
-        self.__filters = ref_phot.getFilterList()
+        self.__filters = ref_filters
         self.__ref_photo = ref_phot.getData(*self.__filters)
         self.__ref_ebv_corr = ref_phot.getEBVCorrectionFactors(*self.__filters)
         self.__ref_shift_corr = ref_phot.getShiftCorrectionFactors(*self.__filters)
