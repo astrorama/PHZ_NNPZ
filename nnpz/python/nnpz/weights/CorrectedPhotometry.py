@@ -74,7 +74,7 @@ class CorrectedPhotometry(WeightPhotometryProvider):
         dtype = [(filter_name, np.float32) for filter_name in self.__filters]
         rest_photo = self.__ref_photo[ref_i]
         corrected_photo = np.zeros(2, dtype=dtype)
-        ebv = self.__ebv_list[cat_i][np.newaxis]
+        ebv = self.__ebv_list[cat_i][np.newaxis] if self.__ebv_list is not None else 0
 
         # First, apply the filter correction
         for fi, fname in enumerate(self.__filters):
