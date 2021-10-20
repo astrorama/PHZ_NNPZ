@@ -66,15 +66,24 @@ class PhotometryCalculator(object):
     def __compute_interp_grid(self, trans, sed):
         # Places where the transmission is > 0
         tmask = trans[:, 1] > 0
+        if not np.any(tmask):
+            return trans[0:2, 0]
+        # Unmask the knots just before and just after the first/last transmission
+        tidx = np.argwhere(tmask)
+        first, last = tidx[0] - 1, np.flip(tidx)[0] + 1
+        if first >= 0:
+            tmask[first] = True
+        if last < len(tmask):
+            tmask[last] = True
         trans_lambda = trans[tmask, 0]
         mnt, mxt = trans_lambda.min(), trans_lambda.max()
-        # Use the smallest step size of the SED, divided by 2
+        # Use the smallest step size of the SED
         smask = (sed[:, 0] >= mnt) & (sed[:, 0] <= mxt)
         if not np.any(smask):
             return trans[0:2, 0]
         sed_lambda = sed[smask, 0]
         step_size = np.min(np.diff(sed_lambda), initial=np.diff(trans_lambda).min())
-        return np.arange(mnt, mxt, step_size)
+        return np.arange(mnt, mxt + step_size, step_size)
 
     def __compute_value(self, filter_name: str, trans: np.ndarray, sed: np.ndarray,
                         shifts: np.ndarray):

@@ -77,15 +77,18 @@ def test_compute():
 
     # Compute the expected photometry values. Note that the grid here is not the same
     # used in PhotometryCalculator, so we need to give a considerable tolerance
+    grid = np.linspace(sed[:, 0].min(), sed[:, 0].max(), 10000)
     expected = {}
     filter_1 = filter_map['first']
-    filtered_sed_1 = sed[:, 1] * np.interp(sed[:, 0], filter_1[:, 0], filter_1[:, 1],
-                                           left=0, right=0)
-    expected['first'] = np.trapz(filtered_sed_1, x=sed[:, 0])
+    filter_1 = np.interp(grid, filter_1[:, 0], filter_1[:, 1])
+    sed_interp = np.interp(grid, sed[:, 0], sed[:, 1])
+    filtered_sed_1 = sed_interp * filter_1
+    expected['first'] = np.trapz(filtered_sed_1, x=grid)
+
     filter_2 = filter_map['second']
-    filtered_sed_2 = sed[:, 1] * np.interp(sed[:, 0], filter_2[:, 0], filter_2[:, 1],
-                                           left=0, right=0)
-    expected['second'] = np.trapz(filtered_sed_2, x=sed[:, 0])
+    filter_2 = np.interp(grid, filter_2[:, 0], filter_2[:, 1])
+    filtered_sed_2 = sed_interp * filter_2
+    expected['second'] = np.trapz(filtered_sed_2, x=grid)
 
     # Check the postProcess() has been called once per filter with the correct
     # parameters

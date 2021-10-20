@@ -92,10 +92,10 @@ def test_recomputedPhotometryNanMeans(reference_sample_fixture, reference_photo_
     )
 
     # Then
-
     # It should, effectively, behave like the shift is 0
     for i in range(len(filter_means['vis'])):
         phot = recomputed(0, i, None)
+        print(phot)
         assert len(phot.dtype) == len(reference_photo_fixture.getFilterList())
         assert phot['Y'][0] > 1.
         assert phot['vis'][0] <= np.finfo(np.float32).eps
