@@ -130,15 +130,24 @@ def target_fixture(filters_fixture):
 def reference_photo_fixture(temp_dir_fixture, filters_fixture):
     photo_path = os.path.join(temp_dir_fixture, 'Photometry.fits')
 
+    shift_corr = {
+        'vis': np.zeros((5, 2), dtype=np.float32),
+        'g': np.zeros((5, 2), dtype=np.float32),
+        'Y': np.zeros((5, 2), dtype=np.float32),
+    }
+    shift_corr['vis'][:, 0] = np.arange(5, dtype=np.float32)
+    shift_corr['g'][:, 1] = np.arange(5, dtype=np.float32)
+
     nnpz_photo = dict(ID=np.arange(5, dtype=np.int32))
-    for filter_name in filters_fixture.keys():
-        nnpz_photo[filter_name] = np.zeros(5, dtype=np.float32)
+    for i, filter_name in enumerate(filters_fixture.keys()):
+        nnpz_photo[filter_name] = np.arange(1, 6, dtype=np.float32) * (i + 1) / 10.
+        nnpz_photo[filter_name + '_SHIFT_CORR'] = shift_corr[filter_name]
     nnpz_photo = fits.BinTableHDU(
         data=Table(nnpz_photo),
         name='NNPZ_PHOTOMETRY',
         header=dict(PHOTYPE='F_nu_uJy')
     )
-
+    print(nnpz_photo.data)
     hdus = [fits.PrimaryHDU(), nnpz_photo]
 
     for filter_name, transmission in filters_fixture.items():
