@@ -22,9 +22,72 @@ from nnpz.photometry.PhotometryPrePostProcessorInterface import PhotometryPrePos
 
 
 class PhotometryWithCorrectionsCalculator(object):
+    """
+    Computes photometry values and the correction factors for galactic reddening (EBV)
+    and filter variations (average wavelength shifts).
+
+    Given a SED index $\alpha$, and a filter transmission $T$:
+
+    The EBV correction factor is computed with the formula
+    \\f[
+    a_{\\alpha,T} = -2.5 \\log_{10} \\left( \\frac{\\int
+SED_{\\alpha}(\\lambda)*reddener(\\lambda)*Filter_T(\\lambda)}{\\int
+SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
+    \\f]
+
+    Where the reddener functor is provided by GalacticReddeningPrePostProcessor
+
+    For the filter variation, the correction factor for a given shift ($\\Delta\\lambda$)
+    corresponds to
+
+    \\f[
+    C_{T,\\alpha}(\\Delta\\lambda) = \\frac{f_{T,\\alpha}(\\Delta\\lambda)}{f_{T,\\alpha}(0)}
+    \\f]
+
+    This correction factor is computed for a set of different deltas, and modeled by a
+    second-degree polynomial. Since $C_{T,\alpha}(0) = 1$, the constant coefficient can be fixed
+    to 1, and only two free parameters are to be found.
+
+    This is converted to a linear regression by defining
+
+    \\f[
+    \\hat{C}_{T,\\alpha}(\\Delta\\lambda) = \\frac{C_{T,\\alpha}(\\Delta\\lambda) - 1}{\\Delta\\lambda}
+    \\f]
+
+    Which is defined for $\\Delta\\lambda \\ne 0$. In turn,
+    $\\hat{C}$ can be approximated by a linear function:
+
+    \\f[
+    \\hat{C}_{T,\\alpha}(\\Delta\\lambda) \\approx a_{T,\\alpha}\\Delta\\lambda + b_{T,\\alpha}
+    \\f]
+
+    Which can be obtained by a least-square minimization. The correction factor can be
+    finally computed by
+
+    \\f[
+    C_{T,\\alpha}(\\Delta\\lambda) \\approx a_{T,\\alpha}\\Delta\\lambda^2 + b_{T,\\alpha}\\Delta\\lambda + 1
+    \\f]
+
+    Args:
+        filter_map: A dictionary with keys the filter names and values the
+                filter transmissions as 2D numpy arrays, where the first axis
+                represents the knots and the second axis has size 2 with the
+                first element being the wavelength (expressed in Angstrom) and
+                the second the filter transmission (in the range [0,1])
+        pre_post_processor: An object which is used for controlling the
+                type of the photometry produced, by performing unit conversions
+                before and after integrating the SED. It must implement the
+                PhotometryPrePostProcessorInterface.
+        ebv_ref: The EBV value used to compute the correction factor. 0.3 works well.
+        shifts: The shift values used to compute the correction factors to be fit by a linear
+            model. 0 can *not* be one of the points.
+    """
 
     def __init__(self, filter_map: dict, pre_post_processor: PhotometryPrePostProcessorInterface,
                  ebv_ref: float, shifts: np.ndarray):
+        if shifts is not None and 0 in shifts:
+            raise ValueError('Ĉ(Δλ) is not defined for Δλ=0! Please, remove 0 from the shifts')
+
         pre_post_ebv = GalacticReddeningPrePostProcessor(pre_post_processor, p_14_ebv=ebv_ref)
         self._calculator = PhotometryCalculator(filter_map, pre_post_processor, shifts=shifts)
         self._ebv_calculator = PhotometryCalculator(filter_map, pre_post_ebv)
@@ -32,6 +95,26 @@ class PhotometryWithCorrectionsCalculator(object):
         self._ebv = ebv_ref
 
     def compute(self, sed: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Compute the photometry (for $\\Delta\\lambda  = 0$ and ${EBV} = 0$) and correction factors
+        for the given set of SEDs
+        Args:
+            sed: The SED to compute the photometry for. It is a two
+                dimensional numpy array of single precision floats. The first
+                dimension has size same as the number of the knots and the
+                second dimension has always size equal to two, with the first
+                element representing the wavelength expressed in Angstrom and
+                the second the energy value, expressed in erg/s/cm^2/Angstrom.
+
+        Returns:
+            A tuple (photometry, ebv_correction, shift_correction).
+            - photometry is a structured array with the filter names as attributes, and
+                one dimension with two positions: value and error.
+            - ebv_correction is a structured array as photometry, with a single dimension
+                with the unique EBV correction factor
+            - shift_correction is a structured array as photometry, and one dimension with two
+                position: shift correction factors a and b
+        """
         # Compute the reference photometry
         photo, shifted = self._calculator.compute(sed)
         shift_corr = np.zeros(2, dtype=photo.dtype)

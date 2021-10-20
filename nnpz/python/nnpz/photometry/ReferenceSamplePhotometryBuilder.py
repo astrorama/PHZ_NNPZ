@@ -62,6 +62,7 @@ class ReferenceSamplePhotometryBuilder(object):
         self._pre_post_processor = pre_post_processor
         self._ebv = ebv
         self._shifts = shifts
+        self._filter_map = {}
 
         # By default we produce photometry for every available filter
         self.setFilters(filter_provider.getFilterNames())

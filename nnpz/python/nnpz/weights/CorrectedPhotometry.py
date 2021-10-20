@@ -18,8 +18,6 @@ from typing import List
 import numpy as np
 from ElementsKernel import Logging
 from nnpz import NnpzFlag
-from nnpz.photometry.SourceIndependantGalacticUnReddening import \
-    SourceIndependantGalacticUnReddening
 from nnpz.reference_sample import PhotometryProvider
 from nnpz.weights import WeightPhotometryProvider
 
@@ -32,7 +30,7 @@ class CorrectedPhotometry(WeightPhotometryProvider):
     rather than re-computation, which is less CPU intensive.
 
     Args:
-        ref_phot: A PhotometrtyProvider instance
+        ref_phot: A PhotometryProvider instance
         ref_filters: List of filters to use
         ebv_list: None, or a 1D array with the (E(B-V) corresponding to each entry in the
                 target catalog

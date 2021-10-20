@@ -49,9 +49,6 @@ class PhotometryCalculator(object):
             shifts: Compute the photometry with these shifts in order to compute
                 the correction factors.
         """
-        if shifts is not None and 0 in shifts:
-            raise ValueError('Ĉ(Δλ) is not defined for Δλ=0! Please, remove 0 from the shifts')
-
         self.__filter_trans_map = filter_map
         self.__pre_post_processor = pre_post_processor
         self.__shifts = shifts
@@ -113,7 +110,7 @@ class PhotometryCalculator(object):
 
         Returns:
             A structured array with the filter names as attributes, and one dimension with two
-            positions: value and error. Optinally, the photometry for the shifted filters.
+            positions: value and error. Optionally, the photometry for the shifted filters.
 
         The type of the photometry values computed depends on the type of the
         pre_post_processor passed to the constructor.
