@@ -81,14 +81,16 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
         ebv_ref: The EBV value used to compute the correction factor. 0.3 works well.
         shifts: The shift values used to compute the correction factors to be fit by a linear
             model. 0 can *not* be one of the points.
+        galactic_reddening_curve: The galactic reddening curve. See GalacticReddeningPrePostProcessor
     """
 
     def __init__(self, filter_map: dict, pre_post_processor: PhotometryPrePostProcessorInterface,
-                 ebv_ref: float, shifts: np.ndarray):
+                 ebv_ref: float, shifts: np.ndarray, galactic_reddening_curve: str = None):
         if shifts is not None and 0 in shifts:
             raise ValueError('Ĉ(Δλ) is not defined for Δλ=0! Please, remove 0 from the shifts')
 
-        pre_post_ebv = GalacticReddeningPrePostProcessor(pre_post_processor, p_14_ebv=ebv_ref)
+        pre_post_ebv = GalacticReddeningPrePostProcessor(pre_post_processor, p_14_ebv=ebv_ref,
+                                                         galactic_reddening_curve=galactic_reddening_curve)
         self._calculator = PhotometryCalculator(filter_map, pre_post_processor, shifts=shifts)
         self._ebv_calculator = PhotometryCalculator(filter_map, pre_post_ebv)
         self._shifts = shifts

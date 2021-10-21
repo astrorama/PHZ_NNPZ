@@ -95,9 +95,9 @@ class ReferenceSamplePhotometryBuilder(object):
                 passed (default).
 
         Returns:
-            A dictionary where the keys are the filter names and the values are
-            numpy arrays of single precision floats containing the photometry
-            values of the filter for the iterated SEDs
+            A tuple with: (photometry, ebv_correction, shift_correction)
+            They are numpy structured arrays of single precision floats containing the photometry
+            values, the single EBV correction factor, and the two filter shift correction factors
 
         Note that if the sample_iter reach an object for which the SED is set
         to None it will stop the iteration and return the already computed
