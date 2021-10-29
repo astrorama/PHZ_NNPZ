@@ -92,7 +92,7 @@ class PhotometryCalculator(object):
         # Compute a "good" interpolation grid
         interp_grid = self.__compute_interp_grid(trans, sed)
         # Interpolate transmission
-        interp_trans = np.interp(interp_grid, trans[:, 0], trans[:, 1])
+        interp_trans = np.interp(interp_grid, trans[:, 0], trans[:, 1], left=0, right=0)
         # Broadcast shape
         lambd_shape = len(shifts), len(interp_grid)
         # Wavelength for each shift
