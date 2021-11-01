@@ -96,7 +96,8 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
         self._shifts = shifts
         self._ebv = ebv_ref
 
-    def compute(self, sed: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def compute(self, sed: np.ndarray, interp_grid_callback=None) -> Tuple[
+        np.ndarray, np.ndarray, np.ndarray]:
         """
         Compute the photometry (for $\\Delta\\lambda  = 0$ and ${EBV} = 0$) and correction factors
         for the given set of SEDs
@@ -118,11 +119,11 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
                 position: shift correction factors a and b
         """
         # Compute the reference photometry
-        photo, shifted = self._calculator.compute(sed)
+        photo, shifted = self._calculator.compute(sed, interp_grid_callback)
         shift_corr = np.zeros(2, dtype=photo.dtype)
 
         # Apply Audrey Galametz's formula for the EBV correction
-        reddened_photo = self._ebv_calculator.compute(sed)
+        reddened_photo = self._ebv_calculator.compute(sed, interp_grid_callback)
         ebv_corr = np.zeros(1, dtype=reddened_photo.dtype)
         for filter_name in photo.dtype.names:
             rfx = reddened_photo[filter_name][0]
