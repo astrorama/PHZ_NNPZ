@@ -66,48 +66,29 @@ class PhotometryCalculator(object):
         ranges_arr = np.asarray(list(self.__filter_range_map.values()))
         self.__total_range = (ranges_arr[:, 0].min(), ranges_arr[:, 1].max())
 
-    def __compute_interp_grid(self, trans, sed, shifts):
-        # Mask areas where there is no transmission
-        tmask = trans[:, 1] > 0
-        # Unmask the knots just before and just after the first/last transmission
-        tidx = np.argwhere(tmask)[0]
-        first, last = tidx[0] - 1, np.flip(tidx)[0] + 1
-        tmask[max(0, first):min(last, len(tmask) - 1)] = True
-        # Pick the interval between the first and last >=0 transmission, and widen the area
-        # according to the shifts
-        start = trans[tmask, 0].min() + np.min(shifts)
-        end = trans[tmask, 0].max() + np.max(shifts)
+    def __compute_interp_grid(self, trans, sed):
         # SED mask
-        smask = (sed[:, 0] >= start) & (sed[:, 0] <= end)
-        # Equally-spaced grid
-        step = np.diff(trans[tmask, 0]).min(initial=min(1, np.diff(sed[smask, 0]).mean()))
-        grid = np.arange(start, end + step, step=step)
-        # Find emission lines, if any, plus the preceding and following knots
-        peaks, _ = signal.find_peaks(sed[smask, 1], threshold=np.mean(sed[smask, 1]))
-        pidx = np.concatenate([peaks, peaks - 1, peaks + 1])
-        # Add the delta knots to the grid
-        grid = np.unique(np.concatenate([grid, sed[pidx, 0]]))
-        return grid
+        smask = (sed[:, 0] >= trans[0, 0]) & (sed[:, 0] <= trans[-1, 0])
+        return np.unique(np.concatenate([trans[:, 0], sed[smask, 0]]))
 
     def __compute_value(self, filter_name: str, trans: np.ndarray, sed: np.ndarray,
                         shifts: np.ndarray, grid_method):
         if grid_method is None:
             grid_method = self.__compute_interp_grid
-        # Compute a reasonable interpolation grid
-        interp_grid = grid_method(trans, sed, shifts)
-        # Interpolate SED
-        interp_sed = np.interp(interp_grid, sed[:, 0], sed[:, 1], left=0, right=0)
-        # Interpolate shifted transmissions
-        interp_trans = np.zeros(shape=(len(shifts), len(interp_grid)), dtype=np.float32)
+        shifted_trans = np.copy(trans)
+        intensity = np.zeros(len(shifts), dtype=np.float32)
         for i, shift in enumerate(shifts):
-            interp_trans[i, :] = np.interp(interp_grid, trans[:, 0] + shift, trans[:, 1], left=0,
-                                           right=0)
-        # Broadcast the SED
-        interp_sed = np.broadcast_to(interp_sed, shape=(len(shifts), len(interp_sed)))
-        # Compute the SED through the filter
-        filtered_sed = interp_sed * interp_trans
-        # Compute the intensity of the filtered object
-        intensity = np.trapz(filtered_sed, x=interp_grid)
+            shifted_trans[:, 0] = trans[:, 0] + shift
+            # Interpolation grid
+            interp_grid = grid_method(shifted_trans, sed)
+            # Interpolate SED and transmission
+            interp_sed = np.interp(interp_grid, sed[:, 0], sed[:, 1], left=0, right=0)
+            interp_trans = np.interp(interp_grid, shifted_trans[:, 0], shifted_trans[:, 1], left=0,
+                                     right=0)
+            # Compute the SED through the filter
+            filtered_sed = interp_sed * interp_trans
+            # Compute the intensity of the filtered object
+            intensity[i] = np.trapz(filtered_sed, x=interp_grid)
         # Post-process the intensity
         return self.__pre_post_processor.postProcess(intensity, filter_name)
 
