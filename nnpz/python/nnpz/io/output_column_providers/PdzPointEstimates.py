@@ -72,7 +72,12 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
                 out[i] = np.nan
 
     def getEstimateMean(self, bins, pdfs, out):
-        out[:] = np.average(np.tile(bins, (len(pdfs), 1)), weights=pdfs, axis=1)
+        zero_mask = np.sum(pdfs, axis=1) > 0
+        out[zero_mask] = np.average(
+            np.tile(bins, (len(pdfs[zero_mask]), 1)),
+            weights=pdfs[zero_mask], axis=1
+        )
+        out[~zero_mask] = np.nan
 
     def getEstimateMode(self, bins, pdfs, out):
         out[:] = bins[np.argmax(pdfs, axis=1)]
