@@ -98,7 +98,7 @@ class WeightPhotometryProviderConfig(ConfigManager.ConfigHandler):
         target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
         if target_config['target_ebv'] is not None or target_config[
             'target_filter_mean_wavelength'] is not None:
-            if target_config.get('recompute_photometry', False):
+            if args.get('recompute_photometry', False):
                 logger.info('Using recomputed photometries for weight calculation')
                 self.__createRecomputedPhotometry(args)
             else:
