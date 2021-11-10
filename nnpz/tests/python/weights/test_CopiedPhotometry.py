@@ -36,10 +36,11 @@ def test_copiedPhotometryAll(reference_photo_fixture):
     copied = CopiedPhotometry(reference_photo_fixture)
 
     # Then
+    ref_photo = reference_photo_fixture.getData('Y', 'g', 'vis')
     for ref_i in range(len(reference_photo_fixture.getIds())):
         phot = copied(ref_i, 1, NnpzFlag())
         assert phot['Y'].shape == (2,)
-        original = reference_photo_fixture.getData()[ref_i]
+        original = ref_photo[ref_i]
         assert np.array_equal(phot['Y'], original[0])
         assert np.array_equal(phot['g'], original[1])
         assert np.array_equal(phot['vis'], original[2])

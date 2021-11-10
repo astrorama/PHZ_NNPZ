@@ -22,13 +22,13 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import os
-import pytest
-import numpy as np
-from astropy.table import Table, Column
-import astropy.io.fits as fits
 
-from nnpz.utils.fits import tableToHdu
+import numpy as np
+import pytest
+
+# noinspection PyUnresolvedReferences
 from ..fixtures.util_fixtures import temp_dir_fixture
+
 
 ##############################################################################
 

@@ -23,6 +23,7 @@ from .NeighborSelectorConfig import NeighborSelectorConfig
 from .OutputHandlerConfig import OutputHandlerConfig
 from .CopyInputColumnsConfig import CopyInputColumnsConfig
 from .NeighborListOutputConfig import NeighborListOutputConfig
+from .NeighborPhotometryOutputConfig import NeighborPhotometryOutputConfig
 from .PdzOutputConfig import PdzOutputConfig
 from .FlagsConfig import FlagsConfig
 from .WeightPhotometryProviderConfig import WeightPhotometryProviderConfig

@@ -21,7 +21,14 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
+from typing import Callable
+
 import numpy as np
+from scipy import signal
+
+
+def correction_func(a, b):
+    return a ** 2 + b + 1
 
 
 class PhotometryCalculator(object):
@@ -29,7 +36,7 @@ class PhotometryCalculator(object):
     Class for computing the photometry for a filter reference system
     """
 
-    def __init__(self, filter_map, pre_post_processor):
+    def __init__(self, filter_map, pre_post_processor, shifts: np.ndarray = None):
         """Creates a new instance of the PhotometryCalculator.
 
         Args:
@@ -42,9 +49,12 @@ class PhotometryCalculator(object):
                 type of the photometry produced, by performing unit conversions
                 before and after integrating the SED. It must implement the
                 PhotometryPrePostProcessorInterface.
+            shifts: Compute the photometry with these shifts in order to compute
+                the correction factors.
         """
         self.__filter_trans_map = filter_map
         self.__pre_post_processor = pre_post_processor
+        self.__shifts = shifts
 
         # Compute the ranges of the filters and the total range
         self.__filter_range_map = {}
@@ -56,7 +66,33 @@ class PhotometryCalculator(object):
         ranges_arr = np.asarray(list(self.__filter_range_map.values()))
         self.__total_range = (ranges_arr[:, 0].min(), ranges_arr[:, 1].max())
 
-    def compute(self, sed):
+    def __compute_interp_grid(self, trans, sed):
+        # SED mask
+        smask = (sed[:, 0] >= trans[0, 0]) & (sed[:, 0] <= trans[-1, 0])
+        return np.unique(np.concatenate([trans[:, 0], sed[smask, 0]]))
+
+    def __compute_value(self, filter_name: str, trans: np.ndarray, sed: np.ndarray,
+                        shifts: np.ndarray, grid_method):
+        if grid_method is None:
+            grid_method = self.__compute_interp_grid
+        shifted_trans = np.copy(trans)
+        intensity = np.zeros(len(shifts), dtype=np.float32)
+        for i, shift in enumerate(shifts):
+            shifted_trans[:, 0] = trans[:, 0] + shift
+            # Interpolation grid
+            interp_grid = grid_method(shifted_trans, sed)
+            # Interpolate SED and transmission
+            interp_sed = np.interp(interp_grid, sed[:, 0], sed[:, 1], left=0, right=0)
+            interp_trans = np.interp(interp_grid, shifted_trans[:, 0], shifted_trans[:, 1], left=0,
+                                     right=0)
+            # Compute the SED through the filter
+            filtered_sed = interp_sed * interp_trans
+            # Compute the intensity of the filtered object
+            intensity[i] = np.trapz(filtered_sed, x=interp_grid)
+        # Post-process the intensity
+        return self.__pre_post_processor.postProcess(intensity, filter_name)
+
+    def compute(self, sed, interp_grid_callback: Callable = None):
         """Computes the photometry for the given SED.
 
         Args:
@@ -69,7 +105,7 @@ class PhotometryCalculator(object):
 
         Returns:
             A structured array with the filter names as attributes, and one dimension with two
-            positions: value and error
+            positions: value and error. Optionally, the photometry for the shifted filters.
 
         The type of the photometry values computed depends on the type of the
         pre_post_processor passed to the constructor.
@@ -92,34 +128,32 @@ class PhotometryCalculator(object):
             any computations on the photometry values (like filter normalization
             etc) that have to be performed after the SED integration.
         """
+        dtype = [(filter_name, np.float32) for filter_name in self.__filter_trans_map]
 
         # Pre-process the SED
         sed = self.__pre_post_processor.preProcess(sed)
+        if self.__shifts is not None:
+            photometry_shifted = np.zeros(len(self.__shifts), dtype=dtype)
+        else:
+            photometry_shifted = None
 
         # Iterate through the filters and compute the photometry values
-        dtype = [(filter_name, np.float32) for filter_name in self.__filter_trans_map]
         photometry_map = np.zeros(2, dtype=dtype)
         for filter_name in self.__filter_trans_map:
             filter_trans = self.__filter_trans_map[filter_name]
-
-            # Interpolate the SED
-            interp_sed = np.interp(filter_trans[:, 0], sed[:, 0], sed[:, 1], left=0, right=0)
-
-            # Compute the SED through the filter
-            filtered_sed = interp_sed * filter_trans[:, 1]
-
-            # Compute the intensity of the filtered object
-            intensity = np.trapz(filtered_sed, x=filter_trans[:, 0])
-
-            # Post-process the intensity
-            photometry = self.__pre_post_processor.postProcess(intensity, filter_name)
-
             # Add the computed photometry in the results
-            photometry_map[filter_name][0] = photometry
-
+            photometry_map[filter_name][0] = self.__compute_value(filter_name, filter_trans, sed,
+                                                                  shifts=np.asarray([0]),
+                                                                  grid_method=interp_grid_callback)
+            if self.__shifts is not None:
+                photometry_shifted[filter_name][:] = self.__compute_value(filter_name, filter_trans,
+                                                                          sed, shifts=self.__shifts,
+                                                                          grid_method=interp_grid_callback)
+        if self.__shifts is not None:
+            return photometry_map, photometry_shifted
         return photometry_map
 
-    def __call__(self, sed):
+    def __call__(self, sed: np.ndarray):
         """
         Convenience method to make this class callable
         """

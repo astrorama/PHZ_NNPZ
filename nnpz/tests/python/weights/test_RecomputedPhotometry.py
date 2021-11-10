@@ -92,7 +92,6 @@ def test_recomputedPhotometryNanMeans(reference_sample_fixture, reference_photo_
     )
 
     # Then
-
     # It should, effectively, behave like the shift is 0
     for i in range(len(filter_means['vis'])):
         phot = recomputed(0, i, None)

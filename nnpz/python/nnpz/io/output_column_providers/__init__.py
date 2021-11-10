@@ -28,3 +28,4 @@ from .NeighborList import NeighborList
 from .PdfSampling import PdfSampling
 from .PdzPointEstimates import PdzPointEstimates
 from .TrueRedshiftPdz import TrueRedshiftPdz
+from .NeighborPhotometry import NeighborPhotometry

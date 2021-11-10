@@ -22,11 +22,12 @@ Author: Nikolaos Apostolakos
 from __future__ import division, print_function
 
 import os
-import numpy as np
+
 import astropy.io.fits as fits
+import numpy as np
 from astropy.table import Table, join
-from nnpz.exceptions import FileNotFoundException, WrongFormatException, UnknownNameException, \
-    MissingDataException
+from nnpz.exceptions import FileNotFoundException, MissingDataException, UnknownNameException, \
+    WrongFormatException
 
 
 class PhotometryProvider(object):
@@ -69,15 +70,23 @@ class PhotometryProvider(object):
 
     @staticmethod
     def __readPhotometryData(phot_table, filter_list):
-        """Reads from the given table the photometry values for the given filters
-        in a numpy array."""
+        """
+        Reads from the given table the photometry values for the given filters
+        in a numpy array.
+        """
 
         data = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
+        ebv_corr = np.zeros((len(phot_table), len(filter_list)), dtype=np.float32)
+        shift_corr = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
         for i, name in enumerate(filter_list):
             data[:, i, 0] = phot_table[name]
             if name + '_ERR' in phot_table.colnames:
                 data[:, i, 1] = phot_table[name + '_ERR']
-        return data
+            if name + '_EBV_CORR' in phot_table.colnames:
+                ebv_corr[:, i] = phot_table[name + '_EBV_CORR']
+            if name + '_SHIFT_CORR' in phot_table.colnames:
+                shift_corr[:, i, :] = phot_table[name + '_SHIFT_CORR']
+        return data, ebv_corr, shift_corr
 
     def __init__(self, filename, ref_ids=None):
         """Creates a new instance for accessing the given photometry file.
@@ -100,7 +109,7 @@ class PhotometryProvider(object):
         # Create a list with the filters in the file
         phot_table = Table(hdus['NNPZ_PHOTOMETRY'].data)
         self.__filter_list = [c for c in phot_table.colnames if
-                              c != 'ID' and not c.endswith('_ERR')]
+                              c != 'ID' and not c.endswith('_ERR') and not c.endswith('_CORR')]
 
         # Read the filter transmissions from the extension HDUs
         self.__filter_data = self.__readFilterTransmissions(hdus, self.__filter_list)
@@ -116,8 +125,12 @@ class PhotometryProvider(object):
         self.__ids = phot_table['ID']
 
         # Read the photometry values
-        self.__phot_data = self.__readPhotometryData(phot_table, self.__filter_list)
+        self.__phot_data, self.__ebv_corr_data, self.__shift_corr_data = self.__readPhotometryData(
+            phot_table,
+            self.__filter_list)
         self.__phot_data.flags.writeable = False
+        self.__ebv_corr_data.flags.writeable = False
+        self.__shift_corr_data.flags.writeable = False
 
     def getType(self):
         """Returns the type of photometry in the file.
@@ -203,3 +216,39 @@ class PhotometryProvider(object):
 
         # Return a view rather than a copy
         return self.__phot_data[:, filter_idx, :]
+
+    def getEBVCorrectionFactors(self, *filter_list):
+        """
+        Get the EBV correction factors
+        """
+        try:
+            if len(filter_list) == 0:
+                # numpy will avoid a copy if the index is a slice, while it will *always*
+                # copy if it is a list
+                filter_idx = slice(len(self.__filter_list))
+            else:
+                filter_idx = np.array(list(map(lambda f: self.__filter_list.index(f), filter_list)))
+        except ValueError as e:
+            missing = str(e).split()[0]
+            raise UnknownNameException('File does not contain corrections for {}'.format(missing))
+
+            # Return a view rather than a copy
+        return self.__ebv_corr_data[:, filter_idx]
+
+    def getShiftCorrectionFactors(self, *filter_list):
+        """
+        Get the filter variation correction factors
+        """
+        try:
+            if len(filter_list) == 0:
+                # numpy will avoid a copy if the index is a slice, while it will *always*
+                # copy if it is a list
+                filter_idx = slice(len(self.__filter_list))
+            else:
+                filter_idx = np.array(list(map(lambda f: self.__filter_list.index(f), filter_list)))
+        except ValueError as e:
+            missing = str(e).split()[0]
+            raise UnknownNameException('File does not contain corrections for {}'.format(missing))
+
+        # Return a view rather than a copy
+        return self.__shift_corr_data[:, filter_idx, :]
