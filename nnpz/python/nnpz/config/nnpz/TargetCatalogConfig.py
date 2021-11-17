@@ -87,7 +87,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             self.__target_astropy_table = self.__target_astropy_table[input_size]
 
         self.__target_size = len(self.__target_ids)
-        self.__target_chunk_size = args.get('input_chunk_size', self.__target_size)
+        self.__target_chunk_size = args.get('input_chunk_size', max(self.__target_size, 1))
 
     def parseArgs(self, args):
 
