@@ -24,6 +24,8 @@ that minimizes the chi^2 distance between reference an target object.
 
 from __future__ import division, print_function
 
+import warnings
+
 import numpy as np
 from ElementsKernel import Logging
 from scipy.optimize import newton
@@ -130,13 +132,15 @@ class Chi2Scaling(object):
             reference_mask[prune_idx] = False
 
             try:
-                new_scale = newton(
-                    chi2_prior_da, scale[reference_mask], args=(
-                        ref_values[reference_mask, :], ref_errors[reference_mask, :],
-                        coord_values, coord_errors
-                    ),
-                    maxiter=self.__max_iter, rtol=self.__rtol, disp=False
-                )
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    new_scale = newton(
+                        chi2_prior_da, scale[reference_mask], args=(
+                            ref_values[reference_mask, :], ref_errors[reference_mask, :],
+                            coord_values, coord_errors
+                        ),
+                        maxiter=self.__max_iter, rtol=self.__rtol, disp=False
+                    )
                 not_nan = np.isfinite(new_scale)
                 reference_mask[reference_mask] = not_nan
                 scale[reference_mask] = new_scale[not_nan]
