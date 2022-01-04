@@ -21,8 +21,7 @@ Author: Nikolaos Apostolakos
 
 
 from nnpz.config import ConfigManager
-from nnpz.config.reference import (ReferenceCatalogConfig, ReferenceSampleConfig,
-                                   ReferenceSamplePhotometryConfig)
+from nnpz.config.reference import ReferenceSampleConfig, ReferenceSamplePhotometryConfig
 
 
 class ReferenceConfig(ConfigManager.ConfigHandler):
@@ -34,7 +33,6 @@ class ReferenceConfig(ConfigManager.ConfigHandler):
     def parseArgs(self, args):
         options = {}
         options.update(ConfigManager.getHandler(ReferenceSampleConfig).parseArgs(args))
-        options.update(ConfigManager.getHandler(ReferenceCatalogConfig).parseArgs(args))
         options.update(ConfigManager.getHandler(ReferenceSamplePhotometryConfig).parseArgs(args))
         return options
 

@@ -56,9 +56,7 @@ class WeightCalculatorConfig(ConfigManager.ConfigHandler):
         if column_name.find(':') >= 0:
             catalog_path, column_name = column_name.split(':', 1)
             verify_ids = True
-        # Otherwise, we look for this column on the reference sample or reference catalog
-        elif ref_config.get('reference_catalog', None):
-            catalog_path = ref_config['reference_catalog']
+        # Otherwise, we look for this column on the reference sample
         else:
             catalog_path = ref_config['reference_sample_phot_file']
 

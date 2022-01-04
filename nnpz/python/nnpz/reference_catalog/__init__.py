@@ -1,2 +1,0 @@
-from .ReferenceCatalog import ReferenceCatalog
-from .ReferenceCatalogPhotometryProvider import CatalogPhotometryProvider
