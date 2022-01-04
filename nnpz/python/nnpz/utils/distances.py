@@ -13,35 +13,19 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-
-"""
-Created on: 19/01/18
-Author: Nikolaos Apostolakos
-"""
-
-
 import numpy as np
 
-from nnpz.neighbor_selection import BruteForceSelector
+from nnpz.photometry.photometry import Photometry
 
 
-class EuclideanDistance(BruteForceSelector.DistanceMethodInterface):
-    """Euclidean distance implementation
+def euclidean(ref: Photometry, target: Photometry, out: np.ndarray) -> np.ndarray:
+    assert ref.system == target.system
+    x = ref.values[:, :, 0] - target.values[:, 0]
+    return np.sqrt(np.sum(x * x, axis=1, out=out), out=out)
 
-    WARNING: The Euclidean distance ignores the uncertainties
-    """
 
-    def __call__(self, ref_data_values, ref_data_errors, coord_values, coord_errors):
-        """Returns the euclidean distances.
-
-        For argument and return description see the interface documentation.
-
-        WARNING: The Euclidean distance ignores the uncertainties
-        """
-
-        dist = ref_data_values - coord_values
-        dist = dist * dist
-        dist = np.sum(dist, axis=1)
-        dist = np.sqrt(dist)
-
-        return dist
+def chi2(ref: Photometry, target: Photometry, out: np.ndarray) -> np.ndarray:
+    assert ref.system == target.system
+    nom = ref.values[:, :, 0] - target.values[:, 0]
+    den = ref.values[:, :, 1] * ref.values[:, :, 1] + target.values[:, 1] * target.values[:, 1]
+    return np.sum(nom * nom / den, axis=1, out=out)

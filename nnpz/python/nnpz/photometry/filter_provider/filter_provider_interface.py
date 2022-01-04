@@ -19,16 +19,19 @@ Created on: 04/12/17
 Author: Nikolaos Apostolakos
 """
 
-
 import abc
+from typing import List
+
+import numpy as np
 
 
-class FilterProviderInterface(object):
+class FilterProviderInterface(metaclass=abc.ABCMeta):
     """Interface providing the filter transmissions"""
 
     @abc.abstractmethod
-    def getFilterNames(self):
-        """Provides a list with the names of the filters.
+    def getFilterNames(self) -> List[str]:
+        """
+        Provides a list with the names of the filters.
 
         Returns:
             A python list with the names of the filters as strings
@@ -36,8 +39,9 @@ class FilterProviderInterface(object):
         return
 
     @abc.abstractmethod
-    def getFilterTransmission(self, name):
-        """Provides the transmission curve of the filter with the given name.
+    def getFilterTransmission(self, name) -> np.ndarray:
+        """
+        Provides the transmission curve of the filter with the given name.
 
         Args:
             name: The name of the filter to get the transmission for

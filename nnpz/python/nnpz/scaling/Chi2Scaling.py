@@ -22,11 +22,11 @@ A minimization is done later, taking into account all errors, looking for the sc
 that minimizes the chi^2 distance between reference an target object.
 """
 
-
 import warnings
 
 import numpy as np
 from ElementsKernel import Logging
+from nnpz.photometry.photometry import Photometry
 from scipy.optimize import newton
 
 logger = Logging.getLogger(__name__)
@@ -42,23 +42,23 @@ def chi2(a, refval, referr, coordval, coorderr):
     return np.sum(nom / den, axis=1)
 
 
-class Chi2Scaling(object):
-    """Find the appropriate scaling minimizing the chi2 and applying a prior"""
+class Chi2Scaling:
+    """
+    Find the appropriate scaling minimizing the chi2 and applying a prior
+
+    Args:
+        prior: A function that models the prior for the scale factor a
+        a_min: Minimum acceptable value for the scale
+        a_max: Maximum acceptable value for the scale
+        n_samples: Number of samples to use for finding the edges of the prior
+        batch_size: Limit the minimization to this number of closest points
+        max_iter: Maximum number of iterations for the minimizer
+        rtol: Relative tolerance for the stop condition
+        epsilon: Epsilon used for the numeric derivative
+    """
 
     def __init__(self, prior, a_min=1e-5, a_max=1e5, n_samples=1000,
                  batch_size=1000, max_iter=20, rtol=1e-4, epsilon=1e-4):
-        """
-        Constructor
-        Args:
-            prior: A function that models the prior for the scale factor a
-            a_min: Minimum acceptable value for the scale
-            a_max: Maximum acceptable value for the scale
-            n_samples: Number of samples to use for finding the edges of the prior
-            batch_size: Limit the minimization to this number of closest points
-            max_iter: Maximum number of iterations for the minimizer
-            rtol: Relative tolerance for the stop condition
-            epsilon: Epsilon used for the numeric derivative
-        """
         if not hasattr(prior, '__call__'):
             raise TypeError('prior must be callable')
         self.prior = prior
@@ -78,11 +78,15 @@ class Chi2Scaling(object):
         self.__rtol = rtol
         self.__epsilon = epsilon
 
-    def __call__(self, ref_values, ref_errors, coord_values, coord_errors):
+    def __call__(self, reference: Photometry, target: Photometry):
         """
         Minimizes the chi2 distance using the scale factor a, which is constrained by
         the prior passed to the constructor
         """
+        ref_values = reference.values[:, 0]
+        ref_errors = reference.values[:, 1]
+        coord_values = target.values[:, 0]
+        coord_errors = target.values[:, 1]
 
         # Mask out nans!
         mask = np.isfinite(coord_values)

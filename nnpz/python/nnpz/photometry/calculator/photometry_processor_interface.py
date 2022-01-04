@@ -19,15 +19,18 @@ Created on: 13/12/17
 Author: Nikolaos Apostolakos
 """
 
-
 import abc
 
+import numpy as np
 
-class PhotometryPrePostProcessorInterface(object):
-    """Interface defining the pre and post processing steps of the photometry calculation"""
+
+class PhotometryPrePostProcessorInterface:
+    """
+    Interface defining the pre and post processing steps of the photometry calculation.
+    """
 
     @abc.abstractmethod
-    def preProcess(self, sed):
+    def preProcess(self, sed: np.ndarray) -> np.ndarray:
         """
         Pre-processes an SED.
 
@@ -45,12 +48,12 @@ class PhotometryPrePostProcessorInterface(object):
         return
 
     @abc.abstractmethod
-    def postProcess(self, intensity, filter_name):
+    def postProcess(self, intensity: float, filter_name: str) -> float:
         """
         Post-processes a band intensity.
 
         Args:
-            intesity: The intensity of the band, as computed by integrating the
+            intensity: The intensity of the band, as computed by integrating the
                 SED convolved with the filter
             filter_name: The name of the filter the intensity is for
 

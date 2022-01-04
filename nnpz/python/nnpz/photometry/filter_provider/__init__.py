@@ -14,13 +14,6 @@
 # MA 02110-1301 USA
 #
 
-"""
-Methods to use with the Brute Force strategy
-"""
-
-from .Chi2Distance import Chi2Distance
-from .EuclideanDistance import EuclideanDistance
-from .DirectedDistance import DirectedDistance
-from .AngularDistance import AngularDistance
-from .SmallestSelector import SmallestSelector
-from .LessThanSelector import LessThanSelector
+from .directory_filter_provider import DirectoryFilterProvider
+from .list_file_filter_provider import ListFileFilterProvider
+from .filter_provider_interface import FilterProviderInterface

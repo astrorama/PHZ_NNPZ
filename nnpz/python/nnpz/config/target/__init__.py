@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -14,15 +14,4 @@
 # MA 02110-1301 USA
 #
 
-"""
-Created on: 20/03/18
-Author: Nikolaos Apostolakos
-"""
-
-
-from nnpz.photometry import FnuPrePostProcessor, FnuuJyPrePostProcessor
-
-PhotometryTypeMap = {
-    'F_nu': (FnuPrePostProcessor, 'Energy flux density in erg/s/cm^2/Hz'),
-    'F_nu_uJy': (FnuuJyPrePostProcessor, 'Energy flux density in uJy'),
-}
+from .TargetCatalogConfig import TargetCatalogConfig

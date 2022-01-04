@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -14,19 +14,22 @@
 # MA 02110-1301 USA
 #
 
-
-import numpy as np
-from nnpz.neighbor_selection import BruteForceSelector
+from nnpz.config import ConfigManager
 
 
-class AngularDistance(BruteForceSelector.DistanceMethodInterface):
-    """
-    Angular distance
-    """
+class NeighborsCatalog(ConfigManager.ConfigHandler):
+    def __init__(self):
+        self.__catalog = None
 
-    def __call__(self, ref_data_values, ref_data_errors, coord_values, coord_errors):
-        angular_num = np.dot(ref_data_values, coord_values)
-        angular_den = np.linalg.norm(ref_data_values, axis=1) * np.linalg.norm(coord_values)
-        angular = angular_num / angular_den
+    def __setup(self, args):
+        self.__catalog = args.get('neighbor_catalog', 'neighbors.fits')
 
-        return np.sin(np.arccos(angular))
+    def parseArgs(self, args):
+        if self.__catalog is None:
+            self.__setup(args)
+        return {
+            'neighbor_catalog': self.__catalog,
+        }
+
+
+ConfigManager.addHandler(NeighborsCatalog)

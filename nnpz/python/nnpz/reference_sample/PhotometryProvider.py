@@ -19,8 +19,8 @@ Created on: 29/01/2018
 Author: Nikolaos Apostolakos
 """
 
-
 import os
+from typing import List
 
 import astropy.io.fits as fits
 import numpy as np
@@ -176,7 +176,7 @@ class PhotometryProvider(object):
         """Returns the IDs of the objects there is photometry in the file"""
         return self.__ids
 
-    def getData(self, *filter_list):
+    def getData(self, filter_list: List[str]):
         """Returns an array with the photometry data for the given bands.
 
         Args:

@@ -16,12 +16,13 @@
 from typing import Tuple
 
 import numpy as np
-from nnpz.photometry.GalacticReddeningPrePostProcessor import GalacticReddeningPrePostProcessor
-from nnpz.photometry.PhotometryCalculator import PhotometryCalculator
-from nnpz.photometry.PhotometryPrePostProcessorInterface import PhotometryPrePostProcessorInterface
+
+from .ebv_processor import EBVPrePostProcessor
+from .photometry_calculator import PhotometryCalculator
+from .photometry_processor_interface import PhotometryPrePostProcessorInterface
 
 
-class PhotometryWithCorrectionsCalculator(object):
+class PhotometryWithCorrectionsCalculator:
     """
     Computes photometry values and the correction factors for galactic reddening (EBV)
     and filter variations (average wavelength shifts).
@@ -85,19 +86,21 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
     """
 
     def __init__(self, filter_map: dict, pre_post_processor: PhotometryPrePostProcessorInterface,
-                 ebv_ref: float, shifts: np.ndarray, galactic_reddening_curve: str = None):
+                 ebv_ref: float, shifts: np.ndarray, galactic_reddening_curve: str = None,
+                 interp_grid_callback=None):
         if shifts is not None and 0 in shifts:
             raise ValueError('Ĉ(Δλ) is not defined for Δλ=0! Please, remove 0 from the shifts')
 
-        pre_post_ebv = GalacticReddeningPrePostProcessor(pre_post_processor, p_14_ebv=ebv_ref,
-                                                         galactic_reddening_curve=galactic_reddening_curve)
-        self._calculator = PhotometryCalculator(filter_map, pre_post_processor, shifts=shifts)
-        self._ebv_calculator = PhotometryCalculator(filter_map, pre_post_ebv)
+        pre_post_ebv = EBVPrePostProcessor(pre_post_processor, p_14_ebv=ebv_ref,
+                                           galactic_reddening_curve=galactic_reddening_curve)
+        self._calculator = PhotometryCalculator(filter_map, pre_post_processor, shifts=shifts,
+                                                interp_grid_callback=interp_grid_callback)
+        self._ebv_calculator = PhotometryCalculator(filter_map, pre_post_ebv,
+                                                    interp_grid_callback=interp_grid_callback)
         self._shifts = shifts
         self._ebv = ebv_ref
 
-    def compute(self, sed: np.ndarray, interp_grid_callback=None) -> Tuple[
-        np.ndarray, np.ndarray, np.ndarray]:
+    def compute(self, sed: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Compute the photometry (for $\\Delta\\lambda  = 0$ and ${EBV} = 0$) and correction factors
         for the given set of SEDs
@@ -119,11 +122,11 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
                 position: shift correction factors a and b
         """
         # Compute the reference photometry
-        photo, shifted = self._calculator.compute(sed, interp_grid_callback)
+        photo, shifted = self._calculator.compute(sed)
         shift_corr = np.zeros(2, dtype=photo.dtype)
 
         # Apply Audrey Galametz's formula for the EBV correction
-        reddened_photo = self._ebv_calculator.compute(sed, interp_grid_callback)
+        reddened_photo = self._ebv_calculator.compute(sed)
         ebv_corr = np.zeros(1, dtype=reddened_photo.dtype)
         for filter_name in photo.dtype.names:
             rfx = reddened_photo[filter_name][0]

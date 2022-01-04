@@ -19,7 +19,6 @@ Created on: 16/11/17
 Author: Nikolaos Apostolakos
 """
 
-
 import os
 import pathlib
 from collections import namedtuple
@@ -27,7 +26,7 @@ from typing import Union
 
 import numpy as np
 from ElementsKernel import Logging
-from nnpz.exceptions import CorruptedFileException, DuplicateIdException
+from nnpz.exceptions import CorruptedFileException, DuplicateIdException, InvalidPositionException
 from numpy.lib import recfunctions as rfn
 
 logger = Logging.getLogger(__name__)
@@ -54,7 +53,7 @@ class IndexProvider(object):
 
         provs = []
         prov_nfiles = []
-        need_sort = False
+        not_sorted = False
         for key, pair in pairs.items():
             file_field, offset_field = pair
             max_file = self.__data[file_field].max()
@@ -64,16 +63,13 @@ class IndexProvider(object):
                 offsets = self.__data[self.__data[file_field] == file_id][offset_field]
                 sorted_offsets = np.sort(offsets)
                 if not np.array_equal(offsets, sorted_offsets):
-                    need_sort = True
-                    logger.warning(
+                    not_sorted = True
+                    logger.error(
                         'Index for provider "%s" does not follow the physical layout for file %d',
                         key, file_id
                     )
-        if need_sort:
-            sort_idx = np.flip(np.argsort(prov_nfiles))
-            sort_keys = [key for i in sort_idx for key in provs[i]]
-            logger.warning('Sorting index based on %s', str(sort_keys))
-            self.__data.sort(order=sort_keys)
+        if not_sorted:
+            raise InvalidPositionException('One or more of the providers are not contiguous')
 
     def __init__(self, filename: Union[str, pathlib.Path]):
         """

@@ -19,13 +19,14 @@ Created on: 18/12/17
 Author: Nikolaos Apostolakos
 """
 
-
 import os
+from typing import List
 
 import numpy as np
 from astropy.table import Table
-from nnpz.exceptions import FileNotFoundException, UnknownNameException
-from nnpz.photometry import FilterProviderInterface
+
+from nnpz.exceptions import UnknownNameException
+from .filter_provider_interface import FilterProviderInterface
 
 
 class ListFileFilterProvider(FilterProviderInterface):
@@ -43,8 +44,10 @@ class ListFileFilterProvider(FilterProviderInterface):
     """
 
     @staticmethod
-    def __parseFilterListFile(list_file):
-        """Parses the given file in a list of (filtername, filename) pairs"""
+    def __parseFilterListFile(list_file: str):
+        """
+        Parses the given file in a list of (filtername, filename) pairs
+        """
 
         list_file = os.path.abspath(list_file)
 
@@ -75,12 +78,12 @@ class ListFileFilterProvider(FilterProviderInterface):
                 filename = os.path.join(os.path.dirname(list_file), filename)
 
             if not os.path.exists(filename):
-                raise FileNotFoundException('Missing filter transmission: ' + filename)
+                raise FileNotFoundError('Missing filter transmission: ' + filename)
             result.append((filtername, filename))
 
         return result
 
-    def __init__(self, list_file):
+    def __init__(self, list_file: str):
         """Creates a new ListFileFilterProvider for the given list file.
 
         Args:
@@ -91,7 +94,7 @@ class ListFileFilterProvider(FilterProviderInterface):
             FileNotFoundException: If a file in the list_file does not exist
         """
         if not os.path.exists(list_file):
-            raise FileNotFoundException(list_file + ' does not exist')
+            raise FileNotFoundError(list_file + ' does not exist')
 
         # Get the list with the (filtername, filename) pairs
         filter_file_pairs = self.__parseFilterListFile(list_file)
@@ -104,11 +107,11 @@ class ListFileFilterProvider(FilterProviderInterface):
             self.__name_list.append(filtername)
             self.__file_map[filtername] = filename
 
-    def getFilterNames(self):
+    def getFilterNames(self) -> List[str]:
         """Returns the names of the filters"""
         return self.__name_list
 
-    def getFilterTransmission(self, name):
+    def getFilterTransmission(self, name: str) -> np.ndarray:
         """Provides the transmission curve of the filter with the given name.
 
         Args:

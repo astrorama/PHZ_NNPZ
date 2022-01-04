@@ -20,18 +20,37 @@ Author: Alejandro Alvarez Ayllon
 """
 import multiprocessing
 import os
+from typing import List
 
 import numpy as np
 from ElementsKernel import Logging
-from nnpz.photometry.PhotometryWithCorrectionsCalculator import PhotometryWithCorrectionsCalculator
-from nnpz.photometry.ReferenceSamplePhotometryBuilder import ReferenceSamplePhotometryBuilder
 
-logger = Logging.getLogger('BuildPhotometry')
+from nnpz.photometry.calculator import PhotometryPrePostProcessorInterface, \
+    PhotometryWithCorrectionsCalculator
+from nnpz.photometry.filter_provider import FilterProviderInterface
+
+logger = Logging.getLogger(__name__)
 
 
-class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder):
+class PhotometryBuilder:
     """
-    Class for creating photometry from a reference sample using multiple cores
+    Class for creating photometry from a reference sample.
+
+    Args:
+        filter_provider: An instance of FilterProviderInterface from where
+            the filter data are being retrieved
+        pre_post_processor: An instance of PhotometryPrePostProcessorInterface
+            which defines the type of photometry being produced
+        ebv: To be used for the computation of the EBV correction factor
+        shifts: To be used for the computation of the filter variation correction factors
+        ncores:
+            Number of cores to use
+
+    Raises:
+        WrongTypeException: If the filter_provider is not an implementation
+            of FilterProviderInterface
+        WrongTypeException: If the pre_post_processor is not an
+            implementation of PhotometryPrePostProcessorInterface
     """
 
     class SedIter(object):
@@ -46,32 +65,45 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
             for o in self.__objects:
                 yield o.sed
 
-    def __init__(self, filter_provider, pre_post_processor, ebv: float, shifts: np.ndarray,
-                 ncores: int = None):
-        """Creates a new instance of ReferenceSamplePhotometryBuilder
+    def setFilters(self, filter_list: List[str]):
+        """
+        Sets the filters for which the photometry is produced.
 
         Args:
-            filter_provider: An instance of FilterProviderInterface from where
-                the filter data are being retrieved
-            pre_post_processor: An instance of PhotometryPrePostProcessorInterface
-                which defines the type of photometry being produced
-            ebv: To be used for the computation of the EBV correction factor
-            shifts: To be used for the computation of the filter variation correction factors
-            ncores:
-                Number of cores to use
+            filter_list: A list with the filter names
 
         Raises:
-            WrongTypeException: If the filter_provider is not an implementation
-                of FilterProviderInterface
-            WrongTypeException: If the pre_post_processor is not an
-                implementation of PhotometryPrePostProcessorInterface
+            UnknownNameException: If there is any filter which is not known by
+                the filter_provider passed to the constructor
+
+        Note that if this method is not called at all, the default behavior is
+        to build the photometry for all filters available.
         """
-        super(ReferenceSamplePhotometryParallelBuilder, self).__init__(
-            filter_provider, pre_post_processor, ebv, shifts)
+        self._filter_map = {}
+        for f in filter_list:
+            self._filter_map[f] = self._filter_provider.getFilterTransmission(f)
+
+    def __init__(self, filter_provider: FilterProviderInterface,
+                 pre_post_processor: PhotometryPrePostProcessorInterface,
+                 ebv: float, shifts: np.ndarray, ncores: int = None):
+        if not isinstance(filter_provider, FilterProviderInterface):
+            raise TypeError('filter_provider must implement FilterProviderInterface')
+        if not isinstance(pre_post_processor, PhotometryPrePostProcessorInterface):
+            raise TypeError('pre_post_processor must implement PhotometryPrePostProcessorInterface')
+
+        self._filter_provider = filter_provider
+        self._pre_post_processor = pre_post_processor
+        self._ebv = ebv
+        self._shifts = shifts
+        self._filter_map = {}
+
+        # By default we produce photometry for every available filter
+        self.setFilters(filter_provider.getFilterNames())
         self.__ncores = os.cpu_count() if not ncores else ncores
 
     def buildPhotometry(self, sample_iter, progress_listener=None):
-        """Computes the photometry of the SEDs the given iterator traverses.
+        """
+        Computes the photometry of the SEDs the given iterator traverses.
 
         Args:
             sample_iter: An iterator to reference sample objects (or any type
@@ -109,9 +141,7 @@ class ReferenceSamplePhotometryParallelBuilder(ReferenceSamplePhotometryBuilder)
 
         logger.info('Computing photometries using %d processes', self.__ncores)
         with multiprocessing.Pool(self.__ncores) as pool:
-            elements = pool.imap(calculator,
-                                 ReferenceSamplePhotometryParallelBuilder.SedIter(sample_iter),
-                                 chunksize=100)
+            elements = pool.imap(calculator, self.SedIter(sample_iter), chunksize=100)
             for progress, (photo, ebv_corr, shift_corr) in enumerate(elements):
 
                 # Report the progress

@@ -19,10 +19,14 @@ Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
 
+from collections import OrderedDict
 
 from ElementsKernel import Logging
+from astropy import units as u
 from nnpz.config import ConfigManager
-from nnpz.config.reference import ReferenceSampleConfig
+from nnpz.photometry.colorspace import RestFrame
+from nnpz.photometry.photometric_system import PhotometricSystem
+from nnpz.photometry.photometry import Photometry
 from nnpz.reference_sample import PhotometryProvider
 
 logger = Logging.getLogger('Configuration')
@@ -35,50 +39,38 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
     """
 
     def __init__(self):
-        self.__ref_phot_data = None
-        self.__ref_phot_prov = None
-        self.__ref_filter_trans = None
-        self.__out_mean_phot_filters = None
-        self.__out_mean_phot_data = None
-        self.__phot_file = None
-        self.__phot_filters = None
-        self.__ref_phot_type = None
+        self.__ref_photo = None
 
     def __createData(self, args):
+        self._checkParameterExists('reference_sample_phot_file', args)
 
-        ref_sample_dict = ConfigManager.getHandler(ReferenceSampleConfig).parseArgs(args)
-        if 'reference_sample' in ref_sample_dict:
+        file = args['reference_sample_phot_file']
 
-            self._checkParameterExists('reference_sample_phot_file', args)
-            self.__phot_file = args['reference_sample_phot_file']
-            self._checkParameterExists('reference_sample_phot_filters', args)
-            self.__phot_filters = args['reference_sample_phot_filters']
+        logger.info('Using reference sample photometry from %s', file)
+        ref_phot_prov = PhotometryProvider(file)
+        ref_filters = ref_phot_prov.getFilterList()
 
-            logger.info('Using reference sample photometry from %s', self.__phot_file)
-            self.__ref_phot_prov = PhotometryProvider(self.__phot_file,
-                                                      ref_sample_dict['reference_ids'])
+        logger.info('Reference sample photometric bands: %s', ref_filters)
+        ref_type = ref_phot_prov.getType()
+        if ref_type != 'F_nu_uJy':
+            raise ValueError(f'Only F_nu_uJy accepted as reference photometry type, got {ref_type}')
+        logger.info('Reference sample photometry type: %s', ref_type)
+        ref_data = ref_phot_prov.getData(ref_filters)
 
-            logger.info('Reference sample photometric bands: %s', self.__phot_filters)
-            self.__ref_phot_data = self.__ref_phot_prov.getData(*self.__phot_filters)
-            self.__ref_phot_type = self.__ref_phot_prov.getType()
-            logger.info('Reference sample photometry type: %s', self.__ref_phot_type)
-            self.__ref_filter_trans = {}
-            for f_name in self.__phot_filters:
-                self.__ref_filter_trans[f_name] = self.__ref_phot_prov.getFilterTransmission(f_name)
+        filter_trans = OrderedDict()
+        for f_name in ref_filters:
+            filter_trans[f_name] = ref_phot_prov.getFilterTransmission(f_name)
+
+        self.__ref_photo = Photometry(ref_phot_prov.getIds(),
+                                      values=u.Quantity(ref_data, u.uJy, copy=False),
+                                      system=PhotometricSystem(filter_trans), colorspace=RestFrame)
 
     def parseArgs(self, args):
-
-        if self.__ref_phot_data is None and self.__out_mean_phot_data is None:
+        if self.__ref_photo is None:
             self.__createData(args)
-
-        result = {}
-        if self.__ref_phot_data is not None:
-            result['reference_sample_phot_file'] = self.__phot_file
-            result['reference_phot_type'] = self.__ref_phot_type
-            result['reference_photometry'] = self.__ref_phot_prov
-            result['reference_phot_data'] = self.__ref_phot_data
-            result['reference_filter_transmission'] = self.__ref_filter_trans
-            result['reference_filters'] = self.__phot_filters
+        result = {
+            'reference_photometry': self.__ref_photo,
+        }
         return result
 
 

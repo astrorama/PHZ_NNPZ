@@ -19,13 +19,15 @@ Created on: 04/12/17
 Author: Nikolaos Apostolakos
 """
 
+from __future__ import division, print_function
 
 import os
+from typing import List, Tuple
 
 import numpy as np
-from nnpz.exceptions import FileNotFoundException, InvalidPathException, UnknownNameException
 
-from nnpz.photometry import FilterProviderInterface
+from nnpz.exceptions import UnknownNameException
+from .filter_provider_interface import FilterProviderInterface
 
 
 class DirectoryFilterProvider(FilterProviderInterface):
@@ -45,7 +47,7 @@ class DirectoryFilterProvider(FilterProviderInterface):
     """
 
     @staticmethod
-    def __parseFilterListFile(path, dir_contents):
+    def __parseFilterListFile(path: str, dir_contents: List[str]) -> List[Tuple[str, str]]:
         """
         Parses the filter_list.txt in a list of (filtername, filename) pairs
         """
@@ -73,13 +75,14 @@ class DirectoryFilterProvider(FilterProviderInterface):
                 filtername = os.path.splitext(filename)[0]
 
             if not os.path.exists(os.path.join(path, filename)):
-                raise FileNotFoundException('Missing filter transmission: ' + filename)
+                raise FileNotFoundError('Missing filter transmission: ' + filename)
             result.append((filtername, filename))
 
         return result
 
-    def __init__(self, path):
-        """Creates a new DirectoryFilterProvider for the given directory.
+    def __init__(self, path: str):
+        """
+        Creates a new DirectoryFilterProvider for the given directory.
 
         Args:
             path: The directory to read the filters from
@@ -89,7 +92,7 @@ class DirectoryFilterProvider(FilterProviderInterface):
             FileNotFoundException: If a file in the filter_list.txt does not exist
         """
         if not os.path.isdir(path):
-            raise InvalidPathException(path + ' is not a directory')
+            raise NotADirectoryError(path + ' is not a directory')
 
         # Get the list with the (filtername, filename) pairs
         dir_contents = []
@@ -112,11 +115,11 @@ class DirectoryFilterProvider(FilterProviderInterface):
             self.__name_list.append(filtername)
             self.__file_map[filtername] = os.path.join(path, filename)
 
-    def getFilterNames(self):
+    def getFilterNames(self) -> List[str]:
         """Returns the names of the filters"""
         return self.__name_list
 
-    def getFilterTransmission(self, name):
+    def getFilterTransmission(self, name: str) -> np.ndarray:
         """Provides the transmission curve of the filter with the given name.
 
         Args:
