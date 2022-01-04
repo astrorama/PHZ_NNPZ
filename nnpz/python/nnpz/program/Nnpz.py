@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,11 +19,6 @@ Created on: 01/02/18
 Author: Nikolaos Apostolakos
 """
 
-from ElementsKernel import Logging
-from nnpz.config import ConfigManager
-from nnpz.framework import AffectedSourcesFinder, ProgressListener
-from nnpz.program.ArgumentParserWrapper import ArgumentParserWrapper
-
 # Trigger the configuration of the NNPZ pipeline
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
@@ -31,6 +26,10 @@ import nnpz.config.nnpz
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 import nnpz.config.reference
+from ElementsKernel import Logging
+from nnpz.config import ConfigManager
+from nnpz.framework import AffectedSourcesFinder, ProgressListener
+from nnpz.utils.ArgumentParserWrapper import ArgumentParserWrapper
 
 
 def defineSpecificProgramOptions():
