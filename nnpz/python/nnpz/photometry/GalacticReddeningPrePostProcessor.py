@@ -19,7 +19,6 @@ Created on: 19/02/2018
 Author: Florian Dubath
 """
 
-from __future__ import division, print_function
 
 import numpy as np
 from ElementsKernel.Auxiliary import getAuxiliaryPath

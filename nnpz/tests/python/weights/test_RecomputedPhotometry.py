@@ -19,7 +19,6 @@ Created: 11/04/2018
 Author: Alejandro Alvarez Ayllon
 """
 
-from __future__ import division, print_function
 
 from nnpz.weights import RecomputedPhotometry
 

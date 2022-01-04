@@ -19,7 +19,6 @@ Created on: 27/05/19
 Author: Alejandro Alvarez Ayllon
 """
 
-from __future__ import division, print_function
 
 from nnpz.framework.NeighborSet import NeighborSet
 

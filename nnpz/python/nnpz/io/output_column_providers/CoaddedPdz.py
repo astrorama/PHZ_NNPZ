@@ -19,7 +19,6 @@ Created on: 28/03/2018
 Author: Alejandro Alvarez Ayllon
 """
 
-from __future__ import division, print_function
 
 import numpy as np
 from nnpz.io import OutputHandler

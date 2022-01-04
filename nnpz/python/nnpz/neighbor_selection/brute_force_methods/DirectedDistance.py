@@ -14,7 +14,6 @@
 # MA 02110-1301 USA
 #
 
-from __future__ import division, print_function
 
 import numpy as np
 from nnpz.neighbor_selection import BruteForceSelector

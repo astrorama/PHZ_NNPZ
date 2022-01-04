@@ -21,7 +21,6 @@ Created on: 07/11/18
 Author: nikoapos
 """
 
-from __future__ import division, print_function
 import sys
 if sys.version_info[0] < 3:
     from future_builtins import *

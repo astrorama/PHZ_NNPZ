@@ -19,7 +19,6 @@ Created on: 14/12/17
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 from nnpz.photometry import PhotometryPrePostProcessorInterface, FnuPrePostProcessor
 

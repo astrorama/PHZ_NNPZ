@@ -19,7 +19,6 @@ Created on: 27/05/19
 Author: Alejandro Alvarez Ayllon
 """
 
-from __future__ import division, print_function
 
 import numpy as np
 from ElementsKernel import Logging

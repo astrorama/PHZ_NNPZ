@@ -19,7 +19,6 @@ Created on: 19/04/2018
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 from six import with_metaclass
 
 import numpy as np

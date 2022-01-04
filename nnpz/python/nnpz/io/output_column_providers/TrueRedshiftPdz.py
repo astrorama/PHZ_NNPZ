@@ -19,7 +19,6 @@ Created on: 02/02/18
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 import numpy as np
 from nnpz.io import OutputHandler

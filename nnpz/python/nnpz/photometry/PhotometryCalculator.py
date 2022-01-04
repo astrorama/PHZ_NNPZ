@@ -19,7 +19,6 @@ Created on: 05/12/17
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 from typing import Callable
 

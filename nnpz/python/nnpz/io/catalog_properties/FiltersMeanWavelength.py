@@ -19,7 +19,6 @@ Created: 12/04/18
 Author: Alejandro Alvarez Ayllon
 """
 
-from __future__ import division, print_function
 
 import numpy as np
 

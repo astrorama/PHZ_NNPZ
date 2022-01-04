@@ -19,7 +19,6 @@ Created on: 22/02/2018
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 import numpy as np
 from astropy.io import fits

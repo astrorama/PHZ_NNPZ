@@ -19,7 +19,6 @@ Created on: 26/04/18
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 import nnpz.io.catalog_properties as prop
 import numpy as np

@@ -19,7 +19,6 @@ Created on: 06/04/18
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 import nnpz.io.output_column_providers as ocp
 from ElementsKernel import Logging

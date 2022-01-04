@@ -19,7 +19,6 @@ Created on: 20/03/18
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 import numpy as np
 from ElementsKernel import Logging

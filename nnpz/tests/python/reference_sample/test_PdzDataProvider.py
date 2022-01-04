@@ -19,7 +19,6 @@ Created on: 10/11/17
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 from nnpz.exceptions import *
 from nnpz.reference_sample.PdzDataProvider import PdzDataProvider

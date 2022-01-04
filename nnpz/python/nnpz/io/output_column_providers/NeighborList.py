@@ -19,7 +19,6 @@ Created on: 02/02/18
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 from typing import Sequence
 

@@ -19,7 +19,6 @@ Created on: 21/02/2018
 Author: Florian Dubath
 """
 
-from __future__ import division, print_function
 
 try:
     from mock import Mock

@@ -19,10 +19,8 @@ Created: 11/04/2018
 Author: Alejandro Alvarez Ayllon
 """
 
-from __future__ import division, print_function
 
 from nnpz.flags import NnpzFlag
-from nnpz.reference_sample import PhotometryProvider
 from nnpz.weights import CopiedPhotometry
 
 # noinspection PyUnresolvedReferences

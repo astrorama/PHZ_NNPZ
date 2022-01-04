@@ -19,7 +19,6 @@ Created on: 04/12/17
 Author: Nikolaos Apostolakos
 """
 
-from __future__ import division, print_function
 
 import pytest
 import os

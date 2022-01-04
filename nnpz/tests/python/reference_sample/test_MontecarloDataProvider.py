@@ -14,7 +14,6 @@
 # MA 02110-1301 USA
 #
 
-from __future__ import division, print_function
 
 from nnpz.exceptions import *
 from nnpz.reference_sample.MontecarloDataProvider import MontecarloDataProvider

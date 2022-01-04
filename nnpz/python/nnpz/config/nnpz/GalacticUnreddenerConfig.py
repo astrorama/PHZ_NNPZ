@@ -19,7 +19,6 @@ Created on: 10/07/18
 Author: Florian Dubath
 """
 
-from __future__ import division, print_function
 
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager

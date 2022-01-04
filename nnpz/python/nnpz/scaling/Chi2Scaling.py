@@ -22,7 +22,6 @@ A minimization is done later, taking into account all errors, looking for the sc
 that minimizes the chi^2 distance between reference an target object.
 """
 
-from __future__ import division, print_function
 
 import warnings
 

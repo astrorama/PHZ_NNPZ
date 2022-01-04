@@ -18,7 +18,6 @@
 NNPZ specific exception types
 """
 
-from __future__ import division, print_function
 
 
 class NnpzException(Exception):
