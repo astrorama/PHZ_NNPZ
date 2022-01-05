@@ -32,8 +32,11 @@ class ColorSpace:
     def __len__(self):
         return self.__len
 
-    def get(self, item):
+    def __getattr__(self, item):
         return self.__factors[item]
+
+    def __contains__(self, item):
+        return item in self.__factors
 
     def __getitem__(self, item):
         return ColorSpace(**{k: v[item] for k, v in self.__factors.items()})

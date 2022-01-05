@@ -18,6 +18,9 @@ from datetime import datetime
 import fitsio
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
+import nnpz.config.neighbors.GalacticUnreddenerConfig
+# noinspection PyUnresolvedReferences
+# pylint: disable=unused-import
 import nnpz.config.neighbors.NeighborSelectorConfig
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
@@ -60,13 +63,16 @@ def mainMethod(args):
     ref_data = conf_manager.getObject('reference_photometry')
 
     # Read the target catalog data
-    input_data = conf_manager.getObject('target_photometry')
+    input_photometry = conf_manager.getObject('target_photometry')
     id_col = conf_manager.getObject('target_id_column')
+
+    # De-redden
+    source_independent_ebv = conf_manager.getObject('source_independent_ebv')
 
     # Finder
     selector = conf_manager.getObject('neighbor_selector')
     knn = conf_manager.getObject('neighbor_no')
-    selector.fit(ref_data, input_data.system)
+    selector.fit(ref_data, input_photometry.system)
 
     # Prepare the output catalog
     neighbor_catalog = conf_manager.getObject('neighbor_catalog')
@@ -85,7 +91,7 @@ def mainMethod(args):
 
     # Chunk size
     chunk_size = conf_manager.getObject('target_chunk_size')
-    nchunks, remainder = divmod(len(input_data), chunk_size)
+    nchunks, remainder = divmod(len(input_photometry), chunk_size)
     nchunks += remainder > 0
 
     # Process in chunks
@@ -93,13 +99,18 @@ def mainMethod(args):
     for chunk in range(nchunks):
         logger.info('Processing chunk %d / %d', chunk + 1, nchunks)
         offset = chunk * chunk_size
-        chunk_data = input_data[offset:offset + chunk_size]
+        chunk_photometry = input_photometry[offset:offset + chunk_size]
+
+        if source_independent_ebv:
+            logger.info('Deredden')
+            chunk_photometry.values = source_independent_ebv.deredden(chunk_photometry.values,
+                                                                      ebv=chunk_photometry.colorspace.ebv)
 
         logger.info('Looking for neighbors')
-        all_idx, all_scales = selector.query(chunk_data)
-        output = np.zeros(len(chunk_data), dtype=neighbor_columns)
-        output[id_col[0]] = chunk_data.ids
-        for i, (target, nn_idx, nn_scale) in enumerate(zip(chunk_data, all_idx, all_scales)):
+        all_idx, all_scales = selector.query(chunk_photometry)
+        output = np.zeros(len(chunk_photometry), dtype=neighbor_columns)
+        output[id_col[0]] = chunk_photometry.ids
+        for i, (target, nn_idx, nn_scale) in enumerate(zip(chunk_photometry, all_idx, all_scales)):
             output[i]['NEIGHBOR_INDEX'] = nn_idx
             output[i]['NEIGHBOR_SCALING'] = nn_scale
         logger.info('Writing chunk into the output catalog')
@@ -108,7 +119,7 @@ def mainMethod(args):
     end = datetime.utcnow()
     duration = end - start
     logger.info('Finished in %s (%.2f sources / second)', duration,
-                len(input_data) / duration.total_seconds())
+                len(input_photometry) / duration.total_seconds())
 
     # Get the neighbor selector and initialize it
     del output_hdu

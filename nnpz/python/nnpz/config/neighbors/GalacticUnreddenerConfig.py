@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,12 +19,10 @@ Created on: 10/07/18
 Author: Florian Dubath
 """
 
-
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
-from nnpz.config.reference import ReferenceConfig
-from nnpz.photometry.SourceIndependantGalacticUnReddening import \
-    SourceIndependantGalacticUnReddening
+from nnpz.config.target import TargetCatalogConfig
+from nnpz.photometry.projection.source_independent_ebv import SourceIndependentGalacticEBV
 
 logger = Logging.getLogger('Configuration')
 
@@ -37,32 +35,23 @@ class GalacticUnreddenerConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__galactic_absorption_unreddener = None
-        self.__apply = False
         self.__parsed = False
 
     def __createGalacticUnreddener(self, args):
-        if 'target_catalog_gal_ebv' in args:
-            self.__apply = True
-
-            self._checkParameterExists('reference_sample_phot_filters', args)
-
-            reference_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
-            filter_order = args['reference_sample_phot_filters']
-            filter_trans_map = reference_config['reference_filter_transmission']
-
-            self.__galactic_absorption_unreddener = SourceIndependantGalacticUnReddening(
-                filter_trans_map,
-                filter_order
+        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
+        target_photo = target_config['target_photometry']
+        if 'ebv' in target_photo.colorspace:
+            logger.info('Target catalog EBV present')
+            self.__galactic_absorption_unreddener = SourceIndependentGalacticEBV(
+                system=target_photo.system
             )
         self.__parsed = True
-
 
     def parseArgs(self, args):
         if not self.__parsed:
             self.__createGalacticUnreddener(args)
         return {
-            'apply_galactic_absorption': self.__apply,
-            'galactic_absorption_unreddener': self.__galactic_absorption_unreddener
+            'source_independent_ebv': self.__galactic_absorption_unreddener
         }
 
 

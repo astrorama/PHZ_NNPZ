@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -21,7 +21,7 @@ from nnpz.photometry.filter_provider import ListFileFilterProvider
 from nnpz.photometry.photometric_system import PhotometricSystem
 
 
-class EBV:
+class SourceIndependentGalacticEBV:
     """
     Source independent galactic absorption un-reddening and reddening.
 
@@ -44,9 +44,6 @@ class EBV:
         system: PhotometricSystem
             Set of filters and their transmissions
 
-        ebv_field: str
-            Name of the field that contains the E(B-V) value
-
         reddening_curve: The galactic reddening curve.
             The curve is a 2D numpy arrays, where the first axis
             represents the knots and the second axis has size 2 with the
@@ -65,11 +62,10 @@ class EBV:
 
     __fp = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
 
-    def __init__(self, system: PhotometricSystem, ebv_field: str,
+    def __init__(self, system: PhotometricSystem,
                  reddening_curve: np.ndarray = None,
                  reference_sed: np.ndarray = None, ebv_0: float = 0.02):
         self.__system = system
-        self.__ebv_field = ebv_field
 
         if reddening_curve is None:
             reddening_curve = self.__fp.getFilterTransmission('extinction_curve')
@@ -109,33 +105,31 @@ class EBV:
         k_x = -2.5 * np.log10(numerator / denominator) / ebv_0
         return k_x
 
-    def _add_reddening(self, f_x, filter_name, ebv):
-        return f_x / 10 ** (+self._k_x[filter_name] * ebv / 2.5)
+    def _add_reddening(self, f_x: np.ndarray, filter_name: str, ebv: np.ndarray):
+        f_x /= 10 ** (+self._k_x[filter_name] * ebv / 2.5)
 
     def _remove_reddening(self, f_x_obs: np.ndarray, filter_name: str, ebv: np.ndarray):
-        return f_x_obs * 10 ** (+self._k_x[filter_name] * ebv / 2.5)
+        f_x_obs *= 10 ** (+self._k_x[filter_name] * ebv / 2.5)
 
     @u.quantity_input
-    def redden(self, photometry: u.uJy, meta: dict, out: np.ndarray = None):
+    def redden(self, photometry: u.uJy, ebv: np.ndarray, out: u.uJy = None):
         if out is None:
             out = photometry.copy()
         elif out is not photometry:
             np.copyto(out, photometry)
-
         for i, filter_name in enumerate(self.__system.bands):
-            out[:, i, 0] = self._add_reddening(out[:, i, 0], filter_name, meta[self.__ebv_field])
+            self._add_reddening(out[:, i, 0], filter_name, ebv)
         return out
 
     @u.quantity_input
-    def deredden(self, photometry: u.uJy, meta: dict, out: np.ndarray = None):
+    def deredden(self, photometry: u.uJy, ebv: np.ndarray, out: u.uJy = None):
         if out is None:
             out = photometry.copy()
         elif out is not photometry:
             np.copyto(out, photometry)
-
         for i, filter_name in enumerate(self.__system.bands):
-            out[:, i, 0] = self._remove_reddening(out[:, i, 0], filter_name, meta[self.__ebv_field])
+            self._remove_reddening(out[:, i, 0], filter_name, ebv)
         return out
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'E(B-V)'
