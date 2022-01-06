@@ -24,7 +24,7 @@ import nnpz.config.neighbors.GalacticUnreddenerConfig
 import nnpz.config.neighbors.NeighborSelectorConfig
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
-import nnpz.config.neighbors.NeighborsCatalogConfig
+import nnpz.config.pipeline.NeighborsCatalogConfig
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 import nnpz.config.reference
@@ -80,12 +80,18 @@ def mainMethod(args):
         (id_col[0], id_col[1]),
         ('NEIGHBOR_INDEX', np.int64, knn),
         ('NEIGHBOR_SCALING', np.float32, knn),
+        # To be filled later
+        ('NEIGHBOR_WEIGHTS', np.float, knn),
     ]
+
+    # Reserve photometry columns, also to be filled later
+    for filter_name in ref_data.system.bands:
+        neighbor_columns.append((filter_name, ref_data.values.dtype, (knn, 2)))
 
     output_fits = fitsio.FITS(neighbor_catalog, mode='rw', clobber=True)
     output_fits.create_table_hdu(
         dtype=neighbor_columns,
-        units=[''] * 3 + [str(ref_data.unit)] * (len(neighbor_columns) - 4)
+        units=[''] * 4 + [str(ref_data.unit)] * len(ref_data.system)
     )
     output_hdu = output_fits[-1]
 
@@ -109,19 +115,24 @@ def mainMethod(args):
         logger.info('Looking for neighbors')
         all_idx, all_scales = selector.query(chunk_photometry)
         output = np.zeros(len(chunk_photometry), dtype=neighbor_columns)
+
         output[id_col[0]] = chunk_photometry.ids
-        for i, (target, nn_idx, nn_scale) in enumerate(zip(chunk_photometry, all_idx, all_scales)):
-            output[i]['NEIGHBOR_INDEX'] = nn_idx
-            output[i]['NEIGHBOR_SCALING'] = nn_scale
+        output['NEIGHBOR_INDEX'] = all_idx
+        output['NEIGHBOR_SCALING'] = all_scales
+        output['NEIGHBOR_WEIGHTS'] = 1.
+
+        for filter_name in ref_data.system.bands:
+            input_area = ref_data.get_fluxes(filter_name, return_error=True).value
+            output[filter_name] = input_area[all_idx]
+
         logger.info('Writing chunk into the output catalog')
         output_hdu.append(output)
+
+    del output_hdu
+    output_fits.close()
 
     end = datetime.utcnow()
     duration = end - start
     logger.info('Finished in %s (%.2f sources / second)', duration,
                 len(input_photometry) / duration.total_seconds())
-
-    # Get the neighbor selector and initialize it
-    del output_hdu
-    output_fits.close()
     return 0
