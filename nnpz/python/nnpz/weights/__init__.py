@@ -14,15 +14,7 @@
 # MA 02110-1301 USA
 #
 
-"""
-Weighting strategies
-"""
-
-from .WeightPhotometryProvider import WeightPhotometryProvider
-from .CopiedPhotometry import CopiedPhotometry
-from .WeightCalculatorInterface import WeightCalculatorInterface
-from .LikelihoodWeight import LikelihoodWeight
-from .RecomputedPhotometry import RecomputedPhotometry
-from .CorrectedPhotometry import CorrectedPhotometry
 from .InverseChi2Weight import InverseChi2Weight
 from .InverseEuclideanWeight import InverseEuclideanWeight
+from .LikelihoodWeight import LikelihoodWeight
+from .WeightWithFallback import WeightWithFallback

@@ -19,21 +19,15 @@ import numpy as np
 from nnpz.neighbor_selection.bruteforce import BruteForceSelector
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
-from nnpz.scaling.Chi2Scaling import Chi2Scaling
 
 
 class ScaledBruteForceSelector:
-    def __init__(self, k: int, scale_prior: Callable[[float], float],
-                 batch_size: int, max_iter: int, rtol: float):
+    def __init__(self, k: int, scaler: Callable[[Photometry, Photometry], np.ndarray]):
         self.__k = k
-        self.__prior = scale_prior
-        self.__batch_size = batch_size
-        self.__max_iter = max_iter
-        self.__rtol = rtol
+        self.__prior = scaler
         self.__reference = None
         self.__reference_photo = None
-        self.__scaling = Chi2Scaling(scale_prior, batch_size=batch_size, max_iter=max_iter,
-                                     rtol=rtol)
+        self.__scaler = scaler
 
     def fit(self, train: Photometry, system: PhotometricSystem):
         self.__reference = train.subsystem(system.bands)
@@ -43,7 +37,7 @@ class ScaledBruteForceSelector:
         assert target.unit == self.__reference.unit
         assert target.system == self.__reference.system
 
-        scales = self.__scaling(self.__reference, target)
+        scales = self.__scaler(self.__reference, target)
         bruteforce_selector = BruteForceSelector(self.__k)
         bruteforce_selector.fit(self.__reference * scales[:, np.newaxis], self.__reference.system)
         neighbors, _ = bruteforce_selector.query(target)

@@ -69,6 +69,8 @@ elements_add_python_program(NnpzComputeNeighbors
                             nnpz.program.ComputeNeighbors)
 elements_add_python_program(NnpzCorrectPhotometry
                             nnpz.program.CorrectPhotometry)
+elements_add_python_program(NnpzComputeWeights
+                            nnpz.program.ComputeWeights)
 elements_add_python_program(NnpzReconstructPDZ
                             nnpz.program.ReconstructPDZ)
 

@@ -19,9 +19,9 @@ Created on: 09/02/18
 Author: Nikolaos Apostolakos
 """
 
-
 import numpy as np
-from nnpz.weights import WeightCalculatorInterface
+from nnpz.flags.NnpzFlag import NnpzFlag
+from nnpz.weights.WeightCalculatorInterface import WeightCalculatorInterface
 
 
 class LikelihoodWeight(WeightCalculatorInterface):
@@ -31,11 +31,14 @@ class LikelihoodWeight(WeightCalculatorInterface):
     asymptotically close to 0 as $\\chi^2$ grows.
     """
 
-    def __call__(self, obj_1, obj_2, flags):
-        val_1 = obj_1[:, 0]
-        err_1 = obj_1[:, 1]
-        val_2 = obj_2[:, 0]
-        err_2 = obj_2[:, 1]
+    def __call__(self, obj_1, obj_2):
+        val_1 = obj_1[..., 0]
+        err_1 = obj_1[..., 1]
+        val_2 = obj_2[..., 0, np.newaxis]
+        err_2 = obj_2[..., 1, np.newaxis]
 
-        chi2 = np.sum(((val_1 - val_2) * (val_1 - val_2)) / ((err_1 * err_1) + (err_2 * err_2)))
-        return np.exp(-0.5 * chi2)
+        nom = ((val_1 - val_2) * (val_1 - val_2))
+        den = ((err_1 * err_1) + (err_2 * err_2))
+
+        chi2 = np.sum(nom / den, axis=0)
+        return np.exp(-0.5 * chi2), NnpzFlag.Empty

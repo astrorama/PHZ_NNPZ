@@ -19,5 +19,4 @@ NNPZ (Nearest-Neighbor Photometric Redshift) is a machine-learning algorithm,
 which consists in a k-nearest neighbor method in photometric space, designed to
 produce a Probability Density Function of the Redshift (Z).
 """
-from .flags import NnpzFlag
 from .reference_sample.ReferenceSample import ReferenceSample

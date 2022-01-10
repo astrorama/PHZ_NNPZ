@@ -15,7 +15,6 @@
 #
 from datetime import datetime
 
-import astropy.units as u
 import fitsio
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
@@ -26,7 +25,6 @@ import nnpz.config.reference
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 import nnpz.config.target
-import numpy as np
 from ElementsKernel import Logging
 from nnpz.config.ConfigManager import ConfigManager
 from nnpz.photometry.projection.ebv import correct_ebv
@@ -69,7 +67,7 @@ def mainMethod(args):
     output_hdu: fitsio.hdu.TableHDU = output_fits[1]
 
     assert 'NEIGHBOR_INDEX' in output_hdu.get_colnames()
-    assert 'NEIGHBOR_SCALING' in output_hdu.get_colnames()
+    assert 'NEIGHBOR_PHOTOMETRY' in output_hdu.get_colnames()
 
     # Chunk size
     chunk_size = conf_manager.getObject('target_chunk_size')
@@ -84,6 +82,7 @@ def mainMethod(args):
         subset = slice(offset, offset + chunk_size)
         chunk_input = input_photometry[subset]
         chunk_output = output_hdu[subset]
+        chunk_ref_photo = chunk_output['NEIGHBOR_PHOTOMETRY']
 
         if 'shifts' in chunk_input.colorspace:
             chunk_filter_corr_coefs = filter_corr_coefs[chunk_output['NEIGHBOR_INDEX']]
@@ -91,20 +90,21 @@ def mainMethod(args):
                 if filter_name not in chunk_input.colorspace.shifts.dtype.names:
                     continue
                 logger.info('Correcting for %s filter variation', filter_name)
-                correct_filter_variation(chunk_output[filter_name],
+                correct_filter_variation(chunk_ref_photo[:, :, filter_idx, :],
                                          corr_coef=chunk_filter_corr_coefs[:, :, filter_idx],
                                          shift=chunk_input.colorspace.shifts[filter_name],
-                                         out=chunk_output[filter_name])
+                                         out=chunk_ref_photo[:, :, filter_idx, :])
 
         if 'ebv' in chunk_input.colorspace:
             logger.info('Correcting for EBV')
             chunk_ebv_corr_coefs = ebv_corr_coefs[chunk_output['NEIGHBOR_INDEX']]
             for filter_idx, filter_name in enumerate(chunk_input.system.bands):
-                correct_ebv(chunk_output[filter_name],
+                correct_ebv(chunk_ref_photo[:, :, filter_idx, :],
                             corr_coef=chunk_ebv_corr_coefs[:, :, filter_idx],
                             ebv=chunk_input.colorspace.ebv,
-                            out=chunk_output[filter_name])
+                            out=chunk_ref_photo[:, :, filter_idx, :])
 
+        # TODO: Re-scale
         output_hdu.write(chunk_output, firstrow=offset)
 
     end = datetime.utcnow()

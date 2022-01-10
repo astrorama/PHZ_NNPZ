@@ -78,9 +78,9 @@ class Chi2Scaling:
         self.__rtol = rtol
         self.__epsilon = epsilon
 
-    def __call__(self, reference: Photometry, target: Photometry):
+    def __call__(self, reference: Photometry, target: Photometry) -> np.ndarray:
         """
-        Minimizes the chi2 distance using the scale factor a, which is constrained by
+        Minimizes the chi2 distance using the scale factor `a`, which is constrained by
         the prior passed to the constructor
         """
         ref_values = reference.values[:, 0]

@@ -16,6 +16,7 @@
 from collections import OrderedDict
 from typing import List, Union
 
+import numpy as np
 from astropy import units as u
 from astropy.units.quantity import Quantity
 
@@ -42,8 +43,11 @@ class PhotometricSystem:
     def bands(self) -> List[str]:
         return self.__band_names
 
-    def get_transmission(self, band):
+    def get_transmission(self, band: str):
         return self.__bands[band]
+
+    def get_band_indexes(self, bands: List[str]) -> np.ndarray:
+        return np.array([self.__band_names.index(b) for b in bands])
 
     def __len__(self):
         return len(self.__bands)

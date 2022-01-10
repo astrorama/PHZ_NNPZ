@@ -19,9 +19,9 @@ Created on: 26/04/18
 Author: Nikolaos Apostolakos
 """
 
-
 import numpy as np
-from nnpz.weights import WeightCalculatorInterface
+from nnpz.flags import NnpzFlag
+from nnpz.weights.WeightCalculatorInterface import WeightCalculatorInterface
 
 
 class InverseChi2Weight(WeightCalculatorInterface):
@@ -32,11 +32,13 @@ class InverseChi2Weight(WeightCalculatorInterface):
     neighbors become too small.
     """
 
-    def __call__(self, obj_1, obj_2, flags):
-        val_1 = obj_1[:, 0]
-        err_1 = obj_1[:, 1]
-        val_2 = obj_2[:, 0]
-        err_2 = obj_2[:, 1]
+    def __call__(self, obj_1, obj_2):
+        val_1 = obj_1[..., 0]
+        err_1 = obj_1[..., 1]
+        val_2 = obj_2[..., 0, np.newaxis]
+        err_2 = obj_2[..., 1, np.newaxis]
 
-        chi2 = np.sum(((val_1 - val_2) * (val_1 - val_2)) / ((err_1 * err_1) + (err_2 * err_2)))
-        return 1. / chi2
+        nom = ((val_1 - val_2) * (val_1 - val_2))
+        den = ((err_1 * err_1) + (err_2 * err_2))
+        chi2 = np.sum(nom / den, axis=0)
+        return 1. / chi2, NnpzFlag.Empty

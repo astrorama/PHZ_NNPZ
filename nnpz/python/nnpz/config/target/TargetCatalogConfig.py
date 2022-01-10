@@ -95,7 +95,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         if filter_shifts:
             dtype = [(b, float) for b in bands if b in filter_shifts]
-            shifts = np.zeros(len(rows) if rows else table.get_nrows(), dtype=dtype)
+            shifts = np.zeros(len(rows) if rows is not None else table.get_nrows(), dtype=dtype)
             for b, _ in dtype:
                 shifts[b] = table.read_column(filter_shifts[b], rows=rows)
             factors['shifts'] = shifts
@@ -139,7 +139,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
                                                    rows=input_rows)
         self.__target_photo = Photometry(ids, values, system=target_system,
                                          colorspace=target_colorspace)
-        self.__chunk_size = args.get('input_chunk_size', min(10000, len(self.__target_photo)))
+        self.__chunk_size = args.get('input_chunk_size', min(1000, len(self.__target_photo)))
 
     def parseArgs(self, args):
         if self.__target_photo is None:

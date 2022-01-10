@@ -19,13 +19,9 @@ Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
 
-import os.path
-
 from ElementsKernel import Logging
-from astropy.table import Table
-from scipy import interpolate
-
 from nnpz.config import ConfigManager
+from nnpz.config.neighbors.Scaling import Scaling
 from nnpz.neighbor_selection.bruteforce import BruteForceSelector
 from nnpz.neighbor_selection.combined import CombinedSelector
 from nnpz.neighbor_selection.kdtree import KDTreeSelector
@@ -41,20 +37,9 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__selector = None
-        self.__scaling = None
+        self.__scaling = False
         self.__neighbors_no = None
         self.__ref_bands = None
-
-    @staticmethod
-    def __getScalePrior(prior):
-        if hasattr(prior, '__call__'):
-            return prior
-        if prior == 'uniform':
-            return lambda a: 1
-        if os.path.exists(prior):
-            table = Table.read(prior, format='ascii')
-            return interpolate.interp1d(table.columns[0], table.columns[1], kind='linear')
-        raise Exception('Unknown prior')
 
     def __createSelector(self, args):
         self._checkParameterExists('neighbor_method', args)
@@ -62,17 +47,18 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         self._checkParameterExists('reference_sample_phot_filters', args)
 
         neighbor_method = args['neighbor_method']
-        scale_prior = args.get('scale_prior', None)
+
+        scaler = ConfigManager.getHandler(Scaling).parseArgs(args)['scaler']
 
         self.__neighbors_no = args['neighbors_no']
         self.__ref_bands = args['reference_sample_phot_filters']
 
         if neighbor_method not in ['KDTree', 'Combined', 'BruteForce']:
             raise ValueError('Invalid neighbor_method %s' % neighbor_method)
-        if scale_prior and neighbor_method != 'BruteForce':
+        if scaler is not None and neighbor_method != 'BruteForce':
             raise ValueError('Scaling is only supported with BruteForce')
 
-        logger.info('Using %s%s', neighbor_method, ' with scaling' if scale_prior else '')
+        logger.info('Using %s%s', neighbor_method, ' with scaling' if scaler else '')
 
         if neighbor_method == 'KDTree':
             self.__selector = KDTreeSelector(
@@ -84,12 +70,8 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
                 self.__neighbors_no, args['batch_size'],
                 balanced=args.get('balanced_kdtree', True)
             )
-        elif scale_prior:
-            self._checkParameterExists('batch_size', args)
-            self.__selector = ScaledBruteForceSelector(
-                self.__neighbors_no, scale_prior, batch_size=args['batch_size'],
-                max_iter=args.get('scale_max_iter', 20), rtol=args.get('scale_rtol', 1e-4)
-            )
+        elif scaler:
+            self.__selector = ScaledBruteForceSelector(self.__neighbors_no, scaler)
         else:
             self.__selector = BruteForceSelector(self.__neighbors_no)
 
@@ -98,7 +80,6 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
             self.__createSelector(args)
         return {
             'neighbor_selector': self.__selector,
-            'scaling': self.__scaling,
             'neighbor_no': self.__neighbors_no
         }
 

@@ -80,18 +80,15 @@ def mainMethod(args):
         (id_col[0], id_col[1]),
         ('NEIGHBOR_INDEX', np.int64, knn),
         ('NEIGHBOR_SCALING', np.float32, knn),
-        # To be filled later
-        ('NEIGHBOR_WEIGHTS', np.float, knn),
+        ('NEIGHBOR_WEIGHTS', np.float32, knn),
+        ('FLAGS', np.int32),
+        ('NEIGHBOR_PHOTOMETRY', ref_data.values.dtype, (knn, len(ref_data.system), 2)),
     ]
-
-    # Reserve photometry columns, also to be filled later
-    for filter_name in ref_data.system.bands:
-        neighbor_columns.append((filter_name, ref_data.values.dtype, (knn, 2)))
 
     output_fits = fitsio.FITS(neighbor_catalog, mode='rw', clobber=True)
     output_fits.create_table_hdu(
         dtype=neighbor_columns,
-        units=[''] * 4 + [str(ref_data.unit)] * len(ref_data.system)
+        units=[''] * 5 + [str(ref_data.unit)]
     )
     output_hdu = output_fits[-1]
 
@@ -108,7 +105,7 @@ def mainMethod(args):
         chunk_photometry = input_photometry[offset:offset + chunk_size]
 
         if source_independent_ebv:
-            logger.info('Deredden')
+            logger.info('De-redden')
             chunk_photometry.values = source_independent_ebv.deredden(chunk_photometry.values,
                                                                       ebv=chunk_photometry.colorspace.ebv)
 
@@ -120,10 +117,7 @@ def mainMethod(args):
         output['NEIGHBOR_INDEX'] = all_idx
         output['NEIGHBOR_SCALING'] = all_scales
         output['NEIGHBOR_WEIGHTS'] = 1.
-
-        for filter_name in ref_data.system.bands:
-            input_area = ref_data.get_fluxes(filter_name, return_error=True).value
-            output[filter_name] = input_area[all_idx]
+        output['NEIGHBOR_PHOTOMETRY'] = ref_data.values[all_idx]
 
         logger.info('Writing chunk into the output catalog')
         output_hdu.append(output)

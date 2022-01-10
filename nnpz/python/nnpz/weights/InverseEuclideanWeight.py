@@ -21,7 +21,7 @@ Author: Nikolaos Apostolakos
 
 import numpy as np
 
-from nnpz.weights import WeightCalculatorInterface
+from nnpz.weights.WeightCalculatorInterface import WeightCalculatorInterface
 
 
 class InverseEuclideanWeight(WeightCalculatorInterface):
@@ -32,9 +32,9 @@ class InverseEuclideanWeight(WeightCalculatorInterface):
     neighbors become too small.
     """
 
-    def __call__(self, obj_1, obj_2, flags):
-        val_1 = obj_1[:, 0]
-        val_2 = obj_2[:, 0]
+    def __call__(self, obj_1, obj_2):
+        val_1 = obj_1[..., 0]
+        val_2 = obj_2[..., 0, np.newaxis]
 
-        distance = np.sqrt(np.sum((val_1 - val_2) * (val_1 - val_2)))
+        distance = np.sqrt(np.sum((val_1 - val_2) * (val_1 - val_2), axis=0))
         return 1. / distance

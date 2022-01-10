@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -22,12 +22,12 @@ Author: Nikolaos Apostolakos
 import abc
 
 
-class WeightCalculatorInterface(object):
+class WeightCalculatorInterface:
     """
     Interface to be implemented by different weight strategies
     """
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def __call__(self, obj_1, obj_2, flags):
+    def __call__(self, obj_1, obj_2):
         return
