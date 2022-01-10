@@ -82,7 +82,7 @@ class PhotometryProvider(object):
             if name + '_ERR' in phot_table.colnames:
                 data[:, i, 1] = phot_table[name + '_ERR']
             if name + '_EBV_CORR' in phot_table.colnames:
-                ebv_corr[:, i] = phot_table[name + '_EBV_CORR']
+                ebv_corr[:, i] = phot_table[name + '_EBV_CORR'].reshape(-1)
             if name + '_SHIFT_CORR' in phot_table.colnames:
                 shift_corr[:, i, :] = phot_table[name + '_SHIFT_CORR']
         return data, ebv_corr, shift_corr
@@ -216,7 +216,7 @@ class PhotometryProvider(object):
         # Return a view rather than a copy
         return self.__phot_data[:, filter_idx, :]
 
-    def getEBVCorrectionFactors(self, *filter_list):
+    def getEBVCorrectionFactors(self, filter_list: List[str]):
         """
         Get the EBV correction factors
         """
@@ -234,7 +234,7 @@ class PhotometryProvider(object):
             # Return a view rather than a copy
         return self.__ebv_corr_data[:, filter_idx]
 
-    def getShiftCorrectionFactors(self, *filter_list):
+    def getShiftCorrectionFactors(self, filter_list: List[str]):
         """
         Get the filter variation correction factors
         """

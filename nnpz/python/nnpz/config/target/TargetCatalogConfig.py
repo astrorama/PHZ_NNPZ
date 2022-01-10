@@ -85,7 +85,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         return ids, values
 
     def __setupColorspace(self, table: fitsio.hdu.TableHDU, args: Dict,
-                          bands: List[str], rows: int) -> ColorSpace:
+                          bands: List[str], rows: np.ndarray) -> ColorSpace:
         catalog_ebv = args.get('target_catalog_gal_ebv', None)
         filter_shifts = args.get('target_catalog_filters_shifts', None)
 
@@ -94,12 +94,11 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             factors['ebv'] = table.read_column(catalog_ebv, rows=rows)
 
         if filter_shifts:
-            factors['shifts'] = {}
-            for b in bands:
-                if b not in filter_shifts:
-                    continue
-                factors['shifts'][b] = table.read_column(filter_shifts[b], rows=rows)
-
+            dtype = [(b, float) for b in bands if b in filter_shifts]
+            shifts = np.zeros(len(rows) if rows else table.get_nrows(), dtype=dtype)
+            for b, _ in dtype:
+                shifts[b] = table.read_column(filter_shifts[b], rows=rows)
+            factors['shifts'] = shifts
         return ColorSpace(**factors)
 
     def __createData(self, args):

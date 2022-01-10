@@ -17,9 +17,11 @@ import astropy.units as u
 import numpy as np
 
 
-def correct_ebv(ref_photo: u.uJy, corr_coef: np.ndarray, ebv: float, out: u.uJy = None):
+def correct_filter_variation(ref_photo: u.uJy, corr_coef: np.ndarray, shift: np.ndarray,
+                             out: u.uJy):
     if out is None:
         out = np.copy(ref_photo)
-    corr = (10 ** (-0.4 * corr_coef * ebv[:, np.newaxis]))[:, :, np.newaxis]
-    out *= corr
+    shift = shift[:, np.newaxis]
+    shift_corr = corr_coef[:, :, 0] * shift * shift + corr_coef[:, :, 1] * shift + 1
+    out *= shift_corr[:, :, np.newaxis]
     return out

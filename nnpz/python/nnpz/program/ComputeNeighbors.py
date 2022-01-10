@@ -45,12 +45,12 @@ def defineSpecificProgramOptions():
     capture anything extra and do the evaluation ourselves: NNPZ interpret flags
     as Python code
     """
-    return ArgumentParserWrapper(description='Nearest Neighbor Photo-Z')
+    return ArgumentParserWrapper(description='Nearest Neighbor Photo-Z (neighbor search)')
 
 
 def mainMethod(args):
     """
-    Entry point for NNPZ
+    Entry point for ComputeNeighbors
 
     Args:
         args: argparse.Namespace or similar

@@ -13,13 +13,3 @@
 #  if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301 USA
 #
-import astropy.units as u
-import numpy as np
-
-
-def correct_ebv(ref_photo: u.uJy, corr_coef: np.ndarray, ebv: float, out: u.uJy = None):
-    if out is None:
-        out = np.copy(ref_photo)
-    corr = (10 ** (-0.4 * corr_coef * ebv[:, np.newaxis]))[:, :, np.newaxis]
-    out *= corr
-    return out

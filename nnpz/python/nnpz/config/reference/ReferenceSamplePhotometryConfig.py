@@ -40,6 +40,8 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__ref_photo = None
+        self.__ebv_corr = None
+        self.__filter_corr = None
 
     def __createData(self, args):
         self._checkParameterExists('reference_sample_phot_file', args)
@@ -64,12 +66,16 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
         self.__ref_photo = Photometry(ref_phot_prov.getIds(),
                                       values=u.Quantity(ref_data, u.uJy, copy=False),
                                       system=PhotometricSystem(filter_trans), colorspace=RestFrame)
+        self.__ebv_corr = ref_phot_prov.getEBVCorrectionFactors(ref_filters)
+        self.__filter_corr = ref_phot_prov.getShiftCorrectionFactors(ref_filters)
 
     def parseArgs(self, args):
         if self.__ref_photo is None:
             self.__createData(args)
         result = {
             'reference_photometry': self.__ref_photo,
+            'reference_ebv_correction': self.__ebv_corr,
+            'reference_filter_variation_correction': self.__filter_corr,
         }
         return result
 
