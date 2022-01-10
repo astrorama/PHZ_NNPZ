@@ -25,7 +25,6 @@ from .NeighborListOutputConfig import NeighborListOutputConfig
 from .NeighborPhotometryOutputConfig import NeighborPhotometryOutputConfig
 from .PdzOutputConfig import PdzOutputConfig
 from .FlagsConfig import FlagsConfig
-from .WeightCalculatorConfig import WeightCalculatorConfig
 from .MeanPhotOutputConfig import MeanPhotOutputConfig
 from .McPdfConfig import McPdfConfig
 from .UniformPhotometryConfig import UniformPhotometry

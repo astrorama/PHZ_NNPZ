@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,9 +18,9 @@
 Created on: 26/04/18
 Author: Nikolaos Apostolakos
 """
+from typing import Tuple
 
 import numpy as np
-
 from nnpz.weights.WeightCalculatorInterface import WeightCalculatorInterface
 
 
@@ -32,9 +32,9 @@ class InverseEuclideanWeight(WeightCalculatorInterface):
     neighbors become too small.
     """
 
-    def __call__(self, obj_1, obj_2):
-        val_1 = obj_1[..., 0]
-        val_2 = obj_2[..., 0, np.newaxis]
+    def __call__(self, ref_objs: np.ndarray, target_obj: np.ndarray) -> Tuple[np.ndarray, int]:
+        val_1 = ref_objs[..., 0]
+        val_2 = target_obj[..., 0, np.newaxis]
 
         distance = np.sqrt(np.sum((val_1 - val_2) * (val_1 - val_2), axis=0))
         return 1. / distance

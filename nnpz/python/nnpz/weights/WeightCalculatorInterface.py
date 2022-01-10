@@ -20,6 +20,9 @@ Author: Nikolaos Apostolakos
 """
 
 import abc
+from typing import Tuple
+
+import numpy as np
 
 
 class WeightCalculatorInterface:
@@ -29,5 +32,16 @@ class WeightCalculatorInterface:
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def __call__(self, obj_1, obj_2):
-        return
+    def __call__(self, ref_objs: np.ndarray, target_obj: np.ndarray) -> Tuple[np.ndarray, int]:
+        """
+        Compute the weights for all reference objects
+        Args:
+            ref_objs: np.ndarray
+                Reference objects. It is expected to have shape (n.references, n.bands, 2)
+            target_obj: np.ndarray
+                Target object. It is expected to have shape (n.bands, 2)
+
+        Returns:
+
+        """
+        pass
