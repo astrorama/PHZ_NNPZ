@@ -85,8 +85,6 @@ def mainMethod(args):
     weight_calculator = conf_manager.getObject('weight_calculator')
 
     # Indexes
-    print(input_photometry.system.bands)
-    print(ref_photometry.system.bands)
     ref_filter_indexes = ref_photometry.system.get_band_indexes(input_photometry.system.bands)
 
     # Process in chunks

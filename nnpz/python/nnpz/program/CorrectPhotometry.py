@@ -84,6 +84,15 @@ def mainMethod(args):
         chunk_output = output_hdu[subset]
         chunk_ref_photo = chunk_output['NEIGHBOR_PHOTOMETRY']
 
+        if 'ebv' in chunk_input.colorspace:
+            logger.info('Correcting for EBV')
+            chunk_ebv_corr_coefs = ebv_corr_coefs[chunk_output['NEIGHBOR_INDEX']]
+            for filter_idx, filter_name in enumerate(chunk_input.system.bands):
+                correct_ebv(chunk_ref_photo[:, :, filter_idx, :],
+                            corr_coef=chunk_ebv_corr_coefs[:, :, filter_idx],
+                            ebv=chunk_input.colorspace.ebv,
+                            out=chunk_ref_photo[:, :, filter_idx, :])
+
         if 'shifts' in chunk_input.colorspace:
             chunk_filter_corr_coefs = filter_corr_coefs[chunk_output['NEIGHBOR_INDEX']]
             for filter_idx, filter_name in enumerate(chunk_input.system.bands):
@@ -94,15 +103,6 @@ def mainMethod(args):
                                          corr_coef=chunk_filter_corr_coefs[:, :, filter_idx],
                                          shift=chunk_input.colorspace.shifts[filter_name],
                                          out=chunk_ref_photo[:, :, filter_idx, :])
-
-        if 'ebv' in chunk_input.colorspace:
-            logger.info('Correcting for EBV')
-            chunk_ebv_corr_coefs = ebv_corr_coefs[chunk_output['NEIGHBOR_INDEX']]
-            for filter_idx, filter_name in enumerate(chunk_input.system.bands):
-                correct_ebv(chunk_ref_photo[:, :, filter_idx, :],
-                            corr_coef=chunk_ebv_corr_coefs[:, :, filter_idx],
-                            ebv=chunk_input.colorspace.ebv,
-                            out=chunk_ref_photo[:, :, filter_idx, :])
 
         # TODO: Re-scale
         output_hdu.write(chunk_output, firstrow=offset)
