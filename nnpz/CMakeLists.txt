@@ -30,6 +30,10 @@ elements_depends_on_subdirs(ElementsKernel)
 #                     INCLUDE_DIRS Boost ElementsKernel
 #                     PUBLIC_HEADERS ElementsExamples)
 #===============================================================================
+find_package(Cython REQUIRED)
+find_package(PythonLibs ${PYTHON_EXPLICIT_VERSION} REQUIRED)
+elements_add_cython_module(src/Cython/lib/Weights.pyx
+        NO_PUBLIC_HEADERS)
 
 #===============================================================================
 # Declare the executables here
@@ -56,6 +60,7 @@ elements_depends_on_subdirs(ElementsKernel)
 elements_install_python_modules()
 # elements_install_scripts()
 elements_install_aux_files()
+
 
 #===============================================================================
 # Declare the Python programs here

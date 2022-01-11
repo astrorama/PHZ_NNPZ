@@ -82,7 +82,7 @@ def mainMethod(args):
         ('NEIGHBOR_SCALING', np.float32, knn),
         ('NEIGHBOR_WEIGHTS', np.float32, knn),
         ('FLAGS', np.int32),
-        ('NEIGHBOR_PHOTOMETRY', ref_data.values.dtype, (knn, len(ref_data.system), 2)),
+        ('NEIGHBOR_PHOTOMETRY', np.double, (knn, len(ref_data.system), 2)),
     ]
 
     output_fits = fitsio.FITS(neighbor_catalog, mode='rw', clobber=True)

@@ -18,7 +18,6 @@
 # pylint: disable=unused-import
 from datetime import datetime
 
-import astropy.units as u
 import fitsio
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
@@ -89,17 +88,22 @@ def mainMethod(args):
     start = datetime.utcnow()
     for i, chunk in enumerate(chunks, start=1):
         logger.info('Processing chunk %d / %d', i, len(chunks))
-        chunk_output = output_hdu[chunk]
         chunk_target = input_photometry[chunk]
+        chunk_workarea = output_hdu.read(['NEIGHBOR_PHOTOMETRY', 'NEIGHBOR_SCALING', 'FLAGS'],
+                                         rows=range(chunk.start, chunk.stop))
 
-        for i in range(len(chunk_output)):
-            neighbor_photo = chunk_output['NEIGHBOR_PHOTOMETRY'][i, :, ref_filter_indexes] * u.uJy
-            neighbor_photo *= chunk_output['NEIGHBOR_SCALING'][i, np.newaxis].T
-            chunk_output['NEIGHBOR_WEIGHTS'][i], flag = weight_calculator(
-                neighbor_photo, chunk_target.values[i])
-            chunk_output[i]['FLAGS'] |= flag
+        nn_photo = chunk_workarea['NEIGHBOR_PHOTOMETRY'][:, :, ref_filter_indexes, :] \
+            .newbyteorder().byteswap(inplace=True)
+        nn_scale = chunk_workarea['NEIGHBOR_SCALING'].newbyteorder().byteswap(inplace=True)
 
-        output_hdu.write(chunk_output, firstrow=chunk.start)
+        out_weights = np.zeros_like(nn_scale, dtype=np.float32)
+        out_flags = np.zeros(len(chunk_workarea), dtype=np.int32)
+
+        weight_calculator(nn_photo, nn_scale, chunk_target.values.value,
+                          output_weights=out_weights, output_flags=out_flags)
+
+        output_hdu.write([out_weights, out_flags], names=['NEIGHBOR_WEIGHTS', 'FLAGS'],
+                         firstrow=chunk.start)
 
     end = datetime.utcnow()
     duration = end - start

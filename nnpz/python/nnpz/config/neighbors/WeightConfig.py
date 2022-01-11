@@ -14,14 +14,7 @@
 #  MA 02110-1301 USA
 #
 from nnpz.config import ConfigManager
-from nnpz.weights import InverseChi2Weight, InverseEuclideanWeight, LikelihoodWeight, \
-    WeightWithFallback
-
-_calculator_map = {
-    'Euclidean': InverseEuclideanWeight(),
-    'Chi2': InverseChi2Weight(),
-    'Likelihood': LikelihoodWeight()
-}
+from Weights import WeightCalculator
 
 
 class WeightConfig(ConfigManager.ConfigHandler):
@@ -31,13 +24,8 @@ class WeightConfig(ConfigManager.ConfigHandler):
     def __createCalculator(self, args):
         self._checkParameterExists('weight_method', args)
         method = args['weight_method']
-        alternative = args.get('weight_method_alternative', None)
-        calculator = _calculator_map[method]
-        calculator_alternative = _calculator_map[alternative] if alternative else None
-        if calculator_alternative:
-            self.__calculator = WeightWithFallback(calculator, calculator_alternative)
-        else:
-            self.__calculator = calculator
+        alternative = args.get('weight_method_alternative', 'Euclidean')
+        self.__calculator = WeightCalculator(method, alternative)
 
     def parseArgs(self, args):
         if self.__calculator is None:
