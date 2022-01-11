@@ -69,19 +69,15 @@ def mainMethod(args):
     assert 'NEIGHBOR_INDEX' in output_hdu.get_colnames()
     assert 'NEIGHBOR_PHOTOMETRY' in output_hdu.get_colnames()
 
-    # Chunk size
-    chunk_size = conf_manager.getObject('target_chunk_size')
-    nchunks, remainder = divmod(len(input_photometry), chunk_size)
-    nchunks += remainder > 0
+    # Chunks
+    chunks: slice = conf_manager.getObject('target_idx_slices')
 
     # Process in chunks
     start = datetime.utcnow()
-    for chunk in range(nchunks):
-        logger.info('Processing chunk %d / %d', chunk + 1, nchunks)
-        offset = chunk * chunk_size
-        subset = slice(offset, offset + chunk_size)
-        chunk_input = input_photometry[subset]
-        chunk_output = output_hdu[subset]
+    for i, chunk in enumerate(chunks, start=1):
+        logger.info('Processing chunk %d / %d', i, len(chunks))
+        chunk_input = input_photometry[chunk]
+        chunk_output = output_hdu[chunk]
         chunk_ref_photo = chunk_output['NEIGHBOR_PHOTOMETRY']
 
         if 'ebv' in chunk_input.colorspace:
@@ -105,7 +101,7 @@ def mainMethod(args):
                                          out=chunk_ref_photo[:, :, filter_idx, :])
 
         # TODO: Re-scale
-        output_hdu.write(chunk_output, firstrow=offset)
+        output_hdu.write(chunk_output, firstrow=chunk.start)
 
     end = datetime.utcnow()
     duration = end - start

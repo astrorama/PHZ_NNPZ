@@ -40,7 +40,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__target_photo = None
-        self.__chunk_size = None
+        self.__chunks = None
         self.__id_column = None
 
     def __readCatalog(self, table: fitsio.hdu.TableHDU,
@@ -139,7 +139,13 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
                                                    rows=input_rows)
         self.__target_photo = Photometry(ids, values, system=target_system,
                                          colorspace=target_colorspace)
-        self.__chunk_size = args.get('input_chunk_size', min(1000, len(self.__target_photo)))
+
+        chunk_size = args.get('input_chunk_size', min(1000, len(self.__target_photo)))
+        nchunks, remainder = divmod(len(ids), chunk_size)
+        self.__chunks = [slice(chunk * chunk_size, chunk * chunk_size + chunk_size) for chunk in
+                         range(nchunks)]
+        if remainder > 0:
+            self.__chunks.append(slice(len(ids) - remainder, remainder))
 
     def parseArgs(self, args):
         if self.__target_photo is None:
@@ -147,7 +153,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         return {
             'target_photometry': self.__target_photo,
-            'target_chunk_size': self.__chunk_size,
+            'target_idx_slices': self.__chunks,
             'target_id_column': self.__id_column
         }
 

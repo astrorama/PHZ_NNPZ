@@ -92,17 +92,14 @@ def mainMethod(args):
     )
     output_hdu = output_fits[-1]
 
-    # Chunk size
-    chunk_size = conf_manager.getObject('target_chunk_size')
-    nchunks, remainder = divmod(len(input_photometry), chunk_size)
-    nchunks += remainder > 0
+    # Chunks
+    chunks: slice = conf_manager.getObject('target_idx_slices')
 
     # Process in chunks
     start = datetime.utcnow()
-    for chunk in range(nchunks):
-        logger.info('Processing chunk %d / %d', chunk + 1, nchunks)
-        offset = chunk * chunk_size
-        chunk_photometry = input_photometry[offset:offset + chunk_size]
+    for i, chunk in enumerate(chunks, start=1):
+        logger.info('Processing chunk %d / %d', i, len(chunks))
+        chunk_photometry = input_photometry[chunk]
 
         if source_independent_ebv:
             logger.info('De-redden')

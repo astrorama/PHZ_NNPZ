@@ -76,10 +76,8 @@ def mainMethod(args):
     assert 'NEIGHBOR_WEIGHTS' in output_hdu.get_colnames()
     assert 'NEIGHBOR_PHOTOMETRY' in output_hdu.get_colnames()
 
-    # Chunk size
-    chunk_size = conf_manager.getObject('target_chunk_size')
-    nchunks, remainder = divmod(len(input_photometry), chunk_size)
-    nchunks += remainder > 0
+    # Chunks
+    chunks: slice = conf_manager.getObject('target_idx_slices')
 
     # Weight calculator
     weight_calculator = conf_manager.getObject('weight_calculator')
@@ -89,13 +87,10 @@ def mainMethod(args):
 
     # Process in chunks
     start = datetime.utcnow()
-    for chunk in range(nchunks):
-        logger.info('Processing chunk %d / %d', chunk + 1, nchunks)
-        offset = chunk * chunk_size
-        subset = slice(offset, offset + chunk_size)
-
-        chunk_output = output_hdu[subset]
-        chunk_target = input_photometry[subset]
+    for i, chunk in enumerate(chunks, start=1):
+        logger.info('Processing chunk %d / %d', i, len(chunks))
+        chunk_output = output_hdu[chunk]
+        chunk_target = input_photometry[chunk]
 
         for i in range(len(chunk_output)):
             neighbor_photo = chunk_output['NEIGHBOR_PHOTOMETRY'][i, :, ref_filter_indexes] * u.uJy
@@ -104,7 +99,7 @@ def mainMethod(args):
                 neighbor_photo, chunk_target.values[i])
             chunk_output[i]['FLAGS'] |= flag
 
-        output_hdu.write(chunk_output, firstrow=offset)
+        output_hdu.write(chunk_output, firstrow=chunk.start)
 
     end = datetime.utcnow()
     duration = end - start
