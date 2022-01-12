@@ -145,7 +145,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__chunks = [slice(chunk * chunk_size, chunk * chunk_size + chunk_size) for chunk in
                          range(nchunks)]
         if remainder > 0:
-            self.__chunks.append(slice(len(ids) - remainder, remainder))
+            self.__chunks.append(slice(len(ids) - remainder, len(ids)))
 
     def parseArgs(self, args):
         if self.__target_photo is None:
@@ -154,7 +154,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         return {
             'target_photometry': self.__target_photo,
             'target_idx_slices': self.__chunks,
-            'target_id_column': self.__id_column
+            'target_id_column': self.__id_column,
+            'target_system': self.__target_photo.system
         }
 
 
