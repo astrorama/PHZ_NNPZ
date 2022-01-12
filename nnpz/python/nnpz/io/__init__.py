@@ -18,5 +18,4 @@
 Input/output primitive types
 """
 
-from .CatalogReader import CatalogReader
 from .OutputHandler import OutputHandler
