@@ -17,6 +17,7 @@
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 from datetime import datetime
+from typing import List
 
 import astropy.units as u
 import fitsio
@@ -55,9 +56,6 @@ def mainMethod(args):
     # Create the object which handles the user parameters
     conf_manager = ConfigManager(args.config_file, args.extra_arguments)
 
-    # Reference photometry
-    ref_photometry = conf_manager.getObject('reference_photometry')
-
     # Open the target catalog
     input_photometry = conf_manager.getObject('target_photometry')
 
@@ -78,7 +76,7 @@ def mainMethod(args):
     assert photo_unit == u.uJy
 
     # Chunks
-    chunks: slice = conf_manager.getObject('target_idx_slices')
+    chunks: List[slice] = conf_manager.getObject('target_idx_slices')
 
     # Weighter
     weighter = ComputeWeights(conf_manager)

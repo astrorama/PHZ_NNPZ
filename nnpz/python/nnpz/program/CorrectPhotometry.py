@@ -14,6 +14,7 @@
 #  MA 02110-1301 USA
 #
 from datetime import datetime
+from typing import List
 
 import astropy.units as u
 import fitsio
@@ -76,7 +77,7 @@ def mainMethod(args):
     assert photo_unit == u.uJy
 
     # Chunks
-    chunks: slice = conf_manager.getObject('target_idx_slices')
+    chunks: List[slice] = conf_manager.getObject('target_idx_slices')
 
     # Process in chunks
     start = datetime.utcnow()
