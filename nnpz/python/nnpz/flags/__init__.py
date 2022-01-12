@@ -18,4 +18,4 @@
 Handling of flags for the target object
 """
 
-from .NnpzFlag import NnpzFlag
+import nnpz.flags.NnpzFlag as NnpzFlag

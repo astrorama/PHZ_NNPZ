@@ -40,7 +40,7 @@ class McCounter(OutputHandler.OutputColumnProviderInterface):
         self.__column = 'MC_COUNT_{}'.format(self.__param_name.upper())
         self.__output = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self):
         return [
             (self.__column, np.uint32, len(self.__binning))
         ]

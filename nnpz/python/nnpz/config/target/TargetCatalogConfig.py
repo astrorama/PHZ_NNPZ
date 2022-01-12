@@ -42,6 +42,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__target_photo = None
         self.__chunks = None
         self.__id_column = None
+        self.__table_hdu = None
 
     def __readCatalog(self, table: fitsio.hdu.TableHDU,
                       filters: List[Tuple[str, str]], id_column: str,
@@ -121,21 +122,21 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         logger.info('Reading target catalog: %s', target_cat)
 
         fits = fitsio.FITS(target_cat)
-        table = fits[1]
+        self.__table_hdu = fits[1]
 
         input_rows = args.get('input_size', None)
         if input_rows is not None:
             logger.warning('Processing only %s objects from target catalog', input_rows)
             input_rows = np.arange(input_rows)
 
-        ids, values = self.__readCatalog(table, target_filters, self.__id_column,
+        ids, values = self.__readCatalog(self.__table_hdu, target_filters, self.__id_column,
                                          missing_values=missing_phot_flags,
                                          rows=input_rows)
         self.__id_column = (self.__id_column, ids.dtype)
 
         target_system = ref_photometry.system[ref_filters]
 
-        target_colorspace = self.__setupColorspace(table, args, target_system.bands,
+        target_colorspace = self.__setupColorspace(self.__table_hdu, args, target_system.bands,
                                                    rows=input_rows)
         self.__target_photo = Photometry(ids, values, system=target_system,
                                          colorspace=target_colorspace)
@@ -155,7 +156,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             'target_photometry': self.__target_photo,
             'target_idx_slices': self.__chunks,
             'target_id_column': self.__id_column,
-            'target_system': self.__target_photo.system
+            'target_system': self.__target_photo.system,
+            'target_hdu': self.__table_hdu,
         }
 
 

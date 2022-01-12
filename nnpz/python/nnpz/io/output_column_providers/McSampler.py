@@ -64,7 +64,7 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         """
         return self.__provider
 
-    def getColumnDefinition(self):
+    def get_column_definition(self):
         """
         This provider does not generate any output
         """

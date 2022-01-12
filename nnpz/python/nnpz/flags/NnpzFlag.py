@@ -13,7 +13,10 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+from typing import List
 
-class NnpzFlag:
-    Empty = 0x00
-    AlternativeWeightFlag = 0x01
+Empty = 0x00
+AlternativeWeightFlag = 0x01
+
+Flags = [AlternativeWeightFlag]
+FlagNames = ['AlternativeWeightFlag']

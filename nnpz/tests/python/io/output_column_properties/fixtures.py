@@ -34,7 +34,7 @@ class MockOutputHandler:
         dtype = []
         for prov in self.__providers:
             self.__provider_columns[prov] = []
-            prov_def = prov.getColumnDefinition()
+            prov_def = prov.get_column_definition()
             dtype.extend(prov_def)
             for col in prov_def:
                 self.__provider_columns[prov].append(col[0])
@@ -45,7 +45,7 @@ class MockOutputHandler:
 
     def addContribution(self, reference_sample_i, neighbor, flags):
         for p in self.__providers:
-            p.addContribution(reference_sample_i, neighbor, flags)
+            p.add_contribution(reference_sample_i, neighbor, flags)
 
     def getDataForProvider(self, provider):
         return self.__output[self.__provider_columns[provider]]

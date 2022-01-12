@@ -20,7 +20,7 @@ from astropy.table import Table
 from nnpz.io import OutputHandler
 
 
-class McPdf2DBins(OutputHandler.OutputExtensionTableProviderInterface):
+class McPdf2DBins(OutputHandler.OutputExtensionProviderInterface):
     """
     Generate a an HDU with the binning associated to a 2D PDF
     See Also:

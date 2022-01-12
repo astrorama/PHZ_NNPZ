@@ -19,9 +19,9 @@ Created on: 02/02/18
 Author: Nikolaos Apostolakos
 """
 
+from typing import List, Optional, Sequence, Tuple
 
-from typing import Sequence
-
+import astropy.units as u
 import numpy as np
 from nnpz.io import OutputHandler
 
@@ -44,22 +44,15 @@ class NeighborList(OutputHandler.OutputColumnProviderInterface):
         self.__weights = None
         self.__scales = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self) \
+            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         return [
-            (NEIGHBOR_IDS_COLNAME, np.int64, self.__n_neighbors),
-            (NEIGHBOR_WEIGHTS_COLNAME, np.float32, self.__n_neighbors),
-            (NEIGHBOR_SCALES_COLNAME, np.float32, self.__n_neighbors)
+            (NEIGHBOR_IDS_COLNAME, np.int64, u.dimensionless_unscaled, self.__n_neighbors),
+            (NEIGHBOR_WEIGHTS_COLNAME, np.float32, u.dimensionless_unscaled, self.__n_neighbors),
+            (NEIGHBOR_SCALES_COLNAME, np.float32, u.dimensionless_unscaled, self.__n_neighbors)
         ]
 
-    def setWriteableArea(self, output_area):
-        self.__neighbors = output_area[NEIGHBOR_IDS_COLNAME]
-        self.__weights = output_area[NEIGHBOR_WEIGHTS_COLNAME]
-        self.__scales = output_area[NEIGHBOR_SCALES_COLNAME]
-
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        self.__neighbors[neighbor.index, neighbor.position] = self.__ref_ids[reference_sample_i]
-        self.__weights[neighbor.index, neighbor.position] = neighbor.weight
-        self.__scales[neighbor.index, neighbor.position] = neighbor.scale
-
-    def fillColumns(self):
-        pass
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
+        output[NEIGHBOR_IDS_COLNAME] = self.__ref_ids[neighbor_info['NEIGHBOR_INDEX']]
+        output[NEIGHBOR_WEIGHTS_COLNAME] = neighbor_info['NEIGHBOR_WEIGHTS']
+        output[NEIGHBOR_SCALES_COLNAME] = neighbor_info['NEIGHBOR_SCALING']

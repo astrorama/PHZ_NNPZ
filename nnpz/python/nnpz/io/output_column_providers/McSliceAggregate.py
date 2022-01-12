@@ -41,7 +41,7 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
         )
         self.__output = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self):
         return [
             (self.__column, np.float32, len(self.__binning) - 1)
         ]

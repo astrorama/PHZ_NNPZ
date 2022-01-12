@@ -23,7 +23,7 @@ from .fixtures import *
 
 def test_count_samples(sampler, mock_output_handler):
     counter = McCounter(sampler, param_name='I1', binning=np.arange(0, 10))
-    mock_output_handler.addColumnProvider(counter)
+    mock_output_handler.add_column_provider(counter)
     mock_output_handler.initialize(nrows=2)
     counter.fillColumns()
     columns = mock_output_handler.getDataForProvider(counter)

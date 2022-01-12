@@ -18,7 +18,7 @@ from astropy.table import Table
 from nnpz.io import OutputHandler
 
 
-class McSliceAggregateBins(OutputHandler.OutputExtensionTableProviderInterface):
+class McSliceAggregateBins(OutputHandler.OutputExtensionProviderInterface):
     """
     Store an extension table with the binning used for the sliced aggregate values
 

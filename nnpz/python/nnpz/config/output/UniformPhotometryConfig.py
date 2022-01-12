@@ -15,8 +15,9 @@
 #
 
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import OutputHandlerConfig, TargetCatalogConfig
+from nnpz.config.output import OutputHandlerConfig
 from nnpz.config.reference import ReferenceConfig
+from nnpz.config.target import TargetCatalogConfig
 from nnpz.io.output_column_providers.UniformPhotometry import UniformPhotometry
 
 
@@ -34,12 +35,12 @@ class UniformPhotometryConfig(ConfigManager.ConfigHandler):
         ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
         output_config = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)
 
-        target = target_config['target_astropy_table']
-        phot_prov = ref_config['reference_photometry']
+        target_phot = target_config['target_photometry']
+        ref_phot = ref_config['reference_photometry']
 
         # Build the list of tuples
-        output_config['output_handler'].addColumnProvider(
-            UniformPhotometry(target, phot_prov, corrected_phot)
+        output_config['output_handler'].add_column_provider(
+            UniformPhotometry(target_phot, ref_phot, corrected_phot)
         )
 
     def parseArgs(self, args):

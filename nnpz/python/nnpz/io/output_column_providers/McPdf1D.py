@@ -44,7 +44,7 @@ class McPdf1D(OutputHandler.OutputColumnProviderInterface):
         self.__column = 'MC_PDF_1D_{}'.format(self.__param_name.upper())
         self.__output = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self):
         return [
             (self.__column, np.float32, len(self.__binning) - 1)
         ]

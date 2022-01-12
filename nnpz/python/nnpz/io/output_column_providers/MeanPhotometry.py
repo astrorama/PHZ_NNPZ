@@ -18,11 +18,13 @@
 Created on: 22/02/18
 Author: Nikolaos Apostolakos
 """
+from typing import List, Optional, Tuple
 
-
+import astropy.units as u
 import numpy as np
 from nnpz.exceptions import InvalidDimensionsException
 from nnpz.io import OutputHandler
+from nnpz.photometry.projection.source_independent_ebv import SourceIndependentGalacticEBV
 from nnpz.utils.numpy import recarray_flat_view
 
 
@@ -35,63 +37,40 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
     *after* the mean photometry is computed entirely on the reference color space.
     """
 
-    def __init__(self, catalog_size, filter_names, data, unreddener, target_ebv):
+    def __init__(self, filter_names: List[str], filter_idxs: np.ndarray, unit: u.Unit,
+                 reddener: Optional[SourceIndependentGalacticEBV],
+                 target_ebv: Optional[str]):
         """
         Constructor
         Args:
-            catalog_size:
-                Number of elements in the target catalog
             filter_names:
                 Names of the filters to be output
-            data:
-                Reference sample photometry
-            unreddener: (Optional)
+            filter_idxs:
+                Indexes of the filters on the reference sample
+            reddener: (Optional)
                 An object implementing the method redden_data(photometry, ebv)
             target_ebv: (Optional)
                 Target catalog extinction values
         """
-
-        if len(filter_names) != data.shape[1]:
-            raise InvalidDimensionsException('Number of filter names does not match the data')
-
-        self.__data = data
-        self.__unreddener = unreddener
+        self.__filter_idxs = filter_idxs
+        self.__unit = unit
+        self.__unreddener = reddener
         self.__target_ebv = target_ebv
 
         self.__columns = [name + '_MEAN' for name in filter_names]
         self.__err_columns = [name + '_MEAN_ERR' for name in filter_names]
 
-        self.__total_weights = np.zeros((catalog_size, 1), dtype=np.float64)
-        self.__total_values = None
-        self.__total_errors = None
-
-    def getColumnDefinition(self):
+    def get_column_definition(self) \
+            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         col_defs = []
-        for name in self.__columns:
-            col_defs.append((name, np.float32))
-        for err_name in self.__err_columns:
-            col_defs.append((err_name, np.float32))
+        for name, err in zip(self.__columns, self.__err_columns):
+            col_defs.append((name, np.float32, self.__unit))
+            col_defs.append((err, np.float32, self.__unit))
         return col_defs
 
-    def setWriteableArea(self, output_area):
-        self.__total_values = recarray_flat_view(output_area, self.__columns)
-        self.__total_errors = recarray_flat_view(output_area, self.__err_columns)
-
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        ref_phot = self.__data[reference_sample_i]
-        self.__total_weights[neighbor.index] += neighbor.weight
-        self.__total_values[neighbor.index] += neighbor.weight * neighbor.scale * ref_phot[:, 0]
-        self.__total_errors[neighbor.index] += (neighbor.weight * neighbor.scale * ref_phot[:,
-                                                                                   1]) ** 2
-
-    def fillColumns(self):
-        self.__total_values /= self.__total_weights
-        np.sqrt(self.__total_errors, out=self.__total_errors)
-        self.__total_errors /= self.__total_weights
-
-        if self.__unreddener:
-            # FIXME: This can probably be done better, too many copies are involved
-            photometry = np.stack([self.__total_values, self.__total_errors], axis=2)
-            reddened = self.__unreddener.redden_data(photometry, self.__target_ebv)
-            self.__total_values[:, :] = reddened[:, :, 0]
-            self.__total_errors[:, :] = reddened[:, :, 1]
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
+        ref_photo = neighbor_info['NEIGHBOR_PHOTOMETRY']
+        ref_weights = neighbor_info['NEIGHBOR_WEIGHTS']
+        for name, err, idx in zip(self.__columns, self.__err_columns, self.__filter_idxs):
+            output[name] = np.average(ref_photo[:, :, idx, 0], weights=ref_weights, axis=-1)
+            output[err] = np.average(ref_photo[:, :, idx, 1], weights=ref_weights, axis=-1)

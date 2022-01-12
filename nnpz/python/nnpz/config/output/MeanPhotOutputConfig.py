@@ -19,14 +19,14 @@ Created on: 06/04/18
 Author: Nikolaos Apostolakos
 """
 
-
-from ElementsKernel import Logging
 import nnpz.io.output_column_providers as ocp
+from ElementsKernel import Logging
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import OutputHandlerConfig, TargetCatalogConfig, GalacticUnreddenerConfig
+from nnpz.config.output import OutputHandlerConfig
 from nnpz.config.reference import ReferenceConfig
-from nnpz.photometry.SourceIndependantGalacticUnReddening import \
-    SourceIndependantGalacticUnReddening
+from nnpz.config.target.TargetCatalogConfig import TargetCatalogConfig
+from nnpz.photometry.photometry import Photometry
+from nnpz.photometry.projection.source_independent_ebv import SourceIndependentGalacticEBV
 
 logger = Logging.getLogger('Configuration')
 
@@ -44,13 +44,12 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
         target_options = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
         output_options = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)
 
-        ref_phot_prov = ref_options['reference_photometry']
+        ref_phot: Photometry = ref_options['reference_photometry']
 
         if args.get('reference_sample_out_mean_phot_filters', None):
             out_mean_phot_filters = args['reference_sample_out_mean_phot_filters']
-            out_mean_phot_data = ref_phot_prov.getData(*out_mean_phot_filters)
+            out_mean_phot_idxs = ref_phot.system.get_band_indexes(out_mean_phot_filters)
 
-            target_ids = target_options['target_ids']
             output = output_options['output_handler']
 
             target_ebv = None
@@ -59,20 +58,11 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
             if args.get('redden_mean_phot', False):
                 self._checkParameterExists('target_catalog_gal_ebv', args)
                 target_ebv = target_options['target_ebv']
+                reddener = SourceIndependentGalacticEBV(ref_phot.system)
 
-                out_trans = dict()
-                for f_name in out_mean_phot_filters:
-                    out_trans[f_name] = ref_phot_prov.getFilterTransmission(f_name)
-
-                reddener = SourceIndependantGalacticUnReddening(
-                    out_trans, out_mean_phot_filters
-                )
-
-            output.addColumnProvider(
-                ocp.MeanPhotometry(
-                    len(target_ids), out_mean_phot_filters, out_mean_phot_data,
-                    reddener, target_ebv
-                )
+            output.add_column_provider(
+                ocp.MeanPhotometry(out_mean_phot_filters, out_mean_phot_idxs,
+                                   unit=ref_phot.unit, reddener=reddener, target_ebv=target_ebv)
             )
 
     def parseArgs(self, args):

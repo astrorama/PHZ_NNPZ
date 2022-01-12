@@ -22,10 +22,6 @@ from .CatalogCopy import CatalogCopy
 from .CoaddedPdz import CoaddedPdz
 from .Flags import Flags
 from .MeanPhotometry import MeanPhotometry
-from .MeanTrueRedshift import MeanTrueRedshift
-from .MedianTrueRedshift import MedianTrueRedshift
 from .NeighborList import NeighborList
 from .PdfSampling import PdfSampling
 from .PdzPointEstimates import PdzPointEstimates
-from .TrueRedshiftPdz import TrueRedshiftPdz
-from .NeighborPhotometry import NeighborPhotometry

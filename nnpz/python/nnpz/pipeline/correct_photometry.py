@@ -61,6 +61,7 @@ class CorrectPhotometry:
         if 'ebv' in target.colorspace:
             logger.info('Correcting for EBV')
             chunk_ebv_corr_coefs = self.__ebv_corr_coefs[neighbor_idx]
+            # TODO: Correct *all* reference bands
             for filter_idx, filter_name in enumerate(target.system.bands):
                 nn_filter_photo = neighbor_photo[:, :, filter_idx, :]
                 nn_filter_out = out[:, :, filter_idx, :]

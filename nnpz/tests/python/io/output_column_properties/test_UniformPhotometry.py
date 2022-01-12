@@ -70,7 +70,7 @@ def test_uniform_photometry(reference_photometry, reference_matched_photometry, 
             ('MY_C_A', 'MY_C_A_ERR'): ('C', 'A', 'FLUX_A', 'FLUX_A_ERR')
         }
     )
-    mock_output_handler.addColumnProvider(uniform)
+    mock_output_handler.add_column_provider(uniform)
     mock_output_handler.initialize(len(catalog_photometry))
 
     ns = NeighborSet()

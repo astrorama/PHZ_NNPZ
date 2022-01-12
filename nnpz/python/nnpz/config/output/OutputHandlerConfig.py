@@ -19,11 +19,8 @@ Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
 
-
 from nnpz.config import ConfigManager
 from nnpz.io import OutputHandler
-
-_output_handler = OutputHandler()
 
 
 class OutputHandlerConfig(ConfigManager.ConfigHandler):
@@ -31,14 +28,20 @@ class OutputHandlerConfig(ConfigManager.ConfigHandler):
     Configure the destination for the output catalog
     """
 
-    @staticmethod
-    def addColumnProvider(column_provider):
-        _output_handler.addColumnProvider(column_provider)
+    def __init__(self):
+        self.__output_handler = None
+
+    def addColumnProvider(self, column_provider):
+        self.__output_handler.add_column_provider(column_provider)
+
+    def __setOutputHandler(self, args):
+        self._checkParameterExists('output_file', args)
+        self.__output_handler = OutputHandler(args['output_file'])
 
     def parseArgs(self, args):
-        self._checkParameterExists('output_file', args)
-        return {'output_handler': _output_handler,
-                'output_file': args['output_file']}
+        if self.__output_handler is None:
+            self.__setOutputHandler(args)
+        return {'output_handler': self.__output_handler}
 
 
 ConfigManager.addHandler(OutputHandlerConfig)

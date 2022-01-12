@@ -30,7 +30,7 @@ class McSamples(OutputHandler.OutputColumnProviderInterface):
         self.__params = parameters
         self.__output = {}
 
-    def getColumnDefinition(self):
+    def get_column_definition(self):
         col_defs = []
         nsamples = self.__sampler.getSampleCount()
         for param in self.__params:

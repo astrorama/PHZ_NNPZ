@@ -42,6 +42,20 @@ class PdzProvider(BaseProvider):
                 self._data_pattern.format(index)
             )
 
+    def getRedshiftBins(self) -> np.ndarray:
+        if self._current_data_provider is None:
+            self._swapProvider(1)
+        return self._current_data_provider.getRedshiftBins()
+
+    def getPdzForIndex(self, obj_idxs: np.ndarray) -> np.ndarray:
+        # Access following the physical layout
+        sorted_order = np.argsort(obj_idxs)
+        ids = self._index.getIds()[obj_idxs[sorted_order]]
+        output = np.zeros((len(obj_idxs), len(self.getRedshiftBins())), dtype=np.float32)
+        for i, obj_id in zip(sorted_order, ids):
+            output[i] = self.getPdzData(obj_id)
+        return output
+
     def getPdzData(self, obj_id: int) -> Union[np.ndarray, None]:
         """
         Returns the PDZ data for the given reference sample object.
@@ -67,9 +81,7 @@ class PdzProvider(BaseProvider):
             return None
         if not self._current_data_index or self._current_data_index != pdz_loc.file:
             self._swapProvider(pdz_loc.file)
-        z_bins = self._current_data_provider.getRedshiftBins().reshape(-1, 1)
-        pdz_data = self._current_data_provider.readPdz(pdz_loc.offset).reshape(-1, 1)
-        return np.hstack([z_bins, pdz_data])
+        return self._current_data_provider.readPdz(pdz_loc.offset)
 
     def _getWriteablePdzProvider(self, binning):
         """

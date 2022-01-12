@@ -18,11 +18,12 @@
 Created on: 15/02/18
 Author: Nikolaos Apostolakos
 """
-
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from nnpz.io import OutputHandler
 from scipy import interpolate
+import astropy.units as u
 
 
 class PdfSampling(OutputHandler.OutputColumnProviderInterface,
@@ -53,7 +54,8 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
         self.__quantiles = None
         self.__mc = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self) \
+            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         def_cols = []
         if self.__qs:
             def_cols.append(('REDSHIFT_PDF_QUANTILES', np.float32, len(self.__qs)))
@@ -61,13 +63,8 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
             def_cols.append(('REDSHIFT_PDF_MC', np.float32, self.__mc_no))
         return def_cols
 
-    def setWriteableArea(self, output_area):
-        if self.__qs:
-            self.__quantiles = output_area['REDSHIFT_PDF_QUANTILES']
-        if self.__mc_no > 0:
-            self.__mc = output_area['REDSHIFT_PDF_MC']
-
-    def addContribution(self, reference_sample_i, neighbor, flags):
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,
+                        output: np.ndarray):
         pass
 
     def fillColumns(self):
@@ -82,3 +79,9 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
             for pdf in pdfs:
                 samples = np.random.rand(self.__mc_no)
                 self.__mc[:] = self.__sample(pdf, bins, samples)
+
+    def get_headers(self) -> Dict[str, Any]:
+        keys = {}
+        if self.__qs:
+            keys["PDFQUAN"] = ' '.join([str(q) for q in self.__qs])
+        return keys

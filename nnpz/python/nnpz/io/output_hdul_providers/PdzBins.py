@@ -18,26 +18,21 @@
 Created on: 19/04/2018
 Author: Alejandro Alvarez Ayllon
 """
+import fitsio
 from astropy.table import Table
 
 from nnpz.io.OutputHandler import OutputHandler
+from nnpz.reference_sample.ReferenceSample import ReferenceSample
 
 
-class PdzBins(OutputHandler.OutputExtensionTableProviderInterface):
+class PdzBins(OutputHandler.OutputExtensionProviderInterface):
     """
     Generates an HDUL with the PDZ bins
     """
 
-    def __init__(self, pdz_provider):
-        self.__pdz_provider = pdz_provider
+    def __init__(self, ref_sample: ReferenceSample):
+        self.__bins = ref_sample.getProvider('pdz').getRedshiftBins()
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        pass
-
-    def getExtensionTables(self):
-        bins = self.__pdz_provider.getPdzBins()
-        return {
-            'BINS_PDF': Table({
-                'BINS_PDF': bins,
-            })
-        }
+    def add_extensions(self, fits: fitsio.FITS):
+        fits.create_table_hdu({'BINS_PDF': self.__bins}, extname='BINS_PDF')
+        fits['BINS_PDF'].write_column('BINS_PDF', self.__bins)

@@ -18,7 +18,7 @@ from astropy.table import Table
 from nnpz.io import OutputHandler
 
 
-class McPdf1DBins(OutputHandler.OutputExtensionTableProviderInterface):
+class McPdf1DBins(OutputHandler.OutputExtensionProviderInterface):
     """
     Generate a an HDU with the binning associated to a 1D PDF
     See Also:

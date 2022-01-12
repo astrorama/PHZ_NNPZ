@@ -15,42 +15,41 @@
 #
 
 """
-Created on: 28/02/18
+Created on: 06/04/18
 Author: Nikolaos Apostolakos
 """
 
-
 import nnpz.io.output_column_providers as ocp
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import (OutputHandlerConfig, TargetCatalogConfig)
+from nnpz.config.neighbors.NeighborSelectorConfig import NeighborSelectorConfig
+from nnpz.config.output.OutputHandlerConfig import OutputHandlerConfig
+from nnpz.config.reference import ReferenceConfig
 
 
-class CopyInputColumnsConfig(ConfigManager.ConfigHandler):
+class NeighborListOutputConfig(ConfigManager.ConfigHandler):
     """
-    Copy into the output catalog columns from the input
+    Enable or disable neighbor information on the output catalog
     """
 
     def __init__(self):
         self.__added = False
+        self.__neighbor_info_output = False
 
-    @staticmethod
-    def __addColumnProvider(args):
-        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
-        cat_to_copy = target_config['target_astropy_table']
-        output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
-
-        do_copy = args.get('copy_input_columns', False)
-        if do_copy:
-            output.addColumnProvider(ocp.CatalogCopy(cat_to_copy))
-        else:
-            id_column = target_config['target_id_column']
-            output.addColumnProvider(ocp.CatalogCopy(cat_to_copy, [id_column]))
+    def __addColumnProvider(self, args):
+        self.__neighbor_info_output = args.get('neighbor_info_output', False)
+        if self.__neighbor_info_output:
+            ref_ids = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)['reference_ids']
+            output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
+            nn = ConfigManager.getHandler(NeighborSelectorConfig).parseArgs(args)['neighbor_no']
+            output.add_column_provider(ocp.NeighborList(ref_ids, n_neighbors=nn))
 
     def parseArgs(self, args):
         if not self.__added:
             self.__addColumnProvider(args)
             self.__added = True
-        return {}
+        return {
+            'neighbor_info_output': self.__neighbor_info_output
+        }
 
 
-ConfigManager.addHandler(CopyInputColumnsConfig)
+ConfigManager.addHandler(NeighborListOutputConfig)

@@ -19,224 +19,147 @@ Created on: 01/02/18
 Author: Nikolaos Apostolakos
 """
 
-
 import abc
-import os
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from astropy.io import fits
-from nnpz.utils.fits import npDtype2FitsTForm, shape2FitsTDim
+import astropy.units as u
+import fitsio.hdu
+import numpy as np
 
 
-class OutputHandler(object):
+class OutputHandler:
     """
     Handles the generation of the output properties from the found reference objects
     and the given configuration
     """
 
-    class OutputColumnProviderInterface(object):
+    class OutputColumnProviderInterface(abc.ABC):
         """
         This interface must be implemented by output properties that generate a column
         """
-        __metaclass__ = abc.ABCMeta
 
         @abc.abstractmethod
-        def getColumnDefinition(self):
+        def get_column_definition(self) \
+                -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
             """
             Returns:
                 List of triplets (name, dtype, shape) that define the output that the
-                provider generates. Alternative, a tuple can be used, skipping the shape.
-                The caller will assume the output is scalar.
+                provider generates. The shape can be skipped.
             Notes:
-                Do *not* account for the catalog size on the shape.
+                The implementation must *not* account for the catalog size on the shape.
             """
             raise NotImplementedError(self)
 
         @abc.abstractmethod
-        def setWriteableArea(self, output_area):
-            """
-            This method will be called once the output area is allocated. It is called
-            *before* addContribution. The provider can, but is not forced to, use the output
-            buffer as a working area (i.e. for accumulating before normalizing)
-            Args:
-                output_area:
-                    A structured array (accesible by name)
-            """
+        def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,
+                            output: np.ndarray):
             raise NotImplementedError(self)
 
-        @abc.abstractmethod
-        def addContribution(self, reference_sample_i, neighbor, flags):
-            """
-            This method is called for each positive pair reference/neighbor
-            Args:
-                reference_sample_i: int
-                    *Index* of the reference sample object
-                neighbor: nnpz.framework.NeighborSet.Neighbor
-                    Neighbor properties
-                flags: NnpzFlag
-                    A flag object for this pair, if the provider needs to set any
-            """
-            raise NotImplementedError(self)
-
-        def fillColumns(self):
-            """
-            If the OutputHandler needs to do some final massaging of the data (i.e.
-            normalization), or can only generate the output when all contributions have
-            been added, this is the moment to do so.
-            """
-            raise NotImplementedError(self)
-
-    class OutputExtensionTableProviderInterface(object):
+    class OutputExtensionProviderInterface(abc.ABC):
         """
         This interface must be implemented by output properties that generate an additional
         table
         """
-        __metaclass__ = abc.ABCMeta
 
         @abc.abstractmethod
-        def addContribution(self, reference_sample_i, neighbor, flags):
+        def add_extensions(self, fits: fitsio.FITS):
             """
-            This method is called for each positive pair reference/neighbor
-            Args:
-                reference_sample_i: int
-                    *Index* of the reference sample object
-                neighbor: nnpz.framework.NeighborSet.Neighbor
-                    Neighbor properties
-                flags: NnpzFlag
-                    A flag object for this pair, if the provider needs to set any
-            """
-
-        @abc.abstractmethod
-        def getExtensionTables(self):
-            """
-            Returns:
-                A dictionary with additional astropy.Table, where the key is the table name
+            fits:
+                The file where to add the additional extensions
             """
             pass
 
-    class HeaderProviderInterface(object):
+    class HeaderProviderInterface(abc.ABC):
         """
         This interface must be implemented by output properties that generate a table header
         """
-        __metaclass__ = abc.ABCMeta
 
         @abc.abstractmethod
-        def getHeaderKeywords(self):
+        def get_headers(self) -> Dict[str, Any]:
             """
             Returns:
                  A map with keys the keyword names and values the header values.
             """
+            pass
 
-    def __init__(self):
-        self.__column_providers = []
-        self.__hdu_providers = []
-        self.__header_providers = []
-        self.__output = None
+    def __init__(self, path: str):
+        self.__header_providers: List[OutputHandler.HeaderProviderInterface] = []
+        self.__column_providers: List[OutputHandler.OutputColumnProviderInterface] = []
+        self.__hdu_providers: List[OutputHandler.OutputExtensionProviderInterface] = []
+        self.__output_fits: fitsio.FITS = fitsio.FITS(path, mode='rw', clobber=True)
+        self.__hdu: Optional[fitsio.hdu.TableHDU] = None
+        self.__dtype: Optional[np.dtype] = None
 
-    def initialize(self, nrows: int):
-        """
-        Setup output area
-        Args:
-            nrows: int
-                Number of target objects
-        """
-        # Build specs
-        col_spec = []
-        for col_provider in self.__column_providers:
-            col_defs = col_provider.getColumnDefinition()
-            for col_def in col_defs:
-                name, dtype, shape = col_def if len(col_def) == 3 else col_def + (1,)
-                # npDtype2FitsTForm expects the shape to account for the row "dimension"
-                shape = (1,) + shape if isinstance(shape, tuple) else (1, shape,)
-                col_spec.append(fits.Column(name=name, format=npDtype2FitsTForm(dtype, shape),
-                                            dim=shape2FitsTDim(shape)))
-        # Allocate
-        self.__output = fits.BinTableHDU.from_columns(
-            col_spec, nrows=nrows,
-            header=fits.Header({'COMMENT': 'Generated by nnpz'})
-        )
-        # Now go back again and tell the handlers where to write
-        if nrows:
-            for col_provider in self.__column_providers:
-                col_provider.setWriteableArea(self.__output.data)
-
-    def addColumnProvider(self, provider):
+    def add_column_provider(self, provider: OutputColumnProviderInterface):
         """
         Register a new column provider
         Args:
             provider:  OutputColumnProviderInterface
         """
-        assert self.__output is None
         self.__column_providers.append(provider)
 
-    def addExtensionTableProvider(self, provider):
+    def add_extension_table_provider(self, provider: OutputExtensionProviderInterface):
         """
         Register a new table provider
         Args:
             provider: OutputExtensionTableProviderInterface
         """
-        assert self.__output is None
         self.__hdu_providers.append(provider)
 
-    def addHeaderProvider(self, provider):
+    def add_header_provider(self, provider: HeaderProviderInterface):
         """
         Register a new header provider
         Args:
             provider: HeaderProviderInterface
         """
-        assert self.__output is None
         self.__header_providers.append(provider)
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
+    def __generate_headers(self) -> Dict[str, Any]:
         """
-        This method is to be called for each positive pair reference/neighbor.
-        It will be forwarded to the registered output providers.
-        Args:
-            reference_sample_i: int
-                *Index* of the reference sample object
-            neighbor: nnpz.framework.NeighborSet.Neighbor
-                Neighbor properties
-            flags: NnpzFlag
-                A flag object for this pair, if the provider needs to set any
+        Set up the headers on the table HDU
         """
-        assert self.__output is not None
+        headers = {'comment': 'Generated by NNPZ'}
+        for header_provider in self.__header_providers:
+            headers.update(header_provider.get_headers())
+        return headers
+
+    def __initialize(self):
+        """
+        Setup output area
+        """
+        # Build specs
+        spec = []
+        units = []
         for col_provider in self.__column_providers:
-            col_provider.addContribution(reference_sample_i, neighbor, flags)
-        for hdu_provider in self.__hdu_providers:
-            hdu_provider.addContribution(reference_sample_i, neighbor, flags)
+            col_defs = col_provider.get_column_definition()
+            for col_def in col_defs:
+                if len(col_def) == 4:
+                    name, dtype, unit, shape = col_def
+                    spec.append((name, dtype, shape))
+                else:
+                    name, dtype, unit = col_def
+                    spec.append((name, dtype))
+                units.append(unit)
+        self.__dtype = np.dtype(spec)
+        headers = self.__generate_headers()
+        self.__output_fits.create_table_hdu(dtype=self.__dtype, units=[str(u) for u in units],
+                                            header=headers)
+        self.__hdu = self.__output_fits[-1]
+        self.__hdu.write_keys(headers)
 
-    def save(self, filename):
+    def write_output_for(self, indexes: Union[np.ndarray, slice], neighbor_info: np.ndarray):
         """
-        Write the output catalog
-        Args:
-            filename: str or path
-                Output file path
+        Write the output for the given input
         """
-        if os.path.exists(filename):
-            os.remove(filename)
+        if self.__hdu is None:
+            self.__initialize()
+        if isinstance(indexes, slice):
+            indexes = np.arange(indexes.start, indexes.stop, step=indexes.step)
+        output = np.zeros(len(neighbor_info), dtype=self.__dtype)
+        for col_provider in self.__column_providers:
+            col_provider.generate_output(indexes, neighbor_info, output)
+        self.__hdu.append(output)
 
-        # Finish with the output data
-        assert self.__output is not None
-        if len(self.__output.data):
-            for col_prov in self.__column_providers:
-                col_prov.fillColumns()
-
-        for prov in self.__header_providers:
-            self.__output.header.update(prov.getHeaderKeywords())
-
-        # Open file
-        hdul = fits.open(filename, mode='append')
-
-        # Primary hdu
-        hdul.append(fits.PrimaryHDU(header=fits.Header({'COMMENT': 'Generated by nnpz'})))
-
-        # Main results
-        hdul.append(self.__output)
-
-        # Extensions
+    def write_additional_hduls(self):
         for hdu_provider in self.__hdu_providers:
-            for name, table in hdu_provider.getExtensionTables().items():
-                ext_hdu = fits.BinTableHDU(table)
-                ext_hdu.name = name
-                hdul.append(ext_hdu)
-
-        hdul.close()
+            hdu_provider.add_extensions(self.__output_fits)

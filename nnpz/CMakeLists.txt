@@ -76,8 +76,8 @@ elements_add_python_program(NnpzCorrectPhotometry
                             nnpz.program.CorrectPhotometry)
 elements_add_python_program(NnpzComputeWeights
                             nnpz.program.ComputeWeights)
-elements_add_python_program(NnpzReconstructPDZ
-                            nnpz.program.ReconstructPDZ)
+elements_add_python_program(NnpzGenerateOutput
+                            nnpz.program.GenerateOutput)
 
 #===============================================================================
 # Add the elements_install_conf_files macro

@@ -1,7 +1,9 @@
 import numpy as np
 from nnpz.config import ConfigManager
-from nnpz.config.nnpz import NeighborSelectorConfig, OutputHandlerConfig, TargetCatalogConfig
+from nnpz.config.neighbors.NeighborSelectorConfig import NeighborSelectorConfig
+from nnpz.config.output.OutputHandlerConfig import OutputHandlerConfig
 from nnpz.config.reference import ReferenceConfig
+from nnpz.config.target.TargetCatalogConfig import TargetCatalogConfig
 from nnpz.io.output_column_providers.McCounter import McCounter
 from nnpz.io.output_column_providers.McPdf1D import McPdf1D
 from nnpz.io.output_column_providers.McPdf2D import McPdf2D
@@ -58,7 +60,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                     take_n=self.__take_n, mc_provider=provider, ref_ids=self.__ref_ids
                 )
                 self.__samplers[provider_name] = sampler
-                self.__output.addColumnProvider(sampler)
+                self.__output.add_column_provider(sampler)
 
     def __add_mc_1d_pdf(self, args):
         mc_1d_pdf = args.get('mc_1d_pdf', None)
@@ -69,11 +71,11 @@ class McPdfConfig(ConfigManager.ConfigHandler):
             sampler = self.__samplers[provider_name]
             for param, binning in parameters:
                 # Histogram values
-                self.__output.addColumnProvider(McPdf1D(
+                self.__output.add_column_provider(McPdf1D(
                     sampler, param_name=param, binning=binning
                 ))
                 # Histogram binning
-                self.__output.addExtensionTableProvider(McPdf1DBins(param, binning))
+                self.__output.add_extension_table_provider(McPdf1DBins(param, binning))
 
     def __add_mc_2d_pdf(self, args):
         mc_2d_pdf = args.get('mc_2d_pdf', None)
@@ -84,12 +86,12 @@ class McPdfConfig(ConfigManager.ConfigHandler):
             sampler = self.__samplers[provider_name]
             for param1, param2, binning1, binning2 in parameters:
                 # Histogram values
-                self.__output.addColumnProvider(McPdf2D(
+                self.__output.add_column_provider(McPdf2D(
                     sampler, param_names=(param1, param2),
                     binning=(binning1, binning2)
                 ))
                 # Histogram binning
-                self.__output.addExtensionTableProvider(
+                self.__output.add_extension_table_provider(
                     McPdf2DBins((param1, param2), (binning1, binning2))
                 )
 
@@ -101,7 +103,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         for provider_name, parameters in mc_samples.items():
             sampler = self.__samplers[provider_name]
             for parameter_set in parameters:
-                self.__output.addColumnProvider(McSamples(sampler, parameter_set))
+                self.__output.add_column_provider(McSamples(sampler, parameter_set))
 
     def __add_counters(self, args):
         mc_counters = args.get('mc_count', None)
@@ -117,8 +119,8 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                 if not np.issubdtype(bins.dtype, np.int) and not np.issubdtype(bins.dtype, np.bool):
                     raise Exception('The binning must be integers, got {}'.format(bins.dtype))
                 bins = np.sort(bins)
-                self.__output.addColumnProvider(McCounter(sampler, parameter, bins))
-                self.__output.addExtensionTableProvider(McCounterBins(parameter, bins))
+                self.__output.add_column_provider(McCounter(sampler, parameter, bins))
+                self.__output.add_extension_table_provider(McCounterBins(parameter, bins))
 
     def __add_slicers(self, args):
         mc_slicers = args.get('mc_slice_aggregate', None)
@@ -130,10 +132,10 @@ class McPdfConfig(ConfigManager.ConfigHandler):
             for slice_cfg in slice_cfgs:
                 target, sliced, binning, aggs = slice_cfg
                 for suffix, agg in aggs.items():
-                    self.__output.addColumnProvider(McSliceAggregate(
+                    self.__output.add_column_provider(McSliceAggregate(
                         sampler, target, sliced, suffix, agg, binning
                     ))
-                    self.__output.addExtensionTableProvider(McSliceAggregateBins(
+                    self.__output.add_extension_table_provider(McSliceAggregateBins(
                         target, sliced, suffix, binning
                     ))
 
@@ -150,4 +152,4 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         return {}
 
 
-ConfigManager.addHandler(McPdfConfig)
+#ConfigManager.addHandler(McPdfConfig)

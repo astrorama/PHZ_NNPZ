@@ -46,7 +46,7 @@ class McPdf2D(OutputHandler.OutputColumnProviderInterface):
         self.__column = 'MC_PDF_2D_{}_{}'.format(*map(str.upper, self.__param_names))
         self.__output = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self):
         shape = (self.__binning[0].shape[0] - 1, self.__binning[1].shape[0] - 1)
         return [
             (self.__column, np.float32, shape)

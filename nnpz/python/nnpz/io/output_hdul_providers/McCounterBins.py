@@ -18,7 +18,7 @@ from astropy.table import Table
 from nnpz.io import OutputHandler
 
 
-class McCounterBins(OutputHandler.OutputExtensionTableProviderInterface):
+class McCounterBins(OutputHandler.OutputExtensionProviderInterface):
     """
     See McCounter
     """
