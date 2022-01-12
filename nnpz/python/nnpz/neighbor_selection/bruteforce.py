@@ -43,6 +43,6 @@ class BruteForceSelector:
         distances = np.zeros(len(self.__reference), dtype=np.float32) * target.unit
         for i, t in enumerate(target):
             chi2(self.__reference, t, out=distances)
-            neighbors[i, :] = np.argsort(distances)[:self.__k]
+            neighbors[i, :] = np.argpartition(distances, kth=self.__k)[:self.__k]
             matched.append(self.__reference_photo[neighbors[i, :]])
         return neighbors, scales
