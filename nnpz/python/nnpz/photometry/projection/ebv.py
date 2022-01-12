@@ -17,6 +17,7 @@ import astropy.units as u
 import numpy as np
 
 
+@u.quantity_input
 def correct_ebv(ref_photo: u.uJy, corr_coef: np.ndarray, ebv: float, out: u.uJy = None):
     if out is None:
         out = np.copy(ref_photo)

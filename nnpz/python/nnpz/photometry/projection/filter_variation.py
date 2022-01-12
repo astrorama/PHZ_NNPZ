@@ -17,6 +17,7 @@ import astropy.units as u
 import numpy as np
 
 
+@u.quantity_input
 def correct_filter_variation(ref_photo: u.uJy, corr_coef: np.ndarray, shift: np.ndarray,
                              out: u.uJy):
     if out is None:

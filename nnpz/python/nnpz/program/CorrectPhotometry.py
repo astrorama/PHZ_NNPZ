@@ -15,6 +15,7 @@
 #
 from datetime import datetime
 
+import astropy.units as u
 import fitsio
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
@@ -65,9 +66,15 @@ def mainMethod(args):
     neighbor_catalog = conf_manager.getObject('neighbor_catalog')
     output_fits = fitsio.FITS(neighbor_catalog, mode='rw', clobber=False)
     output_hdu: fitsio.hdu.TableHDU = output_fits[1]
+    output_colnames = output_hdu.get_colnames()
+    output_header = output_hdu.read_header()
 
-    assert 'NEIGHBOR_INDEX' in output_hdu.get_colnames()
-    assert 'NEIGHBOR_PHOTOMETRY' in output_hdu.get_colnames()
+    assert 'NEIGHBOR_INDEX' in output_colnames
+    assert 'NEIGHBOR_PHOTOMETRY' in output_colnames
+
+    neighbor_photo_idx = output_colnames.index('NEIGHBOR_PHOTOMETRY') + 1
+    photo_unit = u.Unit(output_header.get(f'TUNIT{neighbor_photo_idx}'))
+    assert photo_unit == u.uJy
 
     # Chunks
     chunks: slice = conf_manager.getObject('target_idx_slices')
@@ -78,7 +85,7 @@ def mainMethod(args):
         logger.info('Processing chunk %d / %d', i, len(chunks))
         chunk_input = input_photometry[chunk]
         chunk_output = output_hdu[chunk]
-        chunk_ref_photo = chunk_output['NEIGHBOR_PHOTOMETRY']
+        chunk_ref_photo = chunk_output['NEIGHBOR_PHOTOMETRY'] * photo_unit
 
         if 'ebv' in chunk_input.colorspace:
             logger.info('Correcting for EBV')
