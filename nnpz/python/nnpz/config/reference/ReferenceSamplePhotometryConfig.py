@@ -76,6 +76,7 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
             'reference_photometry': self.__ref_photo,
             'reference_ebv_correction': self.__ebv_corr,
             'reference_filter_variation_correction': self.__filter_corr,
+            'reference_system': self.__ref_photo.system
         }
         return result
 

@@ -55,7 +55,7 @@ class Photometry:
         return Photometry(ids=self.ids, values=self.values[:, cols],
                           system=self.system[bands], colorspace=self.colorspace)
 
-    def get_fluxes(self, bands: Union[List[str], str], return_error=False) -> np.ndarray:
+    def get_fluxes(self, bands: Union[List[str], str], return_error=False) -> u.Quantity:
         if isinstance(bands, str):
             c = self.system.bands.index(bands)
         else:

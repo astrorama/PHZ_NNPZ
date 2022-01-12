@@ -18,13 +18,8 @@
 # pylint: disable=unused-import
 from datetime import datetime
 
+import astropy.units as u
 import fitsio
-# noinspection PyUnresolvedReferences
-# pylint: disable=unused-import
-import nnpz.config.neighbors.WeightConfig
-# noinspection PyUnresolvedReferences
-# pylint: disable=unused-import
-import nnpz.config.neighbors.WeightConfig
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 import nnpz.config.pipeline.NeighborsCatalogConfig
@@ -34,6 +29,7 @@ import nnpz.config.target
 import numpy as np
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
+from nnpz.pipeline.compute_weights import ComputeWeights
 from nnpz.utils.ArgumentParserWrapper import ArgumentParserWrapper
 
 logger = Logging.getLogger(__name__)
@@ -69,20 +65,23 @@ def mainMethod(args):
     neighbor_catalog = conf_manager.getObject('neighbor_catalog')
     output_fits = fitsio.FITS(neighbor_catalog, mode='rw', clobber=False)
     output_hdu: fitsio.hdu.TableHDU = output_fits[1]
+    output_colnames = output_hdu.get_colnames()
+    output_header = output_hdu.read_header()
 
-    assert 'NEIGHBOR_INDEX' in output_hdu.get_colnames()
-    assert 'NEIGHBOR_SCALING' in output_hdu.get_colnames()
-    assert 'NEIGHBOR_WEIGHTS' in output_hdu.get_colnames()
-    assert 'NEIGHBOR_PHOTOMETRY' in output_hdu.get_colnames()
+    assert 'NEIGHBOR_INDEX' in output_colnames
+    assert 'NEIGHBOR_SCALING' in output_colnames
+    assert 'NEIGHBOR_WEIGHTS' in output_colnames
+    assert 'NEIGHBOR_PHOTOMETRY' in output_colnames
+
+    neighbor_photo_idx = output_colnames.index('NEIGHBOR_PHOTOMETRY') + 1
+    photo_unit = u.Unit(output_header.get(f'TUNIT{neighbor_photo_idx}'))
+    assert photo_unit == u.uJy
 
     # Chunks
     chunks: slice = conf_manager.getObject('target_idx_slices')
 
-    # Weight calculator
-    weight_calculator = conf_manager.getObject('weight_calculator')
-
-    # Indexes
-    ref_filter_indexes = ref_photometry.system.get_band_indexes(input_photometry.system.bands)
+    # Weighter
+    weighter = ComputeWeights(conf_manager)
 
     # Process in chunks
     start = datetime.utcnow()
@@ -92,15 +91,12 @@ def mainMethod(args):
         chunk_workarea = output_hdu.read(['NEIGHBOR_PHOTOMETRY', 'NEIGHBOR_SCALING', 'FLAGS'],
                                          rows=range(chunk.start, chunk.stop))
 
-        nn_photo = chunk_workarea['NEIGHBOR_PHOTOMETRY'][:, :, ref_filter_indexes, :] \
-            .newbyteorder().byteswap(inplace=True)
-        nn_scale = chunk_workarea['NEIGHBOR_SCALING'].newbyteorder().byteswap(inplace=True)
-
-        out_weights = np.zeros_like(nn_scale, dtype=np.float32)
+        out_weights = np.zeros_like(chunk_workarea['NEIGHBOR_SCALING'], dtype=np.float32)
         out_flags = np.zeros(len(chunk_workarea), dtype=np.int32)
 
-        weight_calculator(nn_photo, nn_scale, chunk_target.values.value,
-                          output_weights=out_weights, output_flags=out_flags)
+        weighter(chunk_target, chunk_workarea['NEIGHBOR_PHOTOMETRY'] * photo_unit,
+                 chunk_workarea['NEIGHBOR_SCALING'],
+                 out_weights=out_weights, out_flags=out_flags)
 
         output_hdu.write([out_weights, out_flags], names=['NEIGHBOR_WEIGHTS', 'FLAGS'],
                          firstrow=chunk.start)

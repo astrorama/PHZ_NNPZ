@@ -18,22 +18,14 @@ from datetime import datetime
 import fitsio
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
-import nnpz.config.neighbors.GalacticUnreddenerConfig
-# noinspection PyUnresolvedReferences
-# pylint: disable=unused-import
-import nnpz.config.neighbors.NeighborSelectorConfig
-# noinspection PyUnresolvedReferences
-# pylint: disable=unused-import
 import nnpz.config.pipeline.NeighborsCatalogConfig
-# noinspection PyUnresolvedReferences
-# pylint: disable=unused-import
-import nnpz.config.reference
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 import nnpz.config.target
 import numpy as np
 from ElementsKernel import Logging
 from nnpz.config.ConfigManager import ConfigManager
+from nnpz.pipeline.neighbor_finder import NeighborFinder
 from nnpz.utils.ArgumentParserWrapper import ArgumentParserWrapper
 
 logger = Logging.getLogger(__name__)
@@ -59,20 +51,14 @@ def mainMethod(args):
     # Create the object which handles the user parameters
     conf_manager = ConfigManager(args.config_file, args.extra_arguments)
 
-    # Read the reference sample data
+    # Finder
+    neighbor_finder = NeighborFinder(conf_manager)
     ref_data = conf_manager.getObject('reference_photometry')
+    knn = conf_manager.getObject('neighbor_no')
 
     # Read the target catalog data
     input_photometry = conf_manager.getObject('target_photometry')
     id_col = conf_manager.getObject('target_id_column')
-
-    # De-redden
-    source_independent_ebv = conf_manager.getObject('source_independent_ebv')
-
-    # Finder
-    selector = conf_manager.getObject('neighbor_selector')
-    knn = conf_manager.getObject('neighbor_no')
-    selector.fit(ref_data, input_photometry.system)
 
     # Prepare the output catalog
     neighbor_catalog = conf_manager.getObject('neighbor_catalog')
@@ -101,20 +87,11 @@ def mainMethod(args):
         logger.info('Processing chunk %d / %d', i, len(chunks))
         chunk_photometry = input_photometry[chunk]
 
-        if source_independent_ebv:
-            logger.info('De-redden')
-            chunk_photometry.values = source_independent_ebv.deredden(chunk_photometry.values,
-                                                                      ebv=chunk_photometry.colorspace.ebv)
-
-        logger.info('Looking for neighbors')
-        all_idx, all_scales = selector.query(chunk_photometry)
         output = np.zeros(len(chunk_photometry), dtype=neighbor_columns)
-
         output[id_col[0]] = chunk_photometry.ids
-        output['NEIGHBOR_INDEX'] = all_idx
-        output['NEIGHBOR_SCALING'] = all_scales
         output['NEIGHBOR_WEIGHTS'] = 1.
-        output['NEIGHBOR_PHOTOMETRY'] = ref_data.values[all_idx]
+
+        neighbor_finder(chunk_photometry, out=output)
 
         logger.info('Writing chunk into the output catalog')
         output_hdu.append(output)

@@ -25,9 +25,10 @@ ctypedef np.float32_t SCALE_DTYPE_t
 ctypedef np.float32_t WEIGHT_DTYPE_t
 ctypedef np.int32_t FLAG_DTYPE_t
 
+WEIGHT_DTYPE = np.float32
 
 
-def likelihood(np.ndarray[PHOTO_DTYPE_t, ndim=3] ref_objs, np.ndarray[PHOTO_DTYPE_t, ndim=2] target_obj):
+def likelihood(const PHOTO_DTYPE_t[:,:,:] ref_objs, const PHOTO_DTYPE_t[:,:] target_obj):
     """
     Compute the weight as the likelihood of the chi2: $L = e^{-\\chi^2/2}$
     Note that the maximum weight can be 1 (when $\\chi^2 == 0$), and it gets
@@ -35,17 +36,21 @@ def likelihood(np.ndarray[PHOTO_DTYPE_t, ndim=3] ref_objs, np.ndarray[PHOTO_DTYP
     """
     val_1 = ref_objs[..., 0]
     err_1 = ref_objs[..., 1]
-    val_2 = target_obj[..., 0, np.newaxis].T
-    err_2 = target_obj[..., 1, np.newaxis].T
+    val_2 = target_obj[..., 0, None].T
+    err_2 = target_obj[..., 1, None].T
 
-    nom = ((val_1 - val_2) * (val_1 - val_2))
-    den = ((err_1 * err_1) + (err_2 * err_2))
+    nom = np.subtract(val_1, val_2, dtype=WEIGHT_DTYPE)
+    nom = np.multiply(nom, nom, out=nom)
 
-    chi2 = np.sum(nom / den, axis=1)
-    return np.exp(-0.5 * chi2)
+    den1 = np.multiply(err_1, err_1, dtype=WEIGHT_DTYPE)
+    den2 = np.multiply(err_2, err_2, dtype=WEIGHT_DTYPE)
+    den = np.add(den1, den2, out=den1)
+
+    chi2 = np.sum(nom / den, axis=1, dtype=WEIGHT_DTYPE)
+    return np.exp(-0.5 * chi2, out=chi2)
 
 
-def inverse_chi2(np.ndarray[PHOTO_DTYPE_t, ndim=3] ref_objs, np.ndarray[PHOTO_DTYPE_t, ndim=2] target_obj):
+def inverse_chi2(const PHOTO_DTYPE_t[:,:,:] ref_objs, const PHOTO_DTYPE_t[:,:] target_obj):
     """
     Compute the weight as the inverse of the $\\chi^2$ distance.
     For two identical points, this will be infinity since their distance is 0.
@@ -54,16 +59,21 @@ def inverse_chi2(np.ndarray[PHOTO_DTYPE_t, ndim=3] ref_objs, np.ndarray[PHOTO_DT
     """
     val_1 = ref_objs[..., 0]
     err_1 = ref_objs[..., 1]
-    val_2 = target_obj[..., 0, np.newaxis].T
-    err_2 = target_obj[..., 1, np.newaxis].T
+    val_2 = target_obj[..., 0, None].T
+    err_2 = target_obj[..., 1, None].T
 
-    nom = ((val_1 - val_2) * (val_1 - val_2))
-    den = ((err_1 * err_1) + (err_2 * err_2))
-    chi2 = np.sum(nom / den, axis=1)
-    return 1. / chi2
+    nom = np.subtract(val_1, val_2, dtype=WEIGHT_DTYPE)
+    nom = np.multiply(nom, nom, out=nom)
+
+    den1 = np.multiply(err_1, err_1, dtype=WEIGHT_DTYPE)
+    den2 = np.multiply(err_2, err_2, dtype=WEIGHT_DTYPE)
+    den = np.add(den1, den2, out=den1)
+
+    chi2 = np.sum(nom / den, axis=1, dtype=WEIGHT_DTYPE)
+    return np.reciprocal(chi2, out=chi2)
 
 
-def inverse_euclidean(np.ndarray[PHOTO_DTYPE_t, ndim=3] ref_objs, np.ndarray[PHOTO_DTYPE_t, ndim=2] target_obj):
+def inverse_euclidean(const PHOTO_DTYPE_t[:,:,:] ref_objs, const PHOTO_DTYPE_t[:,:] target_obj):
     """
     Compute the weight as the inverse of the Euclidean distance.
     For two identical points, this will be infinity since their distance is 0.
@@ -71,10 +81,13 @@ def inverse_euclidean(np.ndarray[PHOTO_DTYPE_t, ndim=3] ref_objs, np.ndarray[PHO
     neighbors become too small.
     """
     val_1 = ref_objs[..., 0]
-    val_2 = target_obj[..., 0, np.newaxis]
+    val_2 = target_obj[..., 0, None]
 
-    distance = np.sqrt(np.sum((val_1 - val_2) * (val_1 - val_2), axis=0))
-    return 1. / distance
+    diff = np.subtract(val_1, val_2, dtype=WEIGHT_DTYPE)
+    prod = np.multiply(diff, diff, out=diff)
+    sum = np.sum(prod, axis=0, dtype=WEIGHT_DTYPE)
+    distance = np.sqrt(sum, out=sum)
+    return np.reciprocal(distance, out=distance)
 
 
 class WeightCalculator:
@@ -102,16 +115,13 @@ class WeightCalculator:
         self.__secondary_weight = WeightCalculator._weights[secondary]
         self.__min_weight = np.finfo(np.float32).eps
 
-    def __call__(self, np.ndarray[PHOTO_DTYPE_t, ndim=4] neighbor_photometry,
-                       np.ndarray[SCALE_DTYPE_t, ndim=2] neighbor_scaling,
-                       np.ndarray[PHOTO_DTYPE_t, ndim=3] target_photometry,
-                       np.ndarray[WEIGHT_DTYPE_t, ndim=2] output_weights,
-                       np.ndarray[FLAG_DTYPE_t, ndim=1] output_flags):
+    def __call__(self, const PHOTO_DTYPE_t[:,:,:,:] neighbor_photometry,
+                       const PHOTO_DTYPE_t[:,:,:] target_photometry,
+                       WEIGHT_DTYPE_t[:,:] output_weights,
+                       FLAG_DTYPE_t[:] output_flags):
         assert neighbor_photometry.shape[0] == target_photometry.shape[0]
         assert neighbor_photometry.shape[0] == output_weights.shape[0]
-        assert neighbor_photometry.shape[0] == neighbor_scaling.shape[0]
         assert neighbor_photometry.shape[1] == output_weights.shape[1]
-        assert neighbor_photometry.shape[1] == neighbor_scaling.shape[1]
         assert neighbor_photometry.shape[2] == target_photometry.shape[1]
         assert neighbor_photometry.shape[3] == 2
         assert target_photometry.shape[2] == 2
@@ -119,11 +129,13 @@ class WeightCalculator:
 
         cdef int output_size = len(target_photometry)
         cdef int i
+        cdef WEIGHT_DTYPE_t[:] weight_array
 
         for i in range(output_size):
-            neighbor_photo = neighbor_photometry[i] * neighbor_scaling[i, np.newaxis, np.newaxis].T
+            neighbor_photo = neighbor_photometry[i]
             weights = self.__primary_weight(neighbor_photo, target_photometry[i])
             if np.all(weights[np.isfinite(weights)] <= self.__min_weight):
                 weights = self.__secondary_weight(neighbor_photo, target_photometry[i])
                 output_flags[i] |= NnpzFlag.AlternativeWeightFlag
-            output_weights[i] = weights
+            weight_array = weights
+            output_weights[i] = weight_array
