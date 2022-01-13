@@ -68,7 +68,7 @@ def mainMethod(args):
         ('NEIGHBOR_INDEX', np.int64, knn),
         ('NEIGHBOR_SCALING', np.float32, knn),
         ('NEIGHBOR_WEIGHTS', np.float32, knn),
-        ('FLAGS', np.int32),
+        ('FLAGS', np.uint32),
         ('NEIGHBOR_PHOTOMETRY', np.double, (knn, len(ref_data.system), 2)),
     ]
 

@@ -14,7 +14,7 @@
 #  MA 02110-1301 USA
 #
 import numpy as np
-from nnpz.flags.NnpzFlag import NnpzFlag
+from nnpz.flags import NnpzFlag
 
 cimport numpy as np
 
@@ -23,7 +23,7 @@ np.import_array()
 ctypedef np.double_t PHOTO_DTYPE_t
 ctypedef np.float32_t SCALE_DTYPE_t
 ctypedef np.float32_t WEIGHT_DTYPE_t
-ctypedef np.int32_t FLAG_DTYPE_t
+ctypedef np.uint32_t FLAG_DTYPE_t
 
 WEIGHT_DTYPE = np.float32
 
