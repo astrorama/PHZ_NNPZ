@@ -39,7 +39,7 @@ class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
 
     def __get_details(self, header: fitsio.FITSHDR) \
             -> Tuple[List[u.Unit], List[Optional[Tuple[int, ...]]]]:
-        units = [u.dimensionless_unscaled] * len(self.__columns)
+        units = [''] * len(self.__columns)
         shapes = [None] * len(self.__columns)
         i = 1
         col_name = header.get(f'TTYPE{i}')
@@ -71,9 +71,9 @@ class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
         for col, dtype, unit, shape in zip(self.__columns, self.__dtype, self.__units,
                                            self.__shapes):
             if shape is not None:
-                defs.append((col, dtype, u, shape))
+                defs.append((col, dtype, unit, shape))
             else:
-                defs.append((col, dtype, u))
+                defs.append((col, dtype, unit))
         return defs
 
     def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
