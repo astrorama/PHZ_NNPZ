@@ -39,8 +39,9 @@ class Photometry:
                                                                           values.shape[1])
             )
 
-        if not np.all(np.isfinite(values)):
-            raise ValueError('NaN or Inf values found on the photometry')
+        for filter_idx, filter_name in enumerate(system.bands):
+            if not np.all(np.isfinite(values[:, filter_idx])):
+                raise ValueError(f'NaN or Inf values found on the photometry for {filter_name}')
 
         self.ids = np.array(ids, copy=copy)
         self.values = u.Quantity(values, copy=copy)
