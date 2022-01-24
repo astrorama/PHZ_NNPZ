@@ -113,7 +113,7 @@ class WeightCalculator:
     def __init__(self, primary:str, secondary:str):
         self.__primary_weight = WeightCalculator._weights[primary]
         self.__secondary_weight = WeightCalculator._weights[secondary]
-        self.__min_weight = np.finfo(np.float32).eps
+        self.__min_weight = np.finfo(np.float32).tiny
 
     def __call__(self, const PHOTO_DTYPE_t[:,:,:,:] neighbor_photometry,
                        const PHOTO_DTYPE_t[:,:,:] target_photometry,
