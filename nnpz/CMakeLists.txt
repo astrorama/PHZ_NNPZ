@@ -78,6 +78,8 @@ elements_add_python_program(NnpzComputeWeights
                             nnpz.program.ComputeWeights)
 elements_add_python_program(NnpzGenerateOutput
                             nnpz.program.GenerateOutput)
+elements_add_python_program(nnpz
+                            nnpz.program.Nnpz)
 
 #===============================================================================
 # Add the elements_install_conf_files macro
