@@ -83,17 +83,14 @@ class Chi2Scaling:
         Minimizes the chi2 distance using the scale factor `a`, which is constrained by
         the prior passed to the constructor
         """
-        ref_values = reference.values[:, 0]
-        ref_errors = reference.values[:, 1]
-        coord_values = target.values[:, 0]
-        coord_errors = target.values[:, 1]
+        ref_values = reference.values[..., 0]
+        ref_errors = reference.values[..., 1]
+        coord_values = target.values[..., 0]
+        coord_errors = target.values[..., 1]
 
-        # Mask out nans!
-        mask = np.isfinite(coord_values)
-        coord_values = coord_values[mask]
-        coord_errors = coord_errors[mask]
-        ref_values = ref_values[:, mask]
-        ref_errors = ref_errors[:, mask]
+        # We expect no NaNs
+        assert not np.any(np.isnan(coord_values))
+        assert not np.any(np.isnan(coord_errors))
 
         # Target function to be minimized
         def chi2_prior(scale, *args):
