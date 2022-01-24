@@ -57,7 +57,7 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
 
             if args.get('redden_mean_phot', False):
                 self._checkParameterExists('target_catalog_gal_ebv', args)
-                target_ebv = target_options['target_ebv']
+                target_ebv = target_options['target_photometry'].colorspace.ebv
                 reddener = SourceIndependentGalacticEBV(ref_phot.system)
 
             output.add_column_provider(
