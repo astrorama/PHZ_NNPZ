@@ -16,9 +16,9 @@
 from typing import Callable, Tuple
 
 import numpy as np
-from nnpz.neighbor_selection.bruteforce import BruteForceSelector
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
+from nnpz.utils.distances import chi2
 
 
 class ScaledBruteForceSelector:
@@ -26,20 +26,26 @@ class ScaledBruteForceSelector:
         self.__k = k
         self.__prior = scaler
         self.__reference = None
-        self.__reference_photo = None
         self.__scaler = scaler
 
     def fit(self, train: Photometry, system: PhotometricSystem):
         self.__reference = train.subsystem(system.bands)
-        self.__reference_photo = train
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
         assert target.unit == self.__reference.unit
         assert target.system == self.__reference.system
 
-        scales = self.__scaler(self.__reference, target)
-        bruteforce_selector = BruteForceSelector(self.__k)
-        bruteforce_selector.fit(self.__reference * scales[:, np.newaxis], self.__reference.system)
-        neighbors, _ = bruteforce_selector.query(target)
+        neighbors = np.zeros((len(target), self.__k), dtype=int)
+        scales = np.ones_like(neighbors, dtype=np.float32)
 
+        distances = np.zeros(len(self.__reference), dtype=np.float32) * target.unit
+        for i, t in enumerate(target):
+            all_scales = self.__scaler(self.__reference, t)
+            scaled_ref = Photometry(self.__reference.ids,
+                                    self.__reference.values * all_scales[..., np.newaxis, np.newaxis],
+                                    system=self.__reference.system,
+                                    colorspace=self.__reference.colorspace)
+            chi2(scaled_ref, t, out=distances)
+            neighbors[i] = np.argpartition(distances, kth=self.__k)[:self.__k]
+            scales[i] = all_scales[neighbors[i]]
         return neighbors, scales

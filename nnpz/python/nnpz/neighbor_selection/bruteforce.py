@@ -13,10 +13,9 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
-
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
 from nnpz.utils.distances import chi2
@@ -26,11 +25,9 @@ class BruteForceSelector:
     def __init__(self, k: int):
         self.__k = k
         self.__reference = None
-        self.__reference_photo = None
 
     def fit(self, train: Photometry, system: PhotometricSystem):
         self.__reference = train.subsystem(system.bands)
-        self.__reference_photo = train
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
         assert target.unit == self.__reference.unit
@@ -38,11 +35,9 @@ class BruteForceSelector:
 
         neighbors = np.zeros((len(target), self.__k), dtype=int)
         scales = np.ones_like(neighbors, dtype=np.float32)
-        matched = []
 
         distances = np.zeros(len(self.__reference), dtype=np.float32) * target.unit
         for i, t in enumerate(target):
             chi2(self.__reference, t, out=distances)
             neighbors[i, :] = np.argpartition(distances, kth=self.__k)[:self.__k]
-            matched.append(self.__reference_photo[neighbors[i, :]])
         return neighbors, scales
