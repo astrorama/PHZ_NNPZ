@@ -81,11 +81,11 @@ def inverse_euclidean(const PHOTO_DTYPE_t[:,:,:] ref_objs, const PHOTO_DTYPE_t[:
     neighbors become too small.
     """
     val_1 = ref_objs[..., 0]
-    val_2 = target_obj[..., 0, None]
+    val_2 = target_obj[..., 0, None].T
 
     diff = np.subtract(val_1, val_2, dtype=WEIGHT_DTYPE)
     prod = np.multiply(diff, diff, out=diff)
-    sum = np.sum(prod, axis=0, dtype=WEIGHT_DTYPE)
+    sum = np.sum(prod, axis=1, dtype=WEIGHT_DTYPE)
     distance = np.sqrt(sum, out=sum)
     return np.reciprocal(distance, out=distance)
 
