@@ -62,3 +62,4 @@ class NeighborFinder:
         out['NEIGHBOR_INDEX'] = all_idx
         out['NEIGHBOR_SCALING'] = all_scales
         out['NEIGHBOR_PHOTOMETRY'] = self.__ref_data.values[all_idx]
+        out['NEIGHBOR_PHOTOMETRY'] *= all_scales[..., np.newaxis, np.newaxis]
