@@ -54,7 +54,8 @@ class CombinedSelector:
         distances = np.zeros(self.__batch, dtype=np.float32) * target.unit
         for i, t in enumerate(target):
             candidate_photo = self.__reference_photo[candidates[i]]
-            chi2(candidate_photo.subsystem(self.__system.bands), t, out=distances)
+            chi2(candidate_photo.get_fluxes(self.__system.bands, return_error=True), t,
+                 out=distances)
             final_neighbors = np.argsort(distances)[:self.__k]
             neighbors[i, :] = candidates[i, final_neighbors]
         scales = np.ones_like(neighbors, dtype=np.float32)

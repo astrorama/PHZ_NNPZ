@@ -15,17 +15,13 @@
 #
 import numpy as np
 
-from nnpz.photometry.photometry import Photometry
 
-
-def euclidean(ref: Photometry, target: Photometry, out: np.ndarray) -> np.ndarray:
-    assert ref.system == target.system
-    x = ref.values[:, :, 0] - target.values[:, 0]
+def euclidean(ref: np.ndarray, target: np.ndarray, out: np.ndarray) -> np.ndarray:
+    x = ref[:, :, 0] - target[:, 0]
     return np.sqrt(np.sum(x * x, axis=1, out=out), out=out)
 
 
-def chi2(ref: Photometry, target: Photometry, out: np.ndarray) -> np.ndarray:
-    assert ref.system == target.system
-    nom = ref.values[:, :, 0] - target.values[:, 0]
-    den = ref.values[:, :, 1] * ref.values[:, :, 1] + target.values[:, 1] * target.values[:, 1]
+def chi2(ref: np.ndarray, target: np.ndarray, out: np.ndarray) -> np.ndarray:
+    nom = ref[:, :, 0] - target[:, 0]
+    den = ref[:, :, 1] * ref[:, :, 1] + target[:, 1] * target[:, 1]
     return np.sum(nom * nom / den, axis=1, out=out)

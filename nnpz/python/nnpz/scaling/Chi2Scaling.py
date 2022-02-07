@@ -78,15 +78,15 @@ class Chi2Scaling:
         self.__rtol = rtol
         self.__epsilon = epsilon
 
-    def __call__(self, reference: Photometry, target: Photometry) -> np.ndarray:
+    def __call__(self, reference: np.ndarray, target: np.ndarray) -> np.ndarray:
         """
         Minimizes the chi2 distance using the scale factor `a`, which is constrained by
         the prior passed to the constructor
         """
-        ref_values = reference.values[..., 0]
-        ref_errors = reference.values[..., 1]
-        coord_values = target.values[..., 0]
-        coord_errors = target.values[..., 1]
+        ref_values = reference[..., 0]
+        ref_errors = reference[..., 1]
+        coord_values = target[..., 0]
+        coord_errors = target[..., 1]
 
         # We expect no NaNs
         assert not np.any(np.isnan(coord_values))

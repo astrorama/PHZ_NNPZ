@@ -38,6 +38,6 @@ class BruteForceSelector:
 
         distances = np.zeros(len(self.__reference), dtype=np.float32) * target.unit
         for i, t in enumerate(target):
-            chi2(self.__reference, t, out=distances)
+            chi2(self.__reference.values, t, out=distances)
             neighbors[i, :] = np.argpartition(distances, kth=self.__k)[:self.__k]
         return neighbors, scales

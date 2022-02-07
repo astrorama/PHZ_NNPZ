@@ -41,10 +41,7 @@ class ScaledBruteForceSelector:
         distances = np.zeros(len(self.__reference), dtype=np.float32) * target.unit
         for i, t in enumerate(target):
             all_scales = self.__scaler(self.__reference, t)
-            scaled_ref = Photometry(self.__reference.ids,
-                                    self.__reference.values * all_scales[..., np.newaxis, np.newaxis],
-                                    system=self.__reference.system,
-                                    colorspace=self.__reference.colorspace)
+            scaled_ref = self.__reference.values * all_scales[..., np.newaxis, np.newaxis]
             chi2(scaled_ref, t, out=distances)
             neighbors[i] = np.argpartition(distances, kth=self.__k)[:self.__k]
             scales[i] = all_scales[neighbors[i]]

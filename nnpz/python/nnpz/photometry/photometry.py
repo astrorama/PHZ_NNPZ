@@ -17,7 +17,6 @@ from typing import List, Union
 
 import numpy as np
 from astropy import units as u
-
 from nnpz.exceptions import InvalidDimensionsException
 from nnpz.photometry.colorspace import ColorSpace
 from nnpz.photometry.photometric_system import PhotometricSystem
@@ -83,3 +82,6 @@ class Photometry:
         return """Photometry with {} objects, in {}
     Photometric system: {}
 """.format(len(self), self.unit, str(self.system))
+
+    def __iter__(self):
+        return iter(self.values)
