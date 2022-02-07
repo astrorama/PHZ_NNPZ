@@ -13,8 +13,8 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+import fitsio
 import numpy as np
-from astropy.table import Table
 from nnpz.io import OutputHandler
 
 
@@ -35,12 +35,7 @@ class McPdf1DBins(OutputHandler.OutputExtensionProviderInterface):
         # Take the bin center
         self.__binning = (binning[:-1] + binning[1:]) / 2.
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        pass
-
-    def getExtensionTables(self):
-        return {
-            'BINS_MC_PDF_1D_{}'.format(self.__param_name.upper()): Table({
-                'BINS_PDF': self.__binning,
-            })
-        }
+    def add_extensions(self, fits: fitsio.FITS):
+        extname = 'BINS_MC_PDF_1D_{}'.format(self.__param_name.upper())
+        fits.create_table_hdu({'BINS_PDF': self.__binning}, extname=extname)
+        fits[extname].write_column('BINS_PDF', self.__binning)

@@ -46,23 +46,49 @@ class MontecarloProvider(BaseProvider):
                 self._data_pattern.format(index)
             )
 
-    def getDtype(self, parameter):
+    def getDtype(self, parameter: str = None) -> np.dtype:
         """
         Returns:
-            The dtype of the given parameter
+            The dtype of the given parameter, or of all of them if undefined
         """
         if not self._data_files:
             raise UninitializedException('MontecarloProvider not initialized')
         if not self._current_data_provider:
             self._swapProvider(next(iter(self._data_files)))
-        return self._current_data_provider.read(0)[parameter].dtype
+        if parameter:
+            return self._current_data_provider.read(0)[parameter].dtype
+        else:
+            return self._current_data_provider.read(0).dtype
+
+    def getNSamples(self) -> int:
+        """
+        Returns:
+            How many samples each reference object has
+        """
+        if not self._data_files:
+            raise UninitializedException('MontecarloProvider not initialized')
+        if not self._current_data_provider:
+            self._swapProvider(next(iter(self._data_files)))
+        return len(self._current_data_provider.read(0))
 
     def getData(self, obj_id: int) -> np.ndarray:
+        if obj_id < 0:
+            return np.zeros_like(self.getDtype())
         loc = self._index.get(obj_id, self._key)
         if not loc:
             return None
         self._swapProvider(loc.file)
         return self._current_data_provider.read(loc.offset)
+
+    def getDataForIndex(self, obj_idxs: np.ndarray) -> np.ndarray:
+        assert len(obj_idxs.shape) == 2
+        sorted_order = np.argsort(obj_idxs[:, 0])
+        sorted_idxs = obj_idxs[sorted_order]
+        ids = self._index.getIds()[sorted_idxs[:, 0]]
+        output = np.zeros(len(obj_idxs), dtype=self.getDtype())
+        for i, obj_id in zip(sorted_order, ids):
+            output[i] = self.getData(obj_id)[sorted_idxs[i, 1]]
+        return output
 
     def _getWriteableDataProvider(self):
         """

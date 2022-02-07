@@ -15,8 +15,8 @@
 #
 from typing import Tuple
 
+import fitsio
 import numpy as np
-from astropy.table import Table
 from nnpz.io import OutputHandler
 
 
@@ -39,14 +39,11 @@ class McPdf2DBins(OutputHandler.OutputExtensionProviderInterface):
         bin2 = (binning[1][:-1] + binning[1][1:]) / 2.
         self.__binning = np.meshgrid(bin1, bin2)
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        pass
-
-    def getExtensionTables(self):
-        return {
-            'BINS_MC_PDF_2D_{}_{}'.format(*map(str.upper, self.__param_names)): Table(
-                {
-                    self.__param_names[0].upper(): self.__binning[0].T.ravel(),
-                    self.__param_names[1].upper(): self.__binning[1].T.ravel(),
-                })
-        }
+    def add_extensions(self, fits: fitsio.FITS):
+        col1 = self.__param_names[0].upper()
+        col2 = self.__param_names[1].upper()
+        extname = 'BINS_MC_PDF_2D_{}_{}'.format(col1, col2)
+        val1 = self.__binning[0].T.ravel()
+        val2 = self.__binning[1].T.ravel()
+        fits.create_table_hdu({col1: val1, col2: val2}, extname=extname)
+        fits[extname].write([val1, val2], columns=[col1, col2])

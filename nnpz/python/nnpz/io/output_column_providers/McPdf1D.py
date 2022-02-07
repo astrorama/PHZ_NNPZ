@@ -14,6 +14,7 @@
 # MA 02110-1301 USA
 #
 
+import astropy.units as u
 import numpy as np
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
@@ -46,26 +47,13 @@ class McPdf1D(OutputHandler.OutputColumnProviderInterface):
 
     def get_column_definition(self):
         return [
-            (self.__column, np.float32, len(self.__binning) - 1)
+            (self.__column, np.float32, u.dimensionless_unscaled, len(self.__binning) - 1)
         ]
 
-    def setWriteableArea(self, output_area):
-        self.__output = output_area[self.__column]
-
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        """
-        Does nothing for this provider, as the sampling is done by the McSampler
-        """
-        pass
-
-    def fillColumns(self):
-        """
-        See OutputColumnProviderInterface.fillColumns
-        """
-        samples = self.__sampler.getSamples()
-        # For each object, take a random weighted sample and generate the histogram
-
-        for i in range(len(self.__output)):
-            self.__output[i, :] = np.histogram(
-                samples[i][self.__param_name], bins=self.__binning, density=True
-            )[0]
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,
+                        output: np.ndarray):
+        samples = self.__sampler.get_samples()
+        param_samples = samples[self.__param_name]
+        output_col = output[self.__column]
+        for i in range(len(output)):
+            output_col[i] = np.histogram(param_samples[i], bins=self.__binning, density=True)[0]

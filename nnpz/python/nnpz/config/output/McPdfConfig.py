@@ -1,9 +1,7 @@
 import numpy as np
 from nnpz.config import ConfigManager
-from nnpz.config.neighbors.NeighborSelectorConfig import NeighborSelectorConfig
 from nnpz.config.output.OutputHandlerConfig import OutputHandlerConfig
 from nnpz.config.reference import ReferenceConfig
-from nnpz.config.target.TargetCatalogConfig import TargetCatalogConfig
 from nnpz.io.output_column_providers.McCounter import McCounter
 from nnpz.io.output_column_providers.McPdf1D import McPdf1D
 from nnpz.io.output_column_providers.McPdf2D import McPdf2D
@@ -24,8 +22,6 @@ class McPdfConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__added = False
-        self.__catalog_size = None
-        self.__neighbor_no = None
         self.__output = None
         self.__ref_ids = None
         self.__ref_sample = None
@@ -36,13 +32,9 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         self.__samplers = {}
 
     def __parse_args_common(self, args):
-        neighbor_config = ConfigManager.getHandler(NeighborSelectorConfig).parseArgs(args)
         output_config = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)
         ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
-        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
 
-        self.__catalog_size = target_config['target_size']
-        self.__neighbor_no = neighbor_config['neighbor_no']
         self.__output = output_config['output_handler']
         self.__ref_ids = ref_config['reference_ids']
         self.__ref_sample = ref_config['reference_sample']
@@ -56,7 +48,6 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                     continue
                 provider = self.__ref_sample.getProvider(provider_name)
                 sampler = McSampler(
-                    catalog_size=self.__catalog_size, n_neighbors=self.__neighbor_no,
                     take_n=self.__take_n, mc_provider=provider, ref_ids=self.__ref_ids
                 )
                 self.__samplers[provider_name] = sampler
@@ -113,7 +104,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         for provider_name, parameters in mc_counters.items():
             sampler = self.__samplers[provider_name]
             for parameter, bins in parameters:
-                pdtype = sampler.getProvider().getDtype(parameter)
+                pdtype = sampler.get_provider().getDtype(parameter)
                 if not np.issubdtype(pdtype, np.int) and not np.issubdtype(pdtype, np.bool):
                     raise Exception('Can only count integer types, got {}'.format(pdtype))
                 if not np.issubdtype(bins.dtype, np.int) and not np.issubdtype(bins.dtype, np.bool):
@@ -152,4 +143,4 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         return {}
 
 
-#ConfigManager.addHandler(McPdfConfig)
+ConfigManager.addHandler(McPdfConfig)

@@ -15,6 +15,7 @@
 #
 from typing import Tuple
 
+import astropy.units as u
 import numpy as np
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
@@ -36,27 +37,15 @@ class McSamples(OutputHandler.OutputColumnProviderInterface):
         for param in self.__params:
             dtype = self.__sampler.getDtype(param)
             col_defs.append((
-                'MC_SAMPLES_' + param.upper(), dtype, nsamples
+                'MC_SAMPLES_' + param.upper(), dtype, u.dimensionless_unscaled, nsamples
             ))
         return col_defs
 
-    def setWriteableArea(self, output_area):
-        for param in self.__params:
-            self.__output[param] = output_area['MC_SAMPLES_' + param.upper()]
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,
+                        output: np.ndarray):
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        """
-        Does nothing for this provider, as the sampling is done by the McSampler
-        """
-        pass
-
-    def fillColumns(self):
-        """
-        See OutputColumnProviderInterface.fillColumns
-        """
-        samples = self.__sampler.getSamples()
+        samples = self.__sampler.get_samples()
         if self.__params is None:
             self.__params = samples.dtype.names
-
         for param in self.__params:
-            np.copyto(self.__output[param], samples[param])
+            np.copyto(output['MC_SAMPLES_' + param.upper()], samples[param])

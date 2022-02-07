@@ -40,7 +40,7 @@ class ScaledBruteForceSelector:
 
         distances = np.zeros(len(self.__reference), dtype=np.float32) * target.unit
         for i, t in enumerate(target):
-            all_scales = self.__scaler(self.__reference, t)
+            all_scales = self.__scaler(self.__reference.values, t)
             scaled_ref = self.__reference.values * all_scales[..., np.newaxis, np.newaxis]
             chi2(scaled_ref, t, out=distances)
             neighbors[i] = np.argpartition(distances, kth=self.__k)[:self.__k]

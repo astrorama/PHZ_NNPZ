@@ -14,7 +14,7 @@
 # MA 02110-1301 USA
 #
 import numpy as np
-from astropy.table import Table
+from astrometry.util.fits import fitsio
 from nnpz.io import OutputHandler
 
 
@@ -32,15 +32,10 @@ class McSliceAggregateBins(OutputHandler.OutputExtensionProviderInterface):
         self.__suffix = suffix
         self.__slice_binning = slice_binning
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        pass
-
-    def getExtensionTables(self):
-        return {
-            'BINS_MC_SLICE_AGGREGATE_{}_{}_{}'.format(
-                self.__target_param.upper(), self.__slice_param.upper(), self.__suffix
-            ): Table(
-                {
-                    self.__slice_param.upper(): self.__slice_binning.ravel(),
-                })
-        }
+    def add_extensions(self, fits: fitsio.FITS):
+        target_col = self.__target_param.upper()
+        slice_col = self.__slice_param.upper()
+        extname = 'BINS_MC_SLICE_AGGREGATE_{}_{}_{}'.format(target_col, slice_col, self.__suffix)
+        val = self.__slice_binning.ravel()
+        fits.create_table_hdu({slice_col: val}, extname=extname)
+        fits[extname].write_column(slice_col, val)
