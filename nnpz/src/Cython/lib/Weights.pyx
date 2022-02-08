@@ -134,7 +134,7 @@ class WeightCalculator:
         for i in range(output_size):
             neighbor_photo = neighbor_photometry[i]
             weights = self.__primary_weight(neighbor_photo, target_photometry[i])
-            if np.all(weights[np.isfinite(weights)] <= self.__min_weight):
+            if not np.any(weights > self.__min_weight):
                 weights = self.__secondary_weight(neighbor_photo, target_photometry[i])
                 output_flags[i] |= NnpzFlag.AlternativeWeightFlag
             weight_array = weights
