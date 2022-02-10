@@ -16,12 +16,12 @@
 import numpy as np
 
 
-def euclidean(ref: np.ndarray, target: np.ndarray, out: np.ndarray) -> np.ndarray:
+def euclidean(ref: np.ndarray, target: np.ndarray, out: np.ndarray = None) -> np.ndarray:
     x = ref[:, :, 0] - target[:, 0]
     return np.sqrt(np.sum(x * x, axis=1, out=out), out=out)
 
 
-def chi2(ref: np.ndarray, target: np.ndarray, out: np.ndarray) -> np.ndarray:
+def chi2(ref: np.ndarray, target: np.ndarray, out: np.ndarray = None) -> np.ndarray:
     nom = ref[:, :, 0] - target[:, 0]
     den = ref[:, :, 1] * ref[:, :, 1] + target[:, 1] * target[:, 1]
     return np.sum(nom * nom / den, axis=1, out=out)

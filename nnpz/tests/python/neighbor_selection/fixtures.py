@@ -14,12 +14,21 @@
 # MA 02110-1301 USA
 #
 
-import pytest
+import astropy.units as u
 import numpy as np
+import pytest
+from nnpz.photometry.colorspace import RestFrame
+from nnpz.photometry.photometric_system import PhotometricSystem
+from nnpz.photometry.photometry import Photometry
 
 
 @pytest.fixture
-def reference_values():
+def system() -> PhotometricSystem:
+    return PhotometricSystem(['x', 'y', 'z'])
+
+
+@pytest.fixture
+def reference_values(system: PhotometricSystem) -> Photometry:
     # Reference values are situated on a cube around the center
     ref = np.zeros((27, 3, 2))
     i = 0
@@ -30,13 +39,16 @@ def reference_values():
                 ref[i, 1, 0] = y
                 ref[i, 2, 0] = z
                 i += 1
-    return ref
+    return Photometry(np.arange(len(ref)), values=ref * u.uJy, system=system, colorspace=RestFrame)
 
 
 @pytest.fixture
-def target_values():
+def target_values(system: PhotometricSystem) -> Photometry:
     """
     Return the coordinates for a point centered on the origin.
     Makes it easier to reason about the distances
     """
-    return np.array([(0., 0.), (0., 0.), (0., 0.)])
+    photo = np.zeros((1, 3, 2))
+    photo[:, :, 1] = 0.00001  # Set the error to something so chi2 works
+    return Photometry(np.array([0]), values=photo * u.uJy,
+                      system=system, colorspace=RestFrame)

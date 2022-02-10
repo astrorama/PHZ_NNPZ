@@ -22,10 +22,8 @@ from typing import List, Optional, Tuple
 
 import astropy.units as u
 import numpy as np
-from nnpz.exceptions import InvalidDimensionsException
 from nnpz.io import OutputHandler
 from nnpz.photometry.projection.source_independent_ebv import SourceIndependentGalacticEBV
-from nnpz.utils.numpy import recarray_flat_view
 
 
 class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):

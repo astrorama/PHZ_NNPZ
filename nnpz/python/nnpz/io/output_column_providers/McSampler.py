@@ -91,8 +91,10 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
             neighbors = neighbor_info[i]
             p = np.repeat(neighbors['NEIGHBOR_WEIGHTS'], repeats=self.__samples_per_neighbor)
             total_weight = p.sum()
+            print(total_weight)
             # If all neighbors have 0 weight, we can not pick any
             if total_weight <= 0 or not np.isfinite(total_weight):
+                selected_indexes[i, :] = -1
                 continue
             # Pick the sample indexes
             p /= total_weight

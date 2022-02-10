@@ -101,7 +101,8 @@ def mainMethod(args):
 
         logger.info('Correcting photometry')
         chunk_ref_photo = workarea['NEIGHBOR_PHOTOMETRY'] * ref_data.unit
-        corrector(chunk_photometry, workarea['NEIGHBOR_INDEX'], chunk_ref_photo)
+        corrector(chunk_photometry, workarea['NEIGHBOR_INDEX'], chunk_ref_photo,
+                  out=chunk_ref_photo)
 
         logger.info('Weighting sources')
         weighter(chunk_photometry, chunk_ref_photo, workarea['NEIGHBOR_SCALING'],

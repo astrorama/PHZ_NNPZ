@@ -14,9 +14,10 @@
 # MA 02110-1301 USA
 #
 import threading
-from typing import List, Tuple
+from typing import Callable, Tuple
 
 import numpy as np
+from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
 from scipy import spatial
@@ -26,13 +27,15 @@ from ..utils.distances import chi2
 
 
 class CombinedSelector:
-    def __init__(self, k: int, batch: int, balanced: bool):
+    def __init__(self, k: int, batch: int, balanced: bool = True,
+                 bruteforce_method: Callable = chi2):
         self.__k = k
         self.__batch = batch
         self.__balanced = balanced
         self.__reference_photo = None
         self.__kdtree = None
         self.__system = None
+        self.__bruteforce_method = bruteforce_method
 
     def fit(self, train: Photometry, system: PhotometricSystem):
         timer = threading.Timer(120, _warn_long_execution)
@@ -46,7 +49,10 @@ class CombinedSelector:
         self.__system = system
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
-        assert target.system == self.__system
+        if self.__kdtree is None:
+            raise UninitializedException()
+        if target.system != self.__system:
+            raise InvalidDimensionsException()
         assert target.unit == self.__reference_photo.unit
 
         _, candidates = self.__kdtree.query(target.values[:, :, 0], k=self.__batch)
@@ -54,8 +60,9 @@ class CombinedSelector:
         distances = np.zeros(self.__batch, dtype=np.float32) * target.unit
         for i, t in enumerate(target):
             candidate_photo = self.__reference_photo[candidates[i]]
-            chi2(candidate_photo.get_fluxes(self.__system.bands, return_error=True), t,
-                 out=distances)
+            self.__bruteforce_method(
+                candidate_photo.get_fluxes(self.__system.bands, return_error=True), t,
+                out=distances)
             final_neighbors = np.argsort(distances)[:self.__k]
             neighbors[i, :] = candidates[i, final_neighbors]
         scales = np.ones_like(neighbors, dtype=np.float32)

@@ -14,114 +14,49 @@
 # MA 02110-1301 USA
 #
 
-from nnpz.exceptions import UninitializedException, InvalidDimensionsException
-from nnpz.neighbor_selection import BruteForceSelector
-from nnpz.neighbor_selection.brute_force_methods import EuclideanDistance, LessThanSelector, SmallestSelector
+from nnpz.exceptions import InvalidDimensionsException, UninitializedException
+from nnpz.neighbor_selection.bruteforce import BruteForceSelector
+from nnpz.utils.distances import euclidean
 
 from .fixtures import *
 
 
 ###############################################################################
 
-def test_BruteForceNotInitialized(target_values):
+def test_BruteForceNotInitialized(target_values: Photometry):
     """
     Querying before initializing must throw
     """
-    bf_selector = BruteForceSelector(EuclideanDistance(), LessThanSelector(1.))
+    bf_selector = BruteForceSelector(k=4, method=euclidean)
     with pytest.raises(UninitializedException):
-        bf_selector.findNeighbors(target_values, None)
+        bf_selector.query(target_values)
 
 
 ###############################################################################
 
-def test_BruteForceInvalidDimensions(reference_values, target_values):
+def test_BruteForceInvalidDimensions(reference_values: Photometry, target_values: Photometry):
     """
     Querying with an invalid dimensionality must throw
     """
-    bf_selector = BruteForceSelector(EuclideanDistance(), LessThanSelector(1.))
-    bf_selector.initialize(reference_values)
+    bf_selector = BruteForceSelector(k=4, method=euclidean)
+    bf_selector.fit(reference_values, reference_values.system)
     with pytest.raises(InvalidDimensionsException):
-        bf_selector.findNeighbors(target_values[:, 1], None)
+        bf_selector.query(target_values.subsystem(['x', 'y']))
 
 
 ###############################################################################
 
-def test_BruteForceLessThan(reference_values, target_values):
-    """
-    Query neighbors closer than 1.01 (because is strict less than!)
-    Points centered on the faces and the center fall there
-
-    See Also: 3d_neighbors.png
-    """
-    bf_selector = BruteForceSelector(EuclideanDistance(), LessThanSelector(1.01))
-    bf_selector.initialize(reference_values)
-
-    idx, distances, scales = bf_selector.findNeighbors(target_values, None)
-    # Only the center point and those that are within a sphere of radius 1.01
-    assert (len(idx) == len(distances))
-    assert (len(idx) == 7)
-    assert (np.all(distances <= 1.))
-    assert (np.all(scales == 1.))
-
-
-###############################################################################
-
-def test_BruteForceSmallest(reference_values, target_values):
+def test_BruteForceSmallest(reference_values: Photometry, target_values: Photometry):
     """
     Query only for the closest neighbor, which is the center
     """
-    bf_selector = BruteForceSelector(EuclideanDistance(), SmallestSelector(1))
-    bf_selector.initialize(reference_values)
+    bf_selector = BruteForceSelector(k=1, method=euclidean)
+    bf_selector.fit(reference_values, reference_values.system)
 
-    idx, distances, scales = bf_selector.findNeighbors(target_values, None)
+    idx, scales = bf_selector.query(target_values)
     # Only the center is a hit
-    assert (len(idx) == len(distances))
+    distances = euclidean(reference_values.values[idx[0]], target_values.values[0])
+    assert (len(idx) == len(scales))
     assert (len(idx) == 1)
-    assert (np.all(distances <= 0.1))
-    assert (np.all(scales == 1.))
-
-
-###############################################################################
-
-def test_BruteForceLessThanNan(reference_values, target_values):
-    """
-    Query for neighbors closer than 1.01, but this time the target has a NaN, so
-    effectively we are flattening the cube along that axis, into a square.
-    Some points that were away due to the Z dimension, become a hit.
-
-    See Also: 2d_neighbors.png
-        Note that in each visible point there are 3 with the same X,Y coordinate (3 different Z)
-    """
-    bf_selector = BruteForceSelector(EuclideanDistance(), LessThanSelector(1.01))
-    bf_selector.initialize(reference_values)
-
-    target_values[2, :] = np.nan
-    idx, distances, scales = bf_selector.findNeighbors(target_values, None)
-    # Only the center point and those that are within a circle of radius 1.01
-    assert (len(idx) == len(distances))
-    assert (len(idx) == 15)
-    assert (np.all(distances <= 1.))
-    assert (np.all(scales == 1.))
-
-
-###############################################################################
-
-def test_BruteForceSmallest(reference_values, target_values):
-    """
-    Query for neighbors closer than 1.01, but this time the target has a NaN, so
-    effectively we are flattening the cube along that axis, into a square.
-    Some points that were away due to the Z dimension, become a hit.
-
-    See Also: 2d_neighbors.png
-        Note that in each visible point there are 3 with the same X,Y coordinate (3 different Z)
-    """
-    bf_selector = BruteForceSelector(EuclideanDistance(), SmallestSelector(1))
-    bf_selector.initialize(reference_values)
-
-    target_values[2, :] = np.nan
-    idx, distances, scales = bf_selector.findNeighbors(target_values, None)
-    # Only the center is a hit
-    assert (len(idx) == len(distances))
-    assert (len(idx) == 1)
-    assert (np.all(distances <= 0.1))
+    assert (np.all(distances.value <= 0.1))
     assert (np.all(scales == 1.))

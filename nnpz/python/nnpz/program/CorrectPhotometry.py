@@ -87,7 +87,7 @@ def mainMethod(args):
         chunk_output = output_hdu[chunk]
         chunk_ref_photo = chunk_output['NEIGHBOR_PHOTOMETRY'] * photo_unit
 
-        corrector(chunk_input, chunk_output['NEIGHBOR_INDEX'], chunk_ref_photo)
+        corrector(chunk_input, chunk_output['NEIGHBOR_INDEX'], chunk_ref_photo, out=chunk_ref_photo)
 
         output_hdu.write_column('NEIGHBOR_PHOTOMETRY', chunk_ref_photo, firstrow=chunk.start)
 

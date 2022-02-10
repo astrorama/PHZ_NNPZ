@@ -20,16 +20,17 @@ from nnpz.io.output_column_providers.McSliceAggregate import McSliceAggregate
 from .fixtures import *
 
 
-def test_slice(sampler: McSampler, mock_provider: MockProvider,
-               mock_output_handler: MockOutputHandler):
+def test_slice(sampler: McSampler, mock_output_handler: MockOutputHandler,
+               contributions: np.ndarray, mock_provider: MockProvider):
     slicer = McSliceAggregate(
         sampler, target_param='P1', slice_param='I1', suffix='AVG',
         aggregator=np.mean, binning=np.arange(0, 6, dtype=np.float32) - 0.5
     )
-    mock_output_handler.addColumnProvider(slicer)
-    mock_output_handler.initialize(nrows=2)
-    slicer.fillColumns()
-    columns = mock_output_handler.getDataForProvider(slicer)
+    mock_output_handler.add_column_provider(sampler)
+    mock_output_handler.add_column_provider(slicer)
+    mock_output_handler.initialize(nrows=len(contributions))
+    mock_output_handler.write_output_for(np.arange(len(contributions)), contributions)
+    columns = mock_output_handler.get_data_for_provider(slicer)
 
     ref0 = mock_provider.getData(0)
     ref1 = mock_provider.getData(1)

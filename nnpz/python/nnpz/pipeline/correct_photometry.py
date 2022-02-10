@@ -29,6 +29,7 @@
 #  if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301 USA
 #
+from typing import Dict, Union
 
 import astropy.units as u
 # noinspection PyUnresolvedReferences
@@ -48,16 +49,16 @@ logger = Logging.getLogger(__name__)
 
 
 class CorrectPhotometry:
-    def __init__(self, conf_manager: ConfigManager):
-        self.__ref_system = conf_manager.getObject('reference_system')
-        self.__ebv_corr_coefs = conf_manager.getObject('reference_ebv_correction')
-        self.__filter_corr_coefs = conf_manager.getObject('reference_filter_variation_correction')
+    def __init__(self, conf_manager: Union[ConfigManager, Dict]):
+        self.__ref_system = conf_manager.get('reference_system')
+        self.__ebv_corr_coefs = conf_manager.get('reference_ebv_correction')
+        self.__filter_corr_coefs = conf_manager.get('reference_filter_variation_correction')
 
     @u.quantity_input
     def __call__(self, target: Photometry, neighbor_idx: np.ndarray, neighbor_photo: u.uJy,
                  out: u.uJy = None):
         if out is None:
-            out = neighbor_photo
+            out = neighbor_photo.copy()
 
         assert out.shape == neighbor_photo.shape
         assert out.shape[0] == len(target)
@@ -86,3 +87,4 @@ class CorrectPhotometry:
                                          corr_coef=chunk_filter_corr_coefs[:, :, filter_idx],
                                          shift=target.colorspace.shifts[filter_name],
                                          out=nn_filter_out)
+        return out

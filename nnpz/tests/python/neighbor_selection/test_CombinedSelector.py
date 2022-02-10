@@ -15,7 +15,7 @@
 #
 
 from nnpz.exceptions import InvalidDimensionsException, UninitializedException
-from nnpz.neighbor_selection.kdtree import KDTreeSelector
+from nnpz.neighbor_selection.combined import CombinedSelector
 from nnpz.utils.distances import euclidean
 
 from .fixtures import *
@@ -23,58 +23,56 @@ from .fixtures import *
 
 ###############################################################################
 
-def test_KDTreeNotInitialized(target_values: Photometry):
+def test_CombinedNotInitialized(target_values: Photometry):
     """
     Querying before initializing must throw
     """
-    kd_selector = KDTreeSelector(k=2)
+    erbf_selector = CombinedSelector(k=3, batch=7)
     with pytest.raises(UninitializedException):
-        kd_selector.query(target_values)
+        erbf_selector.query(target_values)
 
 
 ###############################################################################
 
-def test_BruteForceInvalidDimensions(reference_values: Photometry, target_values: Photometry):
+def test_CombinedInvalidDimensions(reference_values: Photometry, target_values: Photometry):
     """
     Querying with an invalid dimensionality must throw
     """
-    kd_selector = KDTreeSelector(k=5)
-    kd_selector.fit(reference_values, reference_values.system)
+    erbf_selector = CombinedSelector(k=3, batch=9)
+    erbf_selector.fit(reference_values, reference_values.system)
     with pytest.raises(InvalidDimensionsException):
-        kd_selector.query(target_values.subsystem(['x', 'y']))
+        erbf_selector.query(target_values.subsystem(['x', 'y']))
 
 
 ###############################################################################
 
-def test_KDTree(reference_values: Photometry, target_values: Photometry):
+def test_Combined(reference_values: Photometry, target_values: Photometry):
     """
     Query for the 7 nearest neighbors, which are those falling in the center of each face, plus the
     middle one.
-
-    See Also: 3d_neighbors.png
     """
-    kd_selector = KDTreeSelector(k=7)
-    kd_selector.fit(reference_values, reference_values.system)
+    erbf_selector = CombinedSelector(k=7, batch=18, bruteforce_method=euclidean)
+    erbf_selector.fit(reference_values, reference_values.system)
 
-    idx, scales = kd_selector.query(target_values)
-    distances = euclidean(reference_values.values[idx[0]], target_values.values[0]).value
+    idx, scales = erbf_selector.query(target_values)
+    distances = euclidean(reference_values.values[idx[0]], target_values.values[0])
     assert (len(idx) == len(scales))
     assert (len(idx[0]) == 7)
-    assert (np.all(distances <= 1.01))
+    assert (np.all(distances.value <= 1.01))
     assert (np.all(scales == 1.))
 
 
 ###############################################################################
 
-def test_KDTree2(reference_values, target_values):
+def test_Combined2(reference_values, target_values):
     """
     Query for the 10 nearest neighbors, which are those falling in the center of each face, plus the
     middle one, and some vertex. In this case, we check that not all distances are the same.
     """
-    kd_selector = KDTreeSelector(k=10)
-    kd_selector.fit(reference_values, reference_values.system)
+    erbf_selector = CombinedSelector(k=10, batch=18, bruteforce_method=euclidean)
+    erbf_selector.fit(reference_values, reference_values.system)
 
-    idx, scales = kd_selector.query(target_values)
+    idx, scales = erbf_selector.query(target_values)
     distances = euclidean(reference_values.values[idx[0]], target_values.values[0]).value
     assert (len(idx) == len(scales))
     assert (len(idx[0]) == 10)

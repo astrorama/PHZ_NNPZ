@@ -19,17 +19,15 @@ Created on: 13/12/17
 Author: Nikolaos Apostolakos
 """
 
-
-import pytest
-
 try:
     from mock import Mock
 except ModuleNotFoundError:
     from unittest.mock import Mock
 import numpy as np
 
-from nnpz.photometry import PhotometryPrePostProcessorInterface
-from nnpz.photometry import PhotometryCalculator
+import pytest
+from nnpz.photometry.calculator import PhotometryPrePostProcessorInterface
+from nnpz.photometry.calculator.photometry_calculator import PhotometryCalculator
 
 
 ###############################################################################

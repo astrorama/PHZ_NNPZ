@@ -19,7 +19,6 @@ Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
 
-
 import abc
 
 from ElementsKernel import Configuration, Logging
@@ -147,6 +146,16 @@ class ConfigManager(object):
         return list(self.__objects.keys())
 
     def getObject(self, name):
+        """
+        Args:
+            name: str
+                Configuration key
+        Returns: object
+            Configuration value
+        """
+        return self.__objects[name]
+
+    def get(self, name):
         """
         Args:
             name: str

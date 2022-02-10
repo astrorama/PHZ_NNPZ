@@ -20,6 +20,7 @@ Author: Nikolaos Apostolakos
 """
 
 import os
+from typing import Dict
 
 import numpy as np
 import pytest
@@ -31,6 +32,7 @@ from nnpz.utils.fits import tableToHdu
 from ..fixtures.util_fixtures import temp_dir_fixture
 # noinspection PyUnresolvedReferences
 from ..photometry.fixtures import filters_fixture
+
 
 ##############################################################################
 
@@ -211,9 +213,7 @@ def reference_sample_dir_fixture(temp_dir_fixture,
             index_dict['mc'][obj_id] = (file_index, pos)
 
     # All known object IDS
-    all_ids = set()
-    for d in index_dict.values():
-        all_ids.update(d.keys())
+    all_ids = [1, 3, 12, 7, 34, 56]
 
     # Allocate array with the full index
     fields = ['id']
@@ -251,17 +251,22 @@ def photometry_data_fixture(photometry_ids_fixure, filters_fixture):
     error. Only for the second filter the errors are zeros, indicating a missing
     error column.
     """
-    data = np.random.rand(len(photometry_ids_fixure), len(filters_fixture), 2).astype(np.float32)
-    data[:, 1, 1] = 0
+    data = np.zeros(len(photometry_ids_fixure),
+                    dtype=[('Y', np.float32, 2), ('g', np.float32, 2), ('vis', np.float32, 2)])
+    data['Y'][:, 0] = np.random.rand(len(photometry_ids_fixure))
+    data['g'][:, 0] = np.random.rand(len(photometry_ids_fixure))
+    data['vis'][:, 0] = np.random.rand(len(photometry_ids_fixure))
     return data
 
 
 ##############################################################################
 
-@pytest.fixture()
-def photometry_file_fixture(temp_dir_fixture, photometry_ids_fixure, filters_fixture,
-                            photometry_data_fixture):
-    """Returns the path of a FITS file which contains the photometry.
+@pytest.fixture
+def photometry_file_fixture(temp_dir_fixture: str, photometry_ids_fixure: np.ndarray,
+                            filters_fixture: Dict[str, np.ndarray],
+                            photometry_data_fixture: np.ndarray):
+    """
+    Returns the path of a FITS file which contains the photometry.
 
     All filters contain errors except of the second one. The transmission of the
     third filter is not stored in the file. The type of the photometry is set to
@@ -276,16 +281,14 @@ def photometry_file_fixture(temp_dir_fixture, photometry_ids_fixure, filters_fix
 
     t['ID'] = Column(np.asarray(photometry_ids_fixure, dtype=np.int64))
 
-    for i, filter in enumerate(filters_fixture):
-        name = filter[0]
-        t[name] = Column(photometry_data_fixture[:, i, 0])
-        if not np.all(photometry_data_fixture[:, i, 1] == 0):
-            t[name + '_ERR'] = Column(photometry_data_fixture[:, i, 1])
+    for filter_name in filters_fixture.keys():
+        t[filter_name] = Column(photometry_data_fixture[filter_name][:, 0])
+        t[filter_name + '_ERR'] = Column(photometry_data_fixture[filter_name][:, 1])
 
     hdus.append(tableToHdu(t))
 
-    for name, data in filters_fixture:
-        if name == filters_fixture[3][0]:
+    for name, data in filters_fixture.items():
+        if name == 'vis':
             continue
         t = Table()
         t.meta['EXTNAME'] = name

@@ -16,28 +16,33 @@
 from typing import Tuple
 
 import numpy as np
+from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
 from nnpz.utils.distances import chi2
 
 
 class BruteForceSelector:
-    def __init__(self, k: int):
+    def __init__(self, k: int, method=chi2):
         self.__k = k
         self.__reference = None
+        self.__method = method
 
     def fit(self, train: Photometry, system: PhotometricSystem):
         self.__reference = train.subsystem(system.bands)
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
+        if self.__reference is None:
+            raise UninitializedException()
+        if target.system != self.__reference.system:
+            raise InvalidDimensionsException()
         assert target.unit == self.__reference.unit
-        assert target.system == self.__reference.system
 
         neighbors = np.zeros((len(target), self.__k), dtype=int)
         scales = np.ones_like(neighbors, dtype=np.float32)
 
         distances = np.zeros(len(self.__reference), dtype=np.float32) * target.unit
         for i, t in enumerate(target):
-            chi2(self.__reference.values, t, out=distances)
+            self.__method(self.__reference.values, t, out=distances)
             neighbors[i, :] = np.argpartition(distances, kth=self.__k)[:self.__k]
         return neighbors, scales

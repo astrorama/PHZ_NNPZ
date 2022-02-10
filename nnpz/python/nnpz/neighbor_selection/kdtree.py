@@ -14,14 +14,14 @@
 # MA 02110-1301 USA
 #
 import threading
-from typing import List, Tuple
+from typing import Tuple
 
 import numpy as np
 from ElementsKernel import Logging
-from scipy import spatial
-
+from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
+from scipy import spatial
 
 logger = Logging.getLogger('KDTreeSelector')
 
@@ -34,7 +34,7 @@ def _warn_long_execution():
 
 
 class KDTreeSelector:
-    def __init__(self, k: int, balanced: bool):
+    def __init__(self, k: int, balanced: bool = True):
         self.__k = k
         self.__balanced = balanced
         self.__reference_photo = None
@@ -53,7 +53,10 @@ class KDTreeSelector:
         self.__system = system
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
-        assert target.system == self.__system
+        if self.__kdtree is None:
+            raise UninitializedException()
+        if target.system != self.__system:
+            raise InvalidDimensionsException()
         _, neighbors = self.__kdtree.query(target.values[:, :, 0], k=self.__k)
         scales = np.ones_like(neighbors, dtype=np.float32)
         return neighbors, scales

@@ -13,9 +13,9 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-import numpy as np
-from nnpz.photometry import PhotometryPrePostProcessorInterface
-from nnpz.photometry.PhotometryWithCorrectionsCalculator import PhotometryWithCorrectionsCalculator
+from nnpz.photometry.calculator import PhotometryPrePostProcessorInterface
+from nnpz.photometry.calculator.photometry_with_corrections_calculator import \
+    PhotometryWithCorrectionsCalculator
 
 from .fixtures import *
 
@@ -33,10 +33,12 @@ class MockPrePostProcessor(PhotometryPrePostProcessorInterface):
 
 ###############################################################################
 
-
 @pytest.fixture
-def filter_trans_map(filters_fixture):
-    return dict(filters_fixture)
+def filter_trans_map():
+    return {'First': np.asarray([(1, 0.1), (2, 0.2), (3, 0.4)], dtype=np.float32),
+            'Second': np.asarray([(4, 0.4), (5, 0.5), (6, 0.6)], dtype=np.float32),
+            'Third': np.asarray([(7, 0.7), (8, 0.8), (9, 0.9)], dtype=np.float32),
+            'Fourth': np.asarray([(1, 0.11), (2, 0.22), (3, 0.44)], dtype=np.float32)}
 
 
 ###############################################################################
@@ -61,7 +63,9 @@ def reddening_fixture():
 
 ###############################################################################
 
-def test_photometryWithCorrectionsCalculator(filter_trans_map, sed_fixture, reddening_fixture):
+def test_photometryWithCorrectionsCalculator(filter_trans_map: Dict[str, np.ndarray],
+                                             sed_fixture: np.ndarray,
+                                             reddening_fixture: np.ndarray):
     shifts = np.array([-1, 1, 2, 3, 4, 5], dtype=np.float32)
     calculator = PhotometryWithCorrectionsCalculator(filter_trans_map,
                                                      MockPrePostProcessor(),

@@ -13,19 +13,22 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+import astropy.units as u
 import numpy as np
 import pytest
-from astropy.table import Column, Table
-from nnpz.framework.NeighborSet import NeighborSet
 from nnpz.io.output_column_providers.UniformPhotometry import UniformPhotometry
+from nnpz.photometry.colorspace import RestFrame
+from nnpz.photometry.photometric_system import PhotometricSystem
+from nnpz.photometry.photometry import Photometry
 
 # noinspection PyUnresolvedReferences
-from .fixtures import mock_output_handler
+from .fixtures import MockOutputHandler, mock_output_handler
 
 
 class DummyPhotometry(object):
     def __init__(self):
-        self._data = np.zeros((2, 2), dtype=[('A', np.float32), ('B', np.float32), ('C', np.float32)])
+        self._data = np.zeros((2, 2),
+                              dtype=[('A', np.float32), ('B', np.float32), ('C', np.float32)])
         self._data['A'][:, 0] = [0.5626045, 0.94242]
         self._data['B'][:, 0] = [1.7679665, 1.8930919]
         self._data['C'][:, 0] = [3.5187345, 2.606762]
@@ -39,31 +42,34 @@ class DummyPhotometry(object):
 
 @pytest.fixture
 def reference_photometry():
-    return DummyPhotometry()
+    return Photometry(
+        ids=np.arange(2), values=np.array(
+            [((0.5626045, 0.), (1.7679665, 0.), (3.5187345, 0.)),
+             ((0.94242, 0.), (1.8930919, 0.), (2.606762, 0.))]) * u.uJy,
+        system=PhotometricSystem(['A', 'B', 'C']), colorspace=RestFrame)
 
 
 @pytest.fixture()
 def reference_matched_photometry(reference_photometry):
-    matched = reference_photometry._data.copy()
-    matched['A'][:, 0] *= np.array([1., 2.])
-    matched['B'][:, 0] *= np.array([1.5, 1.7])
-    matched['C'][:, 0] *= np.array([1.2, 1.5])
+    matched = np.zeros((1, 2, 3, 2), dtype=np.float32)
+    matched[0, :, 0, 0] = reference_photometry.values[:, 0, 0] * np.array([1., 2.])
+    matched[0, :, 1, 0] = reference_photometry.values[:, 1, 0] * np.array([1.5, 1.7])
+    matched[0, :, 2, 0] = reference_photometry.values[:, 2, 0] * np.array([1.2, 1.5])
     return matched
 
 
 @pytest.fixture
-def catalog_photometry():
-    return Table([
-        Column([10], name='FLUX_A'), Column([0], name='FLUX_A_ERR'),
-        Column([10], name='FLUX_B'), Column([0], name='FLUX_B_ERR'),
-        Column([10], name='FLUX_C'), Column([0], name='FLUX_C_ERR'),
-    ])
+def target_photometry():
+    return Photometry(
+        ids=np.array([0]), values=np.array(
+            [((10., 0.), (10., 0.), (10., 0.))]) * u.uJy,
+        system=PhotometricSystem(['A', 'B', 'C']), colorspace=RestFrame)
 
 
-def test_uniform_photometry(reference_photometry, reference_matched_photometry, catalog_photometry,
-                            mock_output_handler):
+def test_uniform_photometry(reference_photometry, target_photometry, reference_matched_photometry,
+                            mock_output_handler: MockOutputHandler):
     uniform = UniformPhotometry(
-        catalog_photometry, reference_photometry, {
+        target_photometry, reference_photometry, {
             ('MY_A_A', 'MY_A_A_ERR'): ('A', 'A', 'FLUX_A', 'FLUX_A_ERR'),
             ('MY_B_B', 'MY_B_B_ERR'): ('B', 'B', 'FLUX_B', 'FLUX_B_ERR'),
             ('MY_C_C', 'MY_C_C_ERR'): ('C', 'C', 'FLUX_C', 'FLUX_C_ERR'),
@@ -71,18 +77,19 @@ def test_uniform_photometry(reference_photometry, reference_matched_photometry, 
         }
     )
     mock_output_handler.add_column_provider(uniform)
-    mock_output_handler.initialize(len(catalog_photometry))
+    mock_output_handler.initialize(len(target_photometry))
 
-    ns = NeighborSet()
-    [ns.append(0) for _ in range(len(reference_matched_photometry))]
+    neighbor_info = np.zeros(1, dtype=[('NEIGHBOR_INDEX', int, 2),
+                                       ('NEIGHBOR_WEIGHTS', np.float32, 2),
+                                       ('NEIGHBOR_PHOTOMETRY', np.float32, (2, 3, 2))])
+    assert neighbor_info['NEIGHBOR_PHOTOMETRY'].shape == reference_matched_photometry.shape
 
-    for i, (t, p) in enumerate(zip(ns, reference_matched_photometry)):
-        t.weight = 1.
-        t.matched_photo = p
-        uniform.addContribution(i, t, None)
+    neighbor_info['NEIGHBOR_INDEX'][0] = [0, 1]
+    neighbor_info['NEIGHBOR_WEIGHTS'] = 1.
+    neighbor_info['NEIGHBOR_PHOTOMETRY'][0] = reference_matched_photometry
+    mock_output_handler.write_output_for([0], neighbor_info)
 
-    uniform.fillColumns()
-    columns = mock_output_handler.getDataForProvider(uniform)
+    columns = mock_output_handler.get_data_for_provider(uniform)
     assert len(columns.dtype.fields) == 8
 
     assert 'MY_A_A' in columns.dtype.fields
@@ -94,12 +101,16 @@ def test_uniform_photometry(reference_photometry, reference_matched_photometry, 
     assert 'MY_C_A' in columns.dtype.fields
     assert 'MY_C_A_ERR' in columns.dtype.fields
 
-    assert np.isclose(columns['MY_A_A'][0], catalog_photometry['FLUX_A'][0] * 0.75)
-    assert np.isclose(columns['MY_B_B'][0], catalog_photometry['FLUX_B'][0] * 0.62745)
-    assert np.isclose(columns['MY_C_C'][0], catalog_photometry['FLUX_C'][0] * 0.75)
+    target_a = target_photometry.get_fluxes('A')[0].value
+    target_b = target_photometry.get_fluxes('B')[0].value
+    target_c = target_photometry.get_fluxes('C')[0].value
+
+    assert np.isclose(columns['MY_A_A'][0], target_a * 0.75)
+    assert np.isclose(columns['MY_B_B'][0], target_b * 0.62745)
+    assert np.isclose(columns['MY_C_C'][0], target_c * 0.75)
     # In this case the output uniform photometry is C*, so the ratio is computed
     # as C* / A
     #   First  reference: 3.5187345 / (1*0.5626045) = 6.254366077768664
     #   Second reference: 2.6067620 / (2*0.9424200) = 1.3830150039260625
     #   So the mean ratio is 3.818690540847363
-    assert np.isclose(columns['MY_C_A'][0], catalog_photometry['FLUX_A'][0] * 3.818690540847363)
+    assert np.isclose(columns['MY_C_A'][0], target_a * 3.818690540847363)

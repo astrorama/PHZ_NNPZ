@@ -339,9 +339,9 @@ def test_getPdzData_withData(reference_sample_dir_fixture, pdz_list_fixture, red
     for obj in pdz_list_fixture.values():
         for obj_id, expected in obj:
             pdz = sample.getPdzData(obj_id)
-            assert pdz.shape == (len(expected), 2)
-            assert np.array_equal(pdz[:, 0], redshift_bins_fixture)
-            assert np.array_equal(pdz[:, 1], expected)
+            assert pdz.shape == (len(expected),)
+            assert np.array_equal(pdz, expected)
+
 
 ###############################################################################
 
@@ -400,7 +400,7 @@ def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_l
     pdz_list = {}
     for key in pdz_list_fixture:
         for obj_id, pdz in pdz_list_fixture[key]:
-            pdz_list[obj_id] = np.stack((redshift_bins_fixture, pdz), axis=-1)
+            pdz_list[obj_id] = pdz
 
     # When
     provider = ReferenceSample(reference_sample_dir_fixture)
@@ -412,6 +412,7 @@ def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_l
             assert pdz_list[obj.id] is None
         else:
             assert np.array_equal(obj.pdz, pdz_list[obj.id])
+
 
 ###############################################################################
 

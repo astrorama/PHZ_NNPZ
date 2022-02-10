@@ -1,14 +1,16 @@
+from typing import List, Union
+
 import numpy as np
 import pytest
-from nnpz.framework.NeighborSet import NeighborSet
+from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
 
 
 class MockProvider:
+    DTYPE = np.dtype([('P1', np.float32), ('P2', np.float32), ('I1', np.int32)])
 
     def __init__(self):
-        self.__data = np.zeros((3, 50),
-                               dtype=[('P1', np.float32), ('P2', np.float32), ('I1', np.int32)])
+        self.__data = np.zeros((3, 50), dtype=self.DTYPE)
         for i in range(len(self.__data)):
             random = np.random.multivariate_normal(
                 (i, i * 2), cov=[[0.0, 0.], [0., 0.0]], size=50
@@ -17,17 +19,28 @@ class MockProvider:
             self.__data['P2'][i] = random[:, 1]
             self.__data['I1'][i] = i
 
-    def getData(self, obj_id):
+    def getDataForIndex(self, obj_idx: np.ndarray):
+        data = self.__data[obj_idx[:, 0], obj_idx[:, 1]]
+        data[obj_idx[:, 0] < 0] = 0
+        return data
+
+    def getData(self, obj_id: int):
         return self.__data[obj_id]
+
+    def getDtype(self) -> np.dtype:
+        return self.DTYPE
+
+    def getNSamples(self) -> int:
+        return self.__data.shape[1]
 
 
 class MockOutputHandler:
     def __init__(self):
-        self.__providers = []
+        self.__providers: List[OutputHandler.OutputColumnProviderInterface] = []
         self.__provider_columns = {}
         self.__output = None
 
-    def addColumnProvider(self, provider):
+    def add_column_provider(self, provider):
         self.__providers.append(provider)
 
     def initialize(self, nrows: int):
@@ -35,19 +48,21 @@ class MockOutputHandler:
         for prov in self.__providers:
             self.__provider_columns[prov] = []
             prov_def = prov.get_column_definition()
-            dtype.extend(prov_def)
-            for col in prov_def:
-                self.__provider_columns[prov].append(col[0])
+            for d in prov_def:
+                if len(d) == 4:
+                    n, t, _, s = d
+                    dtype.append((n, t, s))
+                else:
+                    n, t, _ = d
+                    dtype.append((n, t))
+                self.__provider_columns[prov].append(n)
         self.__output = np.zeros(nrows, dtype=dtype)
 
-        for prov in self.__providers:
-            prov.setWriteableArea(self.__output)
-
-    def addContribution(self, reference_sample_i, neighbor, flags):
+    def write_output_for(self, indexes: Union[np.ndarray, slice], neighbor_info: np.ndarray):
         for p in self.__providers:
-            p.add_contribution(reference_sample_i, neighbor, flags)
+            p.generate_output(indexes, neighbor_info, output=self.__output)
 
-    def getDataForProvider(self, provider):
+    def get_data_for_provider(self, provider):
         return self.__output[self.__provider_columns[provider]]
 
 
@@ -68,23 +83,12 @@ def reference_ids():
 
 @pytest.fixture
 def contributions():
-    NS = NeighborSet()
-    return [
-        (0, NS.append(0, weight=0.10, position=0)),
-        (0, NS.append(1, weight=0.30, position=0)),
-        (1, NS.append(0, weight=0.60, position=1)),
-        (1, NS.append(1, weight=0.05, position=1)),
-        (2, NS.append(0, weight=0.00, position=2)),
-        (2, NS.append(1, weight=0.80, position=2)),
-    ]
+    return np.array(
+        [(0, [0, 1, 2], [0.10, 0.60, 0.00]), (1, [0, 1, 2], [0.30, 0.05, 0.80])],
+        dtype=[('ID', int), ('NEIGHBOR_INDEX', np.float32, 3), ('NEIGHBOR_WEIGHTS', np.float32, 3)])
 
 
 @pytest.fixture
-def sampler(mock_provider, reference_ids, contributions):
-    sampler = McSampler(
-        2, n_neighbors=3, take_n=200, mc_provider=mock_provider,
-        ref_ids=reference_ids
-    )
-    for ref_i, contrib in contributions:
-        sampler.addContribution(ref_i, contrib, None)
+def sampler(mock_provider, reference_ids):
+    sampler = McSampler(take_n=200, mc_provider=mock_provider, ref_ids=reference_ids)
     return sampler

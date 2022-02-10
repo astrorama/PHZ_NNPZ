@@ -107,9 +107,11 @@ class SourceIndependentGalacticEBV:
 
     def _add_reddening(self, f_x: np.ndarray, filter_name: str, ebv: np.ndarray):
         f_x /= 10 ** (+self._k_x[filter_name] * ebv / 2.5)
+        return f_x
 
     def _remove_reddening(self, f_x_obs: np.ndarray, filter_name: str, ebv: np.ndarray):
         f_x_obs *= 10 ** (+self._k_x[filter_name] * ebv / 2.5)
+        return f_x_obs
 
     @u.quantity_input
     def redden(self, photometry: u.uJy, ebv: np.ndarray, out: u.uJy = None):

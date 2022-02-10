@@ -25,7 +25,7 @@ from typing import List
 import astropy.io.fits as fits
 import numpy as np
 from astropy.table import Table, join
-from nnpz.exceptions import FileNotFoundException, MissingDataException, UnknownNameException, \
+from nnpz.exceptions import MissingDataException, UnknownNameException, \
     WrongFormatException
 
 
@@ -39,7 +39,7 @@ class PhotometryProvider(object):
         """Checks that the file exists and that it has the correct HDUs"""
 
         if not os.path.exists(filename):
-            raise FileNotFoundException('File {} does not exist'.format(filename))
+            raise FileNotFoundError('File {} does not exist'.format(filename))
 
         try:
             hdus = fits.open(filename)
@@ -176,7 +176,7 @@ class PhotometryProvider(object):
         """Returns the IDs of the objects there is photometry in the file"""
         return self.__ids
 
-    def getData(self, filter_list: List[str]):
+    def getData(self, filter_list: List[str] = None):
         """Returns an array with the photometry data for the given bands.
 
         Args:
@@ -203,7 +203,7 @@ class PhotometryProvider(object):
 
         # Affected index
         try:
-            if len(filter_list) == 0:
+            if filter_list is None or len(filter_list) == 0:
                 # numpy will avoid a copy if the index is a slice, while it will *always*
                 # copy if it is a list
                 filter_idx = slice(len(self.__filter_list))
@@ -216,12 +216,12 @@ class PhotometryProvider(object):
         # Return a view rather than a copy
         return self.__phot_data[:, filter_idx, :]
 
-    def getEBVCorrectionFactors(self, filter_list: List[str]):
+    def getEBVCorrectionFactors(self, filter_list: List[str] = None):
         """
         Get the EBV correction factors
         """
         try:
-            if len(filter_list) == 0:
+            if filter_list is None or len(filter_list) == 0:
                 # numpy will avoid a copy if the index is a slice, while it will *always*
                 # copy if it is a list
                 filter_idx = slice(len(self.__filter_list))
@@ -234,12 +234,12 @@ class PhotometryProvider(object):
             # Return a view rather than a copy
         return self.__ebv_corr_data[:, filter_idx]
 
-    def getShiftCorrectionFactors(self, filter_list: List[str]):
+    def getShiftCorrectionFactors(self, filter_list: List[str] = None):
         """
         Get the filter variation correction factors
         """
         try:
-            if len(filter_list) == 0:
+            if filter_list is None or len(filter_list) == 0:
                 # numpy will avoid a copy if the index is a slice, while it will *always*
                 # copy if it is a list
                 filter_idx = slice(len(self.__filter_list))
