@@ -105,8 +105,8 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
         Compute the photometry (for $\\Delta\\lambda  = 0$ and ${EBV} = 0$) and correction factors
         for the given set of SEDs
         Args:
-            sed: The SED to compute the photometry for. It is a two
-                dimensional numpy array of single precision floats. The first
+            sed: The SED to compute the photometry for. It is a two-dimensional
+                numpy array of single precision floats. The first
                 dimension has size same as the number of the knots and the
                 second dimension has always size equal to two, with the first
                 element representing the wavelength expressed in Angstrom and
@@ -131,7 +131,10 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
         for filter_name in photo.dtype.names:
             rfx = reddened_photo[filter_name][0]
             fx = photo[filter_name][0]
-            ebv_corr[filter_name] = -2.5 * np.log10(rfx / fx) / self._ebv
+            if rfx == 0:
+                ebv_corr[filter_name] = np.finfo(np.float32).max
+            else:
+                ebv_corr[filter_name] = -2.5 * np.log10(rfx / fx) / self._ebv
 
         # Apply Stephane Paltani's formula for the filter shift correction
         for filter_name in photo.dtype.names:
