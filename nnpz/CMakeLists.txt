@@ -31,8 +31,9 @@ elements_depends_on_subdirs(ElementsKernel)
 #                     PUBLIC_HEADERS ElementsExamples)
 #===============================================================================
 find_package(Cython REQUIRED)
-find_package(PythonLibs ${PYTHON_EXPLICIT_VERSION} REQUIRED)
+find_package(NumPy)
 elements_add_cython_module(src/Cython/lib/Weights.pyx
+        INCLUDE_DIRS NumPy
         NO_PUBLIC_HEADERS)
 
 #===============================================================================
