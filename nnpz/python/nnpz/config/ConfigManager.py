@@ -20,6 +20,7 @@ Author: Nikolaos Apostolakos
 """
 
 import abc
+from ast import literal_eval
 
 from ElementsKernel import Configuration, Logging
 
@@ -97,7 +98,7 @@ class ConfigManager(object):
             config_file = Configuration.getConfigurationPath('nnpz.conf', True)
         args = {}
         # pylint: disable=exec-used
-        exec(open(config_file).read(), args)
+        exec(open(config_file).read(), args)  # nosec
 
         self._parseExtraArgs(args, extra_arguments)
 
@@ -130,9 +131,8 @@ class ConfigManager(object):
                 value = extra_arguments[i]
 
             try:
-                # pylint: disable=eval-used
-                args[key] = eval(value)
-            except (SyntaxError, NameError):
+                args[key] = literal_eval(value)
+            except (SyntaxError, NameError, ValueError):
                 # If the evaluation failed use the argument as a string
                 args[key] = value
 
