@@ -17,20 +17,10 @@ from collections import OrderedDict
 from typing import List, Union
 
 import numpy as np
-from astropy import units as u
-from astropy.units.quantity import Quantity
-
-
-class Transmission:
-    def __init__(self, wavelengh: Quantity, transmission: Quantity):
-        assert wavelengh.unit.is_equivalent(u.Angstrom)
-        assert wavelengh.unit.is_equivalent(u.dimensionless_unscaled)
-        self.wavelength = wavelengh
-        self.transmission = transmission
 
 
 class PhotometricSystem:
-    def __init__(self, bands: Union[List[str], OrderedDict[str, Transmission]]):
+    def __init__(self, bands: Union[List[str], OrderedDict[str, np.ndarray]]):
         if isinstance(bands, list):
             self.__bands = {b: None for b in bands}
         elif isinstance(bands, OrderedDict):

@@ -18,7 +18,7 @@ from typing import Tuple
 import numpy as np
 
 from .ebv_processor import EBVPrePostProcessor
-from .photometry_calculator import PhotometryCalculator
+from .photometry_calculator import PhotometryCalculator, default_compute_interp_grid
 from .photometry_processor_interface import PhotometryPrePostProcessorInterface
 
 
@@ -87,7 +87,7 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
 
     def __init__(self, filter_map: dict, pre_post_processor: PhotometryPrePostProcessorInterface,
                  ebv_ref: float, shifts: np.ndarray, galactic_reddening_curve: str = None,
-                 interp_grid_callback=None):
+                 interp_grid_callback=default_compute_interp_grid):
         if shifts is not None and 0 in shifts:
             raise ValueError('Ĉ(Δλ) is not defined for Δλ=0! Please, remove 0 from the shifts')
 

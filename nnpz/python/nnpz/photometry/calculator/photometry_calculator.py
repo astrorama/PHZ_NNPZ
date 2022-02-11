@@ -28,6 +28,15 @@ import numpy as np
 from .photometry_processor_interface import PhotometryPrePostProcessorInterface
 
 
+def default_compute_interp_grid(trans: np.ndarray, sed: np.ndarray) -> np.ndarray:
+    """
+    Compute the interpolation grid to use for the rest of the operations.
+    """
+    # SED mask
+    smask = (sed[:, 0] >= trans[0, 0]) & (sed[:, 0] <= trans[-1, 0])
+    return np.unique(np.concatenate([trans[:, 0], sed[smask, 0]]))
+
+
 class PhotometryCalculator:
     """
     Class for computing the photometry for a filter reference system.
@@ -52,7 +61,8 @@ class PhotometryCalculator:
     def __init__(self, filter_map: Dict[str, np.ndarray],
                  pre_post_processor: PhotometryPrePostProcessorInterface,
                  shifts: np.ndarray = None,
-                 interp_grid_callback: Callable[[np.ndarray, np.ndarray], np.ndarray] = None):
+                 interp_grid_callback: Callable[
+                     [np.ndarray, np.ndarray], np.ndarray] = default_compute_interp_grid):
         self.__filter_trans_map = filter_map
         self.__pre_post_processor = pre_post_processor
         self.__shifts = shifts
@@ -66,16 +76,7 @@ class PhotometryCalculator:
         # Compute the total range of all filters
         ranges_arr = np.asarray(list(self.__filter_range_map.values()))
         self.__total_range = (ranges_arr[:, 0].min(), ranges_arr[:, 1].max())
-        if interp_grid_callback is not None:
-            self.__compute_interp_grid = interp_grid_callback
-
-    def __compute_interp_grid(self, trans: np.ndarray, sed: np.ndarray) -> np.ndarray:
-        """
-        Compute the interpolation grid to use for the rest of the operations.
-        """
-        # SED mask
-        smask = (sed[:, 0] >= trans[0, 0]) & (sed[:, 0] <= trans[-1, 0])
-        return np.unique(np.concatenate([trans[:, 0], sed[smask, 0]]))
+        self.__compute_interp_grid = interp_grid_callback
 
     def __compute_value(self, filter_name: str, trans: np.ndarray, sed: np.ndarray,
                         shifts: np.ndarray):
