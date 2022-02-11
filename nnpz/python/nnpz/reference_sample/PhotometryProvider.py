@@ -103,9 +103,11 @@ class PhotometryProvider(object):
         hdus = self.__checkFileFormat(filename)
 
         # Get the type of photometry in the file
+        # pylint: disable=no-member
         self.__type = hdus['NNPZ_PHOTOMETRY'].header.get('PHOTYPE')
 
         # Create a list with the filters in the file
+        # pylint: disable=no-member
         phot_table = Table(hdus['NNPZ_PHOTOMETRY'].data)
         self.__filter_list = [c for c in phot_table.colnames if
                               c != 'ID' and not c.endswith('_ERR') and not c.endswith('_CORR')]

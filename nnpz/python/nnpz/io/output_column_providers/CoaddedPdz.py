@@ -25,7 +25,8 @@ import numpy as np
 from nnpz.io import OutputHandler
 from nnpz.reference_sample.ReferenceSample import ReferenceSample
 
-smallest_f32 = np.finfo(np.float32).tiny
+# pylint: disable=no-member
+smallest_f32 = np.finfo(np.float32).smallest_normal
 biggest_f32 = np.finfo(np.float32).max
 
 

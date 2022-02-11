@@ -51,7 +51,7 @@ class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
                 if unit_str:
                     units[col_idx] = u.Unit(unit_str)
                 if dim_str:
-                    shapes[col_idx] = _tdim2shape(dim_str)
+                    shapes[col_idx] = _tdim2shape(dim_str, name=col_name)
             i += 1
             col_name = header.get(f'TTYPE{i}')
         return units, shapes

@@ -28,6 +28,7 @@ from astropy import constants, units as u
 
 from .photometry_processor_interface import PhotometryPrePostProcessorInterface
 
+# pylint: disable=no-member
 C = constants.c.to(u.Angstrom / u.s).value
 
 
