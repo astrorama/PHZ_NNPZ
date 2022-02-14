@@ -13,6 +13,7 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+from typing import Any, Dict
 
 from nnpz.config import ConfigManager
 
@@ -21,10 +22,10 @@ class NeighborsCatalog(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__catalog = None
 
-    def __setup(self, args):
+    def __setup(self, args: Dict[str, Any]):
         self.__catalog = args.get('neighbor_catalog', 'neighbors.fits')
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if self.__catalog is None:
             self.__setup(args)
         return {
@@ -32,4 +33,4 @@ class NeighborsCatalog(ConfigManager.ConfigHandler):
         }
 
 
-ConfigManager.addHandler(NeighborsCatalog)
+ConfigManager.add_handler(NeighborsCatalog)

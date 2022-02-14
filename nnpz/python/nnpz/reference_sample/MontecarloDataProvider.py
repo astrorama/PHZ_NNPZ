@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -13,6 +13,7 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
 import os
 import pathlib
 from typing import Union
@@ -22,7 +23,7 @@ from nnpz.exceptions import CorruptedFileException, UninitializedException, \
     InvalidDimensionsException
 
 
-class MontecarloDataProvider(object):
+class MontecarloDataProvider:
     """
     Can be used to model a PDF of the reference objects as a set of random samples.
     Used for Intermediate Bands and Physical parameters.

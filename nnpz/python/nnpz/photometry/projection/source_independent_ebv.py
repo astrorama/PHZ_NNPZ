@@ -68,9 +68,9 @@ class SourceIndependentGalacticEBV:
         self.__system = system
 
         if reddening_curve is None:
-            reddening_curve = self.__fp.getFilterTransmission('extinction_curve')
+            reddening_curve = self.__fp.get_filter_transmission('extinction_curve')
         if reference_sed is None:
-            reference_sed = self.__fp.getFilterTransmission('typical_galactic_sed')
+            reference_sed = self.__fp.get_filter_transmission('typical_galactic_sed')
         ref_sed_resampled = np.array(reddening_curve)
         ref_sed_resampled[:, 1] = np.interp(
             reddening_curve[:, 0], reference_sed[:, 0], reference_sed[:, 1], left=0, right=0

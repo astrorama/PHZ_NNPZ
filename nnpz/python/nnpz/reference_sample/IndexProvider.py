@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -32,14 +32,14 @@ from numpy.lib import recfunctions as rfn
 logger = Logging.getLogger(__name__)
 
 
-class IndexProvider(object):
+class IndexProvider:
     """
     Class for handling the index table of the NNPZ format
     """
 
     ObjectLocation = namedtuple('ObjectLocation', ['file', 'offset'])
 
-    def __checkLayout(self):
+    def __check_layout(self):
         """
         Make sure the layout is contiguous on disk
         """
@@ -105,7 +105,7 @@ class IndexProvider(object):
             raise CorruptedFileException('Expected 64 bits integers')
 
         # Make sure the disk layout is contiguous
-        self.__checkLayout()
+        self.__check_layout()
 
         # Create a map for easier search and at the same time check if we have
         # duplicates. The map values are (i, sed_file, sed_pos, pdz_file, pdz_pos),
@@ -145,13 +145,13 @@ class IndexProvider(object):
         """
         return os.path.getsize(self.__filename) if os.path.exists(self.__filename) else 0
 
-    def getIds(self) -> list:
+    def get_ids(self) -> list:
         """
         Returns a list of long integers with the IDs
         """
         return self.__data['id']
 
-    def getFiles(self, key: str) -> set:
+    def get_files(self, key: str) -> set:
         """
         Returns a list of short unsigned integers with the file indices for the given key
         """
@@ -187,7 +187,7 @@ class IndexProvider(object):
         except KeyError:
             return None
 
-    def _addKey(self, key: str):
+    def _add_key(self, key: str):
         """
         Add a new key to the index
         """
@@ -219,7 +219,7 @@ class IndexProvider(object):
 
         """
         if f'{key}_file' not in self.__data.dtype.names:
-            self._addKey(key)
+            self._add_key(key)
 
         try:
             i = self.__index_map[obj_id]
@@ -237,7 +237,7 @@ class IndexProvider(object):
         entry[f'{key}_file'] = location.file
         entry[f'{key}_offset'] = location.offset
 
-    def bulkAdd(self, other: np.ndarray):
+    def bulk_add(self, other: np.ndarray):
         """
         Concatenate a whole other index
         """
@@ -287,11 +287,7 @@ class IndexProvider(object):
         for i in range(self.__data.shape[0]):
             self.__index_map[self.__data['id'][i]] = i
 
-    @property
-    def raw(self):
-        return self.__data
-
-    def getIdsForFile(self, file_id: int, key: str):
+    def get_ids_for_file(self, file_id: int, key: str):
         """
         Returns:
             The list of object IDs stored on a given file, following the physical order

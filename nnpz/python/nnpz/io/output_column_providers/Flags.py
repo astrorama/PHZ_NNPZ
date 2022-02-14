@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -46,14 +46,14 @@ class Flags(OutputHandler.OutputColumnProviderInterface):
             -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         if self.__separate_columns:
             return [
-                (name, np.bool, u.dimensionless_unscaled) for name in NnpzFlag.FlagNames
+                (name, np.bool, u.dimensionless_unscaled) for name in NnpzFlag.FLAG_NAMES
             ]
         return [
             ('FLAGS', np.uint32, u.dimensionless_unscaled)
         ]
 
     def _separate_columns(self, flags: np.ndarray, output: np.ndarray):
-        for flag, name in zip(NnpzFlag.Flags, NnpzFlag.FlagNames):
+        for flag, name in zip(NnpzFlag.FLAGS, NnpzFlag.FLAG_NAMES):
             self.__output_area[name] = flags ^ flag
 
     def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):

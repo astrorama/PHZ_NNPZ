@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -41,7 +41,7 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
 
     def __init__(self, ref_sample: ReferenceSample, estimates):
         self.__estimate_impl = {}
-        self.__pdz_bins = ref_sample.getProvider('pdz').getRedshiftBins()
+        self.__pdz_bins = ref_sample.get_provider('pdz').get_redshift_bins()
         self.__estimates = estimates
         for e in self.__estimates:
             if not hasattr(self, 'get_estimate_' + e.lower()):

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,6 +18,7 @@
 Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
+from typing import Any, Dict
 
 from nnpz.config import ConfigManager
 from nnpz.io import OutputHandler
@@ -31,17 +32,17 @@ class OutputHandlerConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__output_handler = None
 
-    def addColumnProvider(self, column_provider):
+    def add_column_provider(self, column_provider: OutputHandler.OutputColumnProviderInterface):
         self.__output_handler.add_column_provider(column_provider)
 
-    def __setOutputHandler(self, args):
-        self._checkParameterExists('output_file', args)
+    def __set_output_handler(self, args: Dict[str, Any]):
+        self._exists_parameter('output_file', args)
         self.__output_handler = OutputHandler(args['output_file'])
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if self.__output_handler is None:
-            self.__setOutputHandler(args)
+            self.__set_output_handler(args)
         return {'output_handler': self.__output_handler}
 
 
-ConfigManager.addHandler(OutputHandlerConfig)
+ConfigManager.add_handler(OutputHandlerConfig)

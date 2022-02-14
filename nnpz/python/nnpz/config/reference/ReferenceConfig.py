@@ -18,7 +18,7 @@
 Created on: 06/04/18
 Author: Nikolaos Apostolakos
 """
-from typing import Dict
+from typing import Any, Dict
 
 import numpy as np
 from nnpz.config import ConfigManager
@@ -36,19 +36,19 @@ class ReferenceConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__validated = False
 
-    def __validate(self, options: Dict):
+    def __validate(self, options: Dict[str, Any]):
         ref_sample_ids = options['reference_ids']
         ref_photo = options['reference_photometry']
         if not np.array_equal(ref_sample_ids, ref_photo.ids):
             raise CorruptedFileException('Reference sample IDs and photometry IDs do not match')
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         options = {}
-        options.update(ConfigManager.getHandler(ReferenceSampleConfig).parseArgs(args))
-        options.update(ConfigManager.getHandler(ReferenceSamplePhotometryConfig).parseArgs(args))
+        options.update(ConfigManager.get_handler(ReferenceSampleConfig).parse_args(args))
+        options.update(ConfigManager.get_handler(ReferenceSamplePhotometryConfig).parse_args(args))
         if not self.__validated:
             self.__validate(options)
         return options
 
 
-ConfigManager.addHandler(ReferenceConfig)
+ConfigManager.add_handler(ReferenceConfig)

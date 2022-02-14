@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -29,7 +29,7 @@ class FilterProviderInterface(metaclass=abc.ABCMeta):
     """Interface providing the filter transmissions"""
 
     @abc.abstractmethod
-    def getFilterNames(self) -> List[str]:
+    def get_filter_names(self) -> List[str]:
         """
         Provides a list with the names of the filters.
 
@@ -39,7 +39,7 @@ class FilterProviderInterface(metaclass=abc.ABCMeta):
         return
 
     @abc.abstractmethod
-    def getFilterTransmission(self, name) -> np.ndarray:
+    def get_filter_transmission(self, name) -> np.ndarray:
         """
         Provides the transmission curve of the filter with the given name.
 

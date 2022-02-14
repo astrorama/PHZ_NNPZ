@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -58,8 +58,8 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         self.__provider = mc_provider
         self.__ref_ids = ref_ids
         self.__samples = None
-        self.__dtype = self.__provider.getDtype()
-        self.__samples_per_neighbor = self.__provider.getNSamples()
+        self.__dtype = self.__provider.get_dtype()
+        self.__samples_per_neighbor = self.__provider.get_n_samples()
         self.__rng = np.random.default_rng()
 
     def get_provider(self):
@@ -91,7 +91,6 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
             neighbors = neighbor_info[i]
             p = np.repeat(neighbors['NEIGHBOR_WEIGHTS'], repeats=self.__samples_per_neighbor)
             total_weight = p.sum()
-            print(total_weight)
             # If all neighbors have 0 weight, we can not pick any
             if total_weight <= 0 or not np.isfinite(total_weight):
                 selected_indexes[i, :] = -1
@@ -103,7 +102,7 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
                       selected_indexes[i, :, 1])
             selected_indexes[i, :, 0] = neighbors['NEIGHBOR_INDEX'][selected_indexes[i, :, 0]]
         # Defer to the provider to read the samples
-        self.__samples = self.__provider.getDataForIndex(selected_indexes.reshape(-1, 2))
+        self.__samples = self.__provider.get_data_for_index(selected_indexes.reshape(-1, 2))
         self.__samples = self.__samples.reshape((len(indexes), self.__take_n))
 
     def get_samples(self):

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -53,7 +53,7 @@ class PhotometryBuilder:
             implementation of PhotometryPrePostProcessorInterface
     """
 
-    class SedIter(object):
+    class SedIter:
         """
         A generator for only the sed attribute of a reference object.
         """
@@ -65,7 +65,7 @@ class PhotometryBuilder:
             for o in self.__objects:
                 yield o.sed
 
-    def setFilters(self, filter_list: List[str]):
+    def set_filters(self, filter_list: List[str]):
         """
         Sets the filters for which the photometry is produced.
 
@@ -81,7 +81,7 @@ class PhotometryBuilder:
         """
         self._filter_map = {}
         for f in filter_list:
-            self._filter_map[f] = self._filter_provider.getFilterTransmission(f)
+            self._filter_map[f] = self._filter_provider.get_filter_transmission(f)
 
     def __init__(self, filter_provider: FilterProviderInterface,
                  pre_post_processor: PhotometryPrePostProcessorInterface,
@@ -98,10 +98,10 @@ class PhotometryBuilder:
         self._filter_map = {}
 
         # By default we produce photometry for every available filter
-        self.setFilters(filter_provider.getFilterNames())
+        self.set_filters(filter_provider.get_filter_names())
         self.__ncores = os.cpu_count() if not ncores else ncores
 
-    def buildPhotometry(self, sample_iter, progress_listener=None):
+    def build_photometry(self, sample_iter, progress_listener=None):
         """
         Computes the photometry of the SEDs the given iterator traverses.
 

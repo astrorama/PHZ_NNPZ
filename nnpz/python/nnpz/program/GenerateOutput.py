@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -21,8 +21,6 @@ Author: Alejandro Alvarez Ayllon
 from datetime import datetime
 from typing import List
 
-# noinspection PyUnresolvedReferences
-# pylint: disable=unused-import
 import fitsio
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
@@ -39,6 +37,7 @@ from nnpz.io import OutputHandler
 from nnpz.utils.ArgumentParserWrapper import ArgumentParserWrapper
 
 
+# noinspection PyPep8Naming
 def defineSpecificProgramOptions():
     """
     Program options. Returns a ArgumentParserWrapper that tricks Elements so we can
@@ -48,6 +47,7 @@ def defineSpecificProgramOptions():
     return ArgumentParserWrapper(description='Reconstruct PDZ from a NNPZ result catalog')
 
 
+# noinspection PyPep8Naming
 def mainMethod(args):
     """
     Entry point for ReconstructPDZ
@@ -60,7 +60,7 @@ def mainMethod(args):
     conf_manager = ConfigManager(args.config_file, args.extra_arguments)
 
     # Open the output catalog
-    neighbor_catalog = conf_manager.getObject('neighbor_catalog')
+    neighbor_catalog = conf_manager.get('neighbor_catalog')
     neighbor_fits = fitsio.FITS(neighbor_catalog, mode='r')
     neighbor_hdu: fitsio.hdu.TableHDU = neighbor_fits[1]
     neighbor_colnames = neighbor_hdu.get_colnames()
@@ -71,10 +71,10 @@ def mainMethod(args):
     assert 'NEIGHBOR_PHOTOMETRY' in neighbor_colnames
 
     # Chunks
-    chunks: List[slice] = conf_manager.getObject('target_idx_slices')
+    chunks: List[slice] = conf_manager.get('target_idx_slices')
 
     # Prepare the output
-    output: OutputHandler = conf_manager.getObject('output_handler')
+    output: OutputHandler = conf_manager.get('output_handler')
 
     # Process in chunks
     start = datetime.utcnow()

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,6 +18,7 @@
 Created on: 06/04/18
 Author: Nikolaos Apostolakos
 """
+from typing import Any, Dict
 
 import nnpz.io.output_column_providers as ocp
 from ElementsKernel import Logging
@@ -39,10 +40,10 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__added = False
 
-    def __addColumnProvider(self, args):
-        ref_options = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
-        target_options = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
-        output_options = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)
+    def __add_column_provider(self, args: Dict[str, Any]):
+        ref_options = ConfigManager.get_handler(ReferenceConfig).parse_args(args)
+        target_options = ConfigManager.get_handler(TargetCatalogConfig).parse_args(args)
+        output_options = ConfigManager.get_handler(OutputHandlerConfig).parse_args(args)
 
         ref_phot: Photometry = ref_options['reference_photometry']
 
@@ -56,7 +57,7 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
             reddener = None
 
             if args.get('redden_mean_phot', False):
-                self._checkParameterExists('target_catalog_gal_ebv', args)
+                self._exists_parameter('target_catalog_gal_ebv', args)
                 target_ebv = target_options['target_photometry'].colorspace.ebv
                 reddener = SourceIndependentGalacticEBV(ref_phot.system)
 
@@ -65,11 +66,11 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
                                    unit=ref_phot.unit, reddener=reddener, target_ebv=target_ebv)
             )
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__added:
-            self.__addColumnProvider(args)
+            self.__add_column_provider(args)
             self.__added = True
         return {}
 
 
-ConfigManager.addHandler(MeanPhotOutputConfig)
+ConfigManager.add_handler(MeanPhotOutputConfig)

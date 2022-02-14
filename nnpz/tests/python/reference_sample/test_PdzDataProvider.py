@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -76,7 +76,7 @@ def test_setRedshiftBins_notSetBefore(temp_dir_fixture):
 
     # When
     with PdzDataProvider(filename) as provider:
-        provider.setRedshiftBins(expected_bins)
+        provider.set_redshift_bins(expected_bins)
 
     # Then
     array = np.load(filename)
@@ -99,7 +99,7 @@ def test_setRedshiftBins_alreadySet(pdz_data_files_fixture):
 
     # Then
     with pytest.raises(AlreadySetException):
-        provider.setRedshiftBins(bins)
+        provider.set_redshift_bins(bins)
 
 
 ###############################################################################
@@ -118,7 +118,7 @@ def test_setRedshiftBins_invalidDimension(temp_dir_fixture):
 
     # Then
     with pytest.raises(InvalidDimensionsException):
-        provider.setRedshiftBins(bins)
+        provider.set_redshift_bins(bins)
 
 
 ###############################################################################
@@ -137,7 +137,7 @@ def test_setRedshiftBins_nonIncreasingValues(temp_dir_fixture):
 
     # Then
     with pytest.raises(InvalidAxisException):
-        provider.setRedshiftBins(bins)
+        provider.set_redshift_bins(bins)
 
 
 ###############################################################################
@@ -151,7 +151,7 @@ def test_getRedshiftBins_alreadySet(pdz_data_files_fixture, redshift_bins_fixtur
     provider = PdzDataProvider(pdz_data_files_fixture[1])
 
     # When
-    bins = provider.getRedshiftBins()
+    bins = provider.get_redshift_bins()
 
     # Then
     assert np.array_equal(bins, redshift_bins_fixture)
@@ -169,7 +169,7 @@ def test_getRedshiftBins_noHeader(temp_dir_fixture):
     provider = PdzDataProvider(filename)
 
     # When
-    bins = provider.getRedshiftBins()
+    bins = provider.get_redshift_bins()
 
     # Then
     assert bins is None
@@ -187,7 +187,7 @@ def test_readPdz_success(pdz_data_files_fixture, pdz_list_fixture, redshift_bins
 
     for i, expected_data in enumerate(pdz_list_fixture[1]):
         # When
-        found_data = provider.readPdz(i + 1)
+        found_data = provider.read_pdz(i + 1)
 
         # Then
         assert np.array_equal(found_data, expected_data[1])
@@ -208,7 +208,7 @@ def test_readPdz_uninitialized(temp_dir_fixture):
 
     # Then
     with pytest.raises(UninitializedException):
-        provider.readPdz(0)
+        provider.read_pdz(0)
 
 
 ###############################################################################
@@ -223,7 +223,7 @@ def test_appendPdz_success(pdz_data_files_fixture, redshift_bins_fixture):
 
     # When
     with PdzDataProvider(pdz_data_files_fixture[1]) as provider:
-        pos = provider.appendPdz(expected_data)
+        pos = provider.append_pdz(expected_data)
 
     # Then
     array = np.load(pdz_data_files_fixture[1])
@@ -246,7 +246,7 @@ def test_appendPdz_uninitialized(temp_dir_fixture, redshift_bins_fixture):
 
     # Then
     with pytest.raises(UninitializedException):
-        provider.appendPdz(bad_data)
+        provider.append_pdz(bad_data)
 
 
 ###############################################################################
@@ -264,7 +264,7 @@ def test_appendPdz_wrongLength(pdz_data_files_fixture, redshift_bins_fixture):
 
     # Then
     with pytest.raises(InvalidDimensionsException):
-        provider.appendPdz(bad_data)
+        provider.append_pdz(bad_data)
 
 
 ###############################################################################
@@ -282,7 +282,7 @@ def test_appendPdz_wrongDimensionality(pdz_data_files_fixture, redshift_bins_fix
 
     # Then
     with pytest.raises(InvalidDimensionsException):
-        provider.appendPdz(bad_data)
+        provider.append_pdz(bad_data)
 
 
 ###############################################################################
@@ -299,8 +299,8 @@ def test_appendBulkPdz(pdz_data_files_fixture, redshift_bins_fixture):
     provider = PdzDataProvider(pdz_data_files_fixture[1])
 
     # Then
-    offsets = provider.appendPdz(new_pdz)
+    offsets = provider.append_pdz(new_pdz)
     assert len(offsets) == len(new_pdz)
     for i, o in enumerate(offsets):
-        pdz = provider.readPdz(o)
+        pdz = provider.read_pdz(o)
         assert np.allclose(new_pdz[i, :], pdz)

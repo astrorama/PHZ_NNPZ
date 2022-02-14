@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -95,7 +95,7 @@ class PhotometryCalculator:
             # Compute the intensity of the filtered object
             intensity[i] = np.trapz(filtered_sed, x=interp_grid)
         # Post-process the intensity
-        return self.__pre_post_processor.postProcess(intensity, filter_name)
+        return self.__pre_post_processor.post_process(intensity, filter_name)
 
     def compute(self, sed: np.ndarray) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray]]:
         """
@@ -137,7 +137,7 @@ class PhotometryCalculator:
         dtype = [(filter_name, np.float32) for filter_name in self.__filter_trans_map]
 
         # Pre-process the SED
-        sed = self.__pre_post_processor.preProcess(sed)
+        sed = self.__pre_post_processor.pre_process(sed)
         if self.__shifts is not None:
             photometry_shifted = np.zeros(len(self.__shifts), dtype=dtype)
         else:

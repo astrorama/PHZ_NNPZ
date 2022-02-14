@@ -19,7 +19,7 @@ Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
 
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import fitsio
 import numpy as np
@@ -44,10 +44,10 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__id_column = None
         self.__table_hdu = None
 
-    def __readCatalog(self, table: fitsio.hdu.TableHDU,
-                      filters: List[Tuple[str, str]], id_column: str,
-                      missing_values: List[float],
-                      rows: int) -> Tuple[np.ndarray, np.ndarray]:
+    def __read_catalog(self, table: fitsio.hdu.TableHDU,
+                       filters: List[Tuple[str, str]], id_column: str,
+                       missing_values: List[float],
+                       rows: int) -> Tuple[np.ndarray, np.ndarray]:
         val_cols = list(map(lambda t: t[0], filters))
         err_cols = list(map(lambda t: t[1], filters))
 
@@ -85,8 +85,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         return ids, values
 
-    def __setupColorspace(self, table: fitsio.hdu.TableHDU, args: Dict,
-                          bands: List[str], rows: np.ndarray) -> ColorSpace:
+    def __setup_colorspace(self, table: fitsio.hdu.TableHDU, args: Dict,
+                           bands: List[str], rows: np.ndarray) -> ColorSpace:
         catalog_ebv = args.get('target_catalog_gal_ebv', None)
         filter_shifts = args.get('target_catalog_filters_shifts', None)
 
@@ -102,12 +102,12 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             factors['shifts'] = shifts
         return ColorSpace(**factors)
 
-    def __createData(self, args):
-        ref_photometry = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)[
+    def __create_data(self, args: Dict[str, Any]):
+        ref_photometry = ConfigManager.get_handler(ReferenceConfig).parse_args(args)[
             'reference_photometry']
 
-        self._checkParameterExists('target_catalog', args)
-        self._checkParameterExists('target_catalog_filters', args)
+        self._exists_parameter('target_catalog', args)
+        self._exists_parameter('target_catalog_filters', args)
 
         target_cat = args['target_catalog']
         missing_phot_flags = args.get('missing_photometry_flags', [])
@@ -129,15 +129,15 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             logger.warning('Processing only %s objects from target catalog', input_rows)
             input_rows = np.arange(input_rows)
 
-        ids, values = self.__readCatalog(self.__table_hdu, target_filters, self.__id_column,
-                                         missing_values=missing_phot_flags,
-                                         rows=input_rows)
+        ids, values = self.__read_catalog(self.__table_hdu, target_filters, self.__id_column,
+                                          missing_values=missing_phot_flags,
+                                          rows=input_rows)
         self.__id_column = (self.__id_column, ids.dtype)
 
         target_system = ref_photometry.system[ref_filters]
 
-        target_colorspace = self.__setupColorspace(self.__table_hdu, args, target_system.bands,
-                                                   rows=input_rows)
+        target_colorspace = self.__setup_colorspace(self.__table_hdu, args, target_system.bands,
+                                                    rows=input_rows)
         self.__target_photo = Photometry(ids, values, system=target_system,
                                          colorspace=target_colorspace)
 
@@ -148,9 +148,9 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         if remainder > 0:
             self.__chunks.append(slice(len(ids) - remainder, len(ids)))
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if self.__target_photo is None:
-            self.__createData(args)
+            self.__create_data(args)
 
         return {
             'target_photometry': self.__target_photo,
@@ -161,4 +161,4 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         }
 
 
-ConfigManager.addHandler(TargetCatalogConfig)
+ConfigManager.add_handler(TargetCatalogConfig)

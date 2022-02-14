@@ -32,6 +32,7 @@ from nnpz.utils.ArgumentParserWrapper import ArgumentParserWrapper
 logger = Logging.getLogger(__name__)
 
 
+# noinspection PyPep8Naming
 def defineSpecificProgramOptions():
     """
     Program options. Returns a ArgumentParserWrapper that tricks Elements so we can
@@ -41,6 +42,7 @@ def defineSpecificProgramOptions():
     return ArgumentParserWrapper(description='Nearest Neighbor Photo-Z (neighbor search)')
 
 
+# noinspection PyPep8Naming
 def mainMethod(args):
     """
     Entry point for ComputeNeighbors
@@ -54,15 +56,15 @@ def mainMethod(args):
 
     # Finder
     neighbor_finder = NeighborFinder(conf_manager)
-    ref_data = conf_manager.getObject('reference_photometry')
-    knn = conf_manager.getObject('neighbor_no')
+    ref_data = conf_manager.get('reference_photometry')
+    knn = conf_manager.get('neighbor_no')
 
     # Read the target catalog data
-    input_photometry = conf_manager.getObject('target_photometry')
-    id_col = conf_manager.getObject('target_id_column')
+    input_photometry = conf_manager.get('target_photometry')
+    id_col = conf_manager.get('target_id_column')
 
     # Prepare the output catalog
-    neighbor_catalog = conf_manager.getObject('neighbor_catalog')
+    neighbor_catalog = conf_manager.get('neighbor_catalog')
     neighbor_columns = [
         (id_col[0], id_col[1]),
         ('NEIGHBOR_INDEX', np.int64, knn),
@@ -80,7 +82,7 @@ def mainMethod(args):
     output_hdu = output_fits[-1]
 
     # Chunks
-    chunks: List[slice] = conf_manager.getObject('target_idx_slices')
+    chunks: List[slice] = conf_manager.get('target_idx_slices')
 
     # Process in chunks
     start = datetime.utcnow()

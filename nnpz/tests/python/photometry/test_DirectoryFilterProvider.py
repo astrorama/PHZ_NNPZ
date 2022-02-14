@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -69,7 +69,7 @@ def test_getFilterNames_noFilterListFile(filter_dir_fixture: str,
 
     # When
     provider = DirectoryFilterProvider(filter_dir_fixture)
-    names = provider.getFilterNames()
+    names = provider.get_filter_names()
 
     # Then
     assert len(names) == len(expected_names)
@@ -90,7 +90,7 @@ def test_getFilterNames_filterListFile(filter_dir_fixture: str,
 
     # When
     provider = DirectoryFilterProvider(filter_dir_fixture)
-    names = provider.getFilterNames()
+    names = provider.get_filter_names()
 
     # Then
     assert len(names) == len(expected_names)
@@ -113,7 +113,7 @@ def test_getFilterNames_filterListFile_extraFilterFile(filter_dir_fixture: str,
 
     # When
     provider = DirectoryFilterProvider(filter_dir_fixture)
-    names = provider.getFilterNames()
+    names = provider.get_filter_names()
 
     # Then
     assert len(names) == len(expected_names)
@@ -140,7 +140,7 @@ def test_getFilterNames_filterListFile_undefinedName(filter_dir_fixture: str,
 
     # When
     provider = DirectoryFilterProvider(filter_dir_fixture)
-    names = provider.getFilterNames()
+    names = provider.get_filter_names()
 
     # Then
     assert len(names) == len(expected_names)
@@ -162,7 +162,7 @@ def test_getFilterTransmission_unknownName(filter_dir_fixture: str):
 
     # Then
     with pytest.raises(UnknownNameException):
-        provider.getFilterTransmission(wrong_name)
+        provider.get_filter_transmission(wrong_name)
 
 
 ###############################################################################
@@ -178,7 +178,7 @@ def test_getFilterTransmission_success(filter_dir_fixture: str,
 
     for name, expected_data in filters_fixture.items():
         # When
-        data = provider.getFilterTransmission(name)
+        data = provider.get_filter_transmission(name)
 
         # Then
         assert np.array_equal(data, np.asarray(expected_data, dtype=np.float32))

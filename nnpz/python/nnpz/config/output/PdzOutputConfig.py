@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,6 +19,8 @@ Created on: 06/04/18
 Author: Nikolaos Apostolakos
 """
 
+from typing import Any, Dict
+
 import nnpz.io.output_column_providers as ocp
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
@@ -35,9 +37,9 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
         self.__added = False
         self.__add_pdz_output = True
 
-    def __addColumnProvider(self, args):
-        ref_options = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
-        neighbor_options = ConfigManager.getHandler(NeighborListOutputConfig).parseArgs(args)
+    def __add_column_provider(self, args: Dict[str, Any]):
+        ref_options = ConfigManager.get_handler(ReferenceConfig).parse_args(args)
+        neighbor_options = ConfigManager.get_handler(NeighborListOutputConfig).parse_args(args)
 
         # NNPZ can be run on neighbor-only mode, so skip PDZ computation in that case
         # Make sure the list of neighbors is generated in that case!
@@ -51,7 +53,7 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
 
         ref_sample = ref_options['reference_sample']
 
-        output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
+        output = ConfigManager.get_handler(OutputHandlerConfig).parse_args(args)['output_handler']
         output.add_column_provider(ocp.CoaddedPdz(ref_sample))
 
         pdz_quantiles = args.get('pdz_quantiles', [])
@@ -69,11 +71,11 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
 
         output.add_extension_table_provider(PdzBins(ref_sample))
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__added:
-            self.__addColumnProvider(args)
+            self.__add_column_provider(args)
             self.__added = True
         return {}
 
 
-ConfigManager.addHandler(PdzOutputConfig)
+ConfigManager.add_handler(PdzOutputConfig)

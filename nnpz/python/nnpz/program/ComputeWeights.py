@@ -14,8 +14,6 @@
 #  MA 02110-1301 USA
 #
 
-# noinspection PyUnresolvedReferences
-# pylint: disable=unused-import
 from datetime import datetime
 from typing import List
 
@@ -36,6 +34,7 @@ from nnpz.utils.ArgumentParserWrapper import ArgumentParserWrapper
 logger = Logging.getLogger(__name__)
 
 
+# noinspection PyPep8Naming
 def defineSpecificProgramOptions():
     """
     Program options. Returns a ArgumentParserWrapper that tricks Elements so we can
@@ -45,6 +44,7 @@ def defineSpecificProgramOptions():
     return ArgumentParserWrapper(description='Nearest Neighbor Photo-Z (photometry correction)')
 
 
+# noinspection PyPep8Naming
 def mainMethod(args):
     """
     Entry point for ComputeWeights
@@ -57,10 +57,10 @@ def mainMethod(args):
     conf_manager = ConfigManager(args.config_file, args.extra_arguments)
 
     # Open the target catalog
-    input_photometry = conf_manager.getObject('target_photometry')
+    input_photometry = conf_manager.get('target_photometry')
 
     # Open the output catalog
-    neighbor_catalog = conf_manager.getObject('neighbor_catalog')
+    neighbor_catalog = conf_manager.get('neighbor_catalog')
     output_fits = fitsio.FITS(neighbor_catalog, mode='rw', clobber=False)
     output_hdu: fitsio.hdu.TableHDU = output_fits[1]
     output_colnames = output_hdu.get_colnames()
@@ -76,7 +76,7 @@ def mainMethod(args):
     assert photo_unit == u.uJy
 
     # Chunks
-    chunks: List[slice] = conf_manager.getObject('target_idx_slices')
+    chunks: List[slice] = conf_manager.get('target_idx_slices')
 
     # Weighter
     weighter = ComputeWeights(conf_manager)

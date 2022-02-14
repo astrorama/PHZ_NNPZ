@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -30,7 +30,7 @@ class PhotometryPrePostProcessorInterface:
     """
 
     @abc.abstractmethod
-    def preProcess(self, sed: np.ndarray) -> np.ndarray:
+    def pre_process(self, sed: np.ndarray) -> np.ndarray:
         """
         Pre-processes an SED.
 
@@ -48,7 +48,7 @@ class PhotometryPrePostProcessorInterface:
         return
 
     @abc.abstractmethod
-    def postProcess(self, intensity: float, filter_name: str) -> float:
+    def post_process(self, intensity: float, filter_name: str) -> float:
         """
         Post-processes a band intensity.
 

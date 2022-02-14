@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -57,11 +57,11 @@ class EBVPrePostProcessor(PhotometryPrePostProcessorInterface):
         self.__p_14_ebv = p_14_ebv
         if galactic_reddening_curve is None:
             prov = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))
-            self.__reddening_curve = prov.getFilterTransmission('extinction_curve')
+            self.__reddening_curve = prov.get_filter_transmission('extinction_curve')
         else:
             self.__reddening_curve = galactic_reddening_curve
 
-    def _computeAbsorption(self, sed: np.ndarray) -> np.ndarray:
+    def _compute_absorption(self, sed: np.ndarray) -> np.ndarray:
         # Compute A_lambda
         interp_absorption = np.interp(
             sed[:, 0], self.__reddening_curve[:, 0], self.__reddening_curve[:, 1], left=0, right=0
@@ -76,16 +76,16 @@ class EBVPrePostProcessor(PhotometryPrePostProcessorInterface):
         mult[:, 1] = absorption_factor
         return np.multiply(sed, mult)
 
-    def preProcess(self, sed: np.ndarray) -> np.ndarray:
+    def pre_process(self, sed: np.ndarray) -> np.ndarray:
         """
         Redden the SED according to the galactic absorption law and the
         E(B-V) parameter then redirects the call to the FnuPrePostProcessor
         """
-        reddened_sed = self._computeAbsorption(sed)
-        return self.__processor.preProcess(reddened_sed)
+        reddened_sed = self._compute_absorption(sed)
+        return self.__processor.pre_process(reddened_sed)
 
-    def postProcess(self, intensity: float, filter_name: str) -> float:
+    def post_process(self, intensity: float, filter_name: str) -> float:
         """
         Returns the flux as computed from the decorated pre/post processor.
         """
-        return self.__processor.postProcess(intensity, filter_name)
+        return self.__processor.post_process(intensity, filter_name)

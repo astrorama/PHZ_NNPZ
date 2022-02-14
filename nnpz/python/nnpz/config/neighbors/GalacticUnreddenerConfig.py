@@ -18,6 +18,7 @@
 Created on: 10/07/18
 Author: Florian Dubath
 """
+from typing import Any, Dict
 
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
@@ -37,8 +38,8 @@ class GalacticUnreddenerConfig(ConfigManager.ConfigHandler):
         self.__galactic_absorption_unreddener = None
         self.__parsed = False
 
-    def __createGalacticUnreddener(self, args):
-        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
+    def __create_galactic_unreddener(self, args: Dict[str, Any]):
+        target_config = ConfigManager.get_handler(TargetCatalogConfig).parse_args(args)
         target_photo = target_config['target_photometry']
         if 'ebv' in target_photo.colorspace:
             logger.info('Target catalog EBV present')
@@ -47,12 +48,12 @@ class GalacticUnreddenerConfig(ConfigManager.ConfigHandler):
             )
         self.__parsed = True
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__parsed:
-            self.__createGalacticUnreddener(args)
+            self.__create_galactic_unreddener(args)
         return {
             'source_independent_ebv': self.__galactic_absorption_unreddener
         }
 
 
-ConfigManager.addHandler(GalacticUnreddenerConfig)
+ConfigManager.add_handler(GalacticUnreddenerConfig)

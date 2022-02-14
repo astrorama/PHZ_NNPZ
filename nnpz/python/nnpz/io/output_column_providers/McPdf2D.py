@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -59,5 +59,5 @@ class McPdf2D(OutputHandler.OutputColumnProviderInterface):
         param2 = samples[self.__param_names[1]]
         output_col = output[self.__column]
 
-        for i, sample in enumerate(samples):
+        for i in range(len(samples)):
             output_col[i] = np.histogram2d(param1[i], param2[i], bins=self.__bins, density=True)[0]

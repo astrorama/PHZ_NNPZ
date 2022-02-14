@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -57,7 +57,7 @@ class FnuuJyPrePostProcessor(PhotometryPrePostProcessorInterface):
             norm_f = filter_trans[:, 1][lambda_gt_0] / lambd
             self.__filter_norm[filter_name] = C * np.trapz(norm_f, x=lambd)
 
-    def preProcess(self, sed: np.ndarray) -> np.ndarray:
+    def pre_process(self, sed: np.ndarray) -> np.ndarray:
         """
         Multiply the SED with the wavelength
         """
@@ -65,7 +65,7 @@ class FnuuJyPrePostProcessor(PhotometryPrePostProcessorInterface):
         res[:, 1] = res[:, 1] * res[:, 0]
         return res
 
-    def postProcess(self, intensity: float, filter_name: str) -> float:
+    def post_process(self, intensity: float, filter_name: str) -> float:
         """
         Converts the intensity to flux density by normalizing for the filter.
 

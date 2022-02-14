@@ -19,18 +19,18 @@ class MockProvider:
             self.__data['P2'][i] = random[:, 1]
             self.__data['I1'][i] = i
 
-    def getDataForIndex(self, obj_idx: np.ndarray):
+    def get_data_for_index(self, obj_idx: np.ndarray):
         data = self.__data[obj_idx[:, 0], obj_idx[:, 1]]
         data[obj_idx[:, 0] < 0] = 0
         return data
 
-    def getData(self, obj_id: int):
+    def get_data(self, obj_id: int):
         return self.__data[obj_id]
 
-    def getDtype(self) -> np.dtype:
+    def get_dtype(self) -> np.dtype:
         return self.DTYPE
 
-    def getNSamples(self) -> int:
+    def get_n_samples(self) -> int:
         return self.__data.shape[1]
 
 

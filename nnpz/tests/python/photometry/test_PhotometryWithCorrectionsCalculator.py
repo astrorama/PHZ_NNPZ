@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -24,10 +24,10 @@ from .fixtures import *
 
 class MockPrePostProcessor(PhotometryPrePostProcessorInterface):
 
-    def preProcess(self, sed):
+    def pre_process(self, sed):
         return sed
 
-    def postProcess(self, intensity, filter_name):
+    def post_process(self, intensity, filter_name):
         return intensity
 
 

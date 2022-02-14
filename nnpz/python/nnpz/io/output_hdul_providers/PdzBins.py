@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,7 +19,6 @@ Created on: 19/04/2018
 Author: Alejandro Alvarez Ayllon
 """
 import fitsio
-from astropy.table import Table
 
 from nnpz.io.OutputHandler import OutputHandler
 from nnpz.reference_sample.ReferenceSample import ReferenceSample
@@ -31,7 +30,7 @@ class PdzBins(OutputHandler.OutputExtensionProviderInterface):
     """
 
     def __init__(self, ref_sample: ReferenceSample):
-        self.__bins = ref_sample.getProvider('pdz').getRedshiftBins()
+        self.__bins = ref_sample.get_provider('pdz').get_redshift_bins()
 
     def add_extensions(self, fits: fitsio.FITS):
         fits.create_table_hdu({'BINS_PDF': self.__bins}, extname='BINS_PDF')

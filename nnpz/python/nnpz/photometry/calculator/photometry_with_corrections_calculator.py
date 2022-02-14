@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -100,6 +100,7 @@ SED_{\\alpha}(\\lambda)*Filter_T(\\lambda)}\\right) / {ebv\\_ref}
         self._shifts = shifts
         self._ebv = ebv_ref
 
+    # noinspection PyPep8Naming
     def compute(self, sed: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Compute the photometry (for $\\Delta\\lambda  = 0$ and ${EBV} = 0$) and correction factors

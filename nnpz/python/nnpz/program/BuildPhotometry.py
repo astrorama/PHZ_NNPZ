@@ -40,6 +40,7 @@ logger = Logging.getLogger('BuildPhotometry')
 DEFAULT_SHIFTS = np.concatenate([np.arange(-100, 0), np.arange(1, 101)])
 
 
+# noinspection PyPep8Naming
 def defineSpecificProgramOptions():
     """
     Specific options for BuildPhotometry
@@ -68,17 +69,17 @@ def defineSpecificProgramOptions():
     return parser
 
 
-def createPhotometryBuilder(gal_ebv, parallel, filter_provider, shifts):
-    filter_names = filter_provider.getFilterNames()
-    filter_trans = {fname: filter_provider.getFilterTransmission(fname) for fname in filter_names}
+def create_photometry_builder(gal_ebv, parallel, filter_provider, shifts):
+    filter_names = filter_provider.get_filter_names()
+    filter_trans = {fname: filter_provider.get_filter_transmission(fname) for fname in filter_names}
     pre_post_processor = FnuuJyPrePostProcessor(filter_trans)
     phot_builder = PhotometryBuilder(filter_provider, pre_post_processor, gal_ebv, shifts,
                                      ncores=parallel)
-    phot_builder.setFilters(filter_names)
+    phot_builder.set_filters(filter_names)
     return phot_builder
 
 
-def buildPhotometry(args: argparse.Namespace, ref_sample: ReferenceSample) \
+def build_photometry(args: argparse.Namespace, ref_sample: ReferenceSample) \
         -> Tuple[int, np.ndarray, np.ndarray, np.ndarray, dict]:
     """
     Build the photometry using the reference redshift (max of the PDZ)
@@ -90,16 +91,16 @@ def buildPhotometry(args: argparse.Namespace, ref_sample: ReferenceSample) \
         filter_provider = DirectoryFilterProvider(args.filters)
     else:
         filter_provider = ListFileFilterProvider(args.filters)
-    filter_name_list = filter_provider.getFilterNames()
+    filter_name_list = filter_provider.get_filter_names()
     filter_map = {}
     for filter_name in filter_name_list:
         logger.info('    %s', filter_name)
-        filter_map[filter_name] = filter_provider.getFilterTransmission(filter_name)
+        filter_map[filter_name] = filter_provider.get_filter_transmission(filter_name)
     logger.info('Successfully read filter transmissions')
 
     # Create the photometry builder to use for computing the photometry values
-    phot_builder = createPhotometryBuilder(args.gal_ebv, args.parallel, filter_provider,
-                                           args.shifts)
+    phot_builder = create_photometry_builder(args.gal_ebv, args.parallel, filter_provider,
+                                             args.shifts)
 
     # Compute the photometry values
     logger.info('')
@@ -110,7 +111,7 @@ def buildPhotometry(args: argparse.Namespace, ref_sample: ReferenceSample) \
     # for the full sample
     n_items = args.input_size if args.input_size is not None else len(ref_sample)
     progress = ProgressListener(n_items, logger=logger)
-    phot_map, ebv_corr_map, shift_corr_map = phot_builder.buildPhotometry(
+    phot_map, ebv_corr_map, shift_corr_map = phot_builder.build_photometry(
         itertools.islice(ref_sample.iterate(), args.input_size),
         progress
     )
@@ -122,6 +123,18 @@ def buildPhotometry(args: argparse.Namespace, ref_sample: ReferenceSample) \
     return n_phot, phot_map, ebv_corr_map, shift_corr_map, filter_map
 
 
+def create_transmission_hdu(filter_name: str, filter_trans: np.ndarray):
+    f_col_data = [
+        table.Column(filter_trans[:, 0]),
+        table.Column(filter_trans[:, 1])
+    ]
+    f_table = table.Table(f_col_data, names=['Wavelength', 'Transmission'])
+    f_hdu = BinTableHDU(f_table)
+    f_hdu.header.set('EXTNAME', filter_name)
+    return f_hdu
+
+
+# noinspection PyPep8Naming
 def mainMethod(args):
     """
     Entry point for BuildPhotometry
@@ -143,7 +156,7 @@ def mainMethod(args):
     logger.info('Successfully opened reference sample')
 
     # Build photometry
-    n_phot, phot_map, ebv_corr_map, shift_corr_map, filter_map = buildPhotometry(args, ref_sample)
+    n_phot, phot_map, ebv_corr_map, shift_corr_map, filter_map = build_photometry(args, ref_sample)
 
     # Create the output
     logger.info('')
@@ -181,21 +194,10 @@ def mainMethod(args):
 
     # Build the filter transmission HDUs
     for filter_name, filter_trans in filter_map.items():
-        f_hdu = createTransmissionHdu(filter_name, filter_trans)
+        f_hdu = create_transmission_hdu(filter_name, filter_trans)
         hdus.append(f_hdu)
 
     # Write the HDUs in the output file
     hdus.writeto(args.out, overwrite=args.overwrite)
     logger.info('Photometry created in %s', args.out)
     return 0
-
-
-def createTransmissionHdu(filter_name, filter_trans):
-    f_col_data = [
-        table.Column(filter_trans[:, 0]),
-        table.Column(filter_trans[:, 1])
-    ]
-    f_table = table.Table(f_col_data, names=['Wavelength', 'Transmission'])
-    f_hdu = BinTableHDU(f_table)
-    f_hdu.header.set('EXTNAME', filter_name)
-    return f_hdu

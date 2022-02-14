@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,6 +18,7 @@
 Created on: 06/04/18
 Author: Nikolaos Apostolakos
 """
+from typing import Any, Dict
 
 import nnpz.io.output_column_providers as ocp
 from nnpz.config import ConfigManager
@@ -35,21 +36,22 @@ class NeighborListOutputConfig(ConfigManager.ConfigHandler):
         self.__added = False
         self.__neighbor_info_output = False
 
-    def __addColumnProvider(self, args):
+    def __add_column_provider(self, args: Dict[str, Any]):
         self.__neighbor_info_output = args.get('neighbor_info_output', False)
         if self.__neighbor_info_output:
-            ref_ids = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)['reference_ids']
-            output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
-            nn = ConfigManager.getHandler(NeighborSelectorConfig).parseArgs(args)['neighbor_no']
+            ref_ids = ConfigManager.get_handler(ReferenceConfig).parse_args(args)['reference_ids']
+            output = ConfigManager.get_handler(OutputHandlerConfig).parse_args(args)[
+                'output_handler']
+            nn = ConfigManager.get_handler(NeighborSelectorConfig).parse_args(args)['neighbor_no']
             output.add_column_provider(ocp.NeighborList(ref_ids, n_neighbors=nn))
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__added:
-            self.__addColumnProvider(args)
+            self.__add_column_provider(args)
             self.__added = True
         return {
             'neighbor_info_output': self.__neighbor_info_output
         }
 
 
-ConfigManager.addHandler(NeighborListOutputConfig)
+ConfigManager.add_handler(NeighborListOutputConfig)

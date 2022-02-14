@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -32,9 +32,9 @@ def test_slice(sampler: McSampler, mock_output_handler: MockOutputHandler,
     mock_output_handler.write_output_for(np.arange(len(contributions)), contributions)
     columns = mock_output_handler.get_data_for_provider(slicer)
 
-    ref0 = mock_provider.getData(0)
-    ref1 = mock_provider.getData(1)
-    ref2 = mock_provider.getData(2)
+    ref0 = mock_provider.get_data(0)
+    ref1 = mock_provider.get_data(1)
+    ref2 = mock_provider.get_data(2)
 
     assert len(columns.dtype.fields) == 1
     assert 'MC_SLICE_AGGREGATE_P1_I1_AVG' in columns.dtype.fields

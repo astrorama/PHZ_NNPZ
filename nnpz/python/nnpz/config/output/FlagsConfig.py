@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,6 +18,7 @@
 Created on: 23/04/18
 Author: Nikolaos Apostolakos
 """
+from typing import Any, Dict
 
 import nnpz.io.output_column_providers as ocp
 from nnpz.config import ConfigManager
@@ -32,18 +33,18 @@ class FlagsConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__added = False
 
-    def __addColumnProvider(self, args):
+    def __add_column_provider(self, args: Dict[str, Any]):
         separate_columns = False
         if 'flags_in_separate_columns' in args:
             separate_columns = args['flags_in_separate_columns']
-        output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
+        output = ConfigManager.get_handler(OutputHandlerConfig).parse_args(args)['output_handler']
         output.add_column_provider(ocp.Flags(separate_columns))
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__added:
-            self.__addColumnProvider(args)
+            self.__add_column_provider(args)
             self.__added = True
         return {}
 
 
-ConfigManager.addHandler(FlagsConfig)
+ConfigManager.add_handler(FlagsConfig)

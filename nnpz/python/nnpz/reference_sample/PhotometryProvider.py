@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -20,23 +20,26 @@ Author: Nikolaos Apostolakos
 """
 
 import os
-from typing import List
+from typing import Dict, List, Tuple
 
 import astropy.io.fits as fits
 import numpy as np
+from astropy.io.fits import HDUList
 from astropy.table import Table, join
 from nnpz.exceptions import MissingDataException, UnknownNameException, \
     WrongFormatException
 
 
-class PhotometryProvider(object):
+class PhotometryProvider:
     """
     This is a utility cass for handling NNPZ photometry FITS files
     """
 
     @staticmethod
-    def __checkFileFormat(filename):
-        """Checks that the file exists and that it has the correct HDUs"""
+    def __check_file_format(filename: str) -> HDUList:
+        """
+        Checks that the file exists and that it has the correct HDUs
+        """
 
         if not os.path.exists(filename):
             raise FileNotFoundError('File {} does not exist'.format(filename))
@@ -52,8 +55,10 @@ class PhotometryProvider(object):
         return hdus
 
     @staticmethod
-    def __readFilterTransmissions(hdus, filter_list):
-        """Reads the filter transmissions from the hdus"""
+    def __read_filter_transmissions(hdus: HDUList, filter_list: List[str]) -> Dict[str, np.ndarray]:
+        """
+        Reads the filter transmissions from the hdus
+        """
 
         filter_data = {}
         for name in filter_list:
@@ -68,7 +73,8 @@ class PhotometryProvider(object):
         return filter_data
 
     @staticmethod
-    def __readPhotometryData(phot_table, filter_list):
+    def __read_photometry_data(phot_table: Table, filter_list: List[str]) \
+            -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Reads from the given table the photometry values for the given filters
         in a numpy array.
@@ -87,8 +93,9 @@ class PhotometryProvider(object):
                 shift_corr[:, i, :] = phot_table[name + '_SHIFT_CORR']
         return data, ebv_corr, shift_corr
 
-    def __init__(self, filename, ref_ids=None):
-        """Creates a new instance for accessing the given photometry file.
+    def __init__(self, filename: str, ref_ids: np.ndarray = None):
+        """
+        Creates a new instance for accessing the given photometry file.
 
         Args:
             filename: The photometry file to read
@@ -100,7 +107,7 @@ class PhotometryProvider(object):
         """
 
         # Check the format of the file
-        hdus = self.__checkFileFormat(filename)
+        hdus = self.__check_file_format(filename)
 
         # Get the type of photometry in the file
         # pylint: disable=no-member
@@ -113,7 +120,7 @@ class PhotometryProvider(object):
                               c != 'ID' and not c.endswith('_ERR') and not c.endswith('_CORR')]
 
         # Read the filter transmissions from the extension HDUs
-        self.__filter_data = self.__readFilterTransmissions(hdus, self.__filter_list)
+        self.__filter_data = self.__read_filter_transmissions(hdus, self.__filter_list)
 
         # Sort the rows following the ref sample layout
         if ref_ids is not None:
@@ -126,34 +133,35 @@ class PhotometryProvider(object):
         self.__ids = phot_table['ID']
 
         # Read the photometry values
-        self.__phot_data, self.__ebv_corr_data, self.__shift_corr_data = self.__readPhotometryData(
+        self.__phot_data, self.__ebv_corr_data, self.__shift_corr_data = self.__read_photometry_data(
             phot_table,
             self.__filter_list)
         self.__phot_data.flags.writeable = False
         self.__ebv_corr_data.flags.writeable = False
         self.__shift_corr_data.flags.writeable = False
 
-    def getType(self):
-        """Returns the type of photometry in the file.
+    def get_type(self) -> str:
+        """
+        Returns the type of photometry in the file.
 
-        The possible types are:
-        - Photons: The photometry values are photon count rates, expressed in counts/s/cm^2
-        - F_nu: The photometry values are energy flux densities expressed in erg/s/cm^2/Hz
-        -F_nu_uJy: The photometry values are energy flux densities expressed in uJy
-        -F_lambda: The photometry values are energy fluxes densities expressed in erg/s/cm^2/A
-        -MAG_AB: The photometry values are AB magnitudes
+        Warnings:
+            Since NNPZ 1.0, only F_nu_uJy is supported. Other units could be converted on
+            the fly using astropy.units
         """
         return self.__type
 
-    def getFilterList(self):
-        """Returns a list with the available filter names"""
+    def get_filter_list(self) -> List[str]:
+        """
+        Returns a list with the available filter names
+        """
         return self.__filter_list
 
-    def getFilterTransmission(self, filter):
-        """Returns the transmission of the given filter.
+    def get_filter_transmission(self, filter_name: str) -> np.ndarray:
+        """
+        Returns the transmission of the given filter.
 
         Args:
-            filter: The name of the filter to get the transmission for
+            filter_name: The name of the filter to get the transmission for
 
         Returns: A 2D numpy array of single precision floats, where the first
             dimension has size same as the number of knots and the second has
@@ -167,19 +175,22 @@ class PhotometryProvider(object):
             MissingDataException: If the HDU for the given filter transmission
                 is missing
         """
-        if filter not in self.__filter_data:
-            raise UnknownNameException('Unknown filter {}'.format(filter))
-        if self.__filter_data[filter] is None:
+        if filter_name not in self.__filter_data:
+            raise UnknownNameException('Unknown filter {}'.format(filter_name))
+        if self.__filter_data[filter_name] is None:
             raise MissingDataException(
-                'File does not contain tranmission for {} filter'.format(filter))
-        return self.__filter_data[filter]
+                'File does not contain tranmission for {} filter'.format(filter_name))
+        return self.__filter_data[filter_name]
 
-    def getIds(self):
-        """Returns the IDs of the objects there is photometry in the file"""
+    def get_ids(self):
+        """
+        Returns the IDs of the objects there is photometry in the file
+        """
         return self.__ids
 
-    def getData(self, filter_list: List[str] = None):
-        """Returns an array with the photometry data for the given bands.
+    def get_data(self, filter_list: List[str] = None) -> np.ndarray:
+        """
+        Returns an array with the photometry data for the given bands.
 
         Args:
             filter_list: The filter names to get the data for. If no filter is
@@ -187,7 +198,7 @@ class PhotometryProvider(object):
             order as returned by the getFilterList() method.
 
         Returns:
-            A three dimensional numpy array of single precision floats where the
+            A three-dimensional numpy array of single precision floats where the
             first dimension has the same size as the number of objects the file
             contains photometries for, the second axis has same size as the
             given bands and the third axis has always size two, where the first
@@ -210,7 +221,7 @@ class PhotometryProvider(object):
                 # copy if it is a list
                 filter_idx = slice(len(self.__filter_list))
             else:
-                filter_idx = np.array(list(map(lambda f: self.__filter_list.index(f), filter_list)))
+                filter_idx = np.array(list(map(self.__filter_list.index, filter_list)))
         except ValueError as e:
             missing = str(e).split()[0]
             raise UnknownNameException('File does not contain photometry for {}'.format(missing))
@@ -218,7 +229,7 @@ class PhotometryProvider(object):
         # Return a view rather than a copy
         return self.__phot_data[:, filter_idx, :]
 
-    def getEBVCorrectionFactors(self, filter_list: List[str] = None):
+    def get_ebv_correction_factors(self, filter_list: List[str] = None) -> np.ndarray:
         """
         Get the EBV correction factors
         """
@@ -228,7 +239,7 @@ class PhotometryProvider(object):
                 # copy if it is a list
                 filter_idx = slice(len(self.__filter_list))
             else:
-                filter_idx = np.array(list(map(lambda f: self.__filter_list.index(f), filter_list)))
+                filter_idx = np.array(list(map(self.__filter_list.index, filter_list)))
         except ValueError as e:
             missing = str(e).split()[0]
             raise UnknownNameException('File does not contain corrections for {}'.format(missing))
@@ -236,7 +247,7 @@ class PhotometryProvider(object):
             # Return a view rather than a copy
         return self.__ebv_corr_data[:, filter_idx]
 
-    def getShiftCorrectionFactors(self, filter_list: List[str] = None):
+    def get_shift_correction_factors(self, filter_list: List[str] = None) -> np.ndarray:
         """
         Get the filter variation correction factors
         """
@@ -246,7 +257,7 @@ class PhotometryProvider(object):
                 # copy if it is a list
                 filter_idx = slice(len(self.__filter_list))
             else:
-                filter_idx = np.array(list(map(lambda f: self.__filter_list.index(f), filter_list)))
+                filter_idx = np.array(list(map(self.__filter_list.index, filter_list)))
         except ValueError as e:
             missing = str(e).split()[0]
             raise UnknownNameException('File does not contain corrections for {}'.format(missing))

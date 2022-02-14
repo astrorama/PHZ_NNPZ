@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -25,7 +25,7 @@ from nnpz.photometry.photometry import Photometry
 from .fixtures import MockOutputHandler, mock_output_handler
 
 
-class DummyPhotometry(object):
+class DummyPhotometry:
     def __init__(self):
         self._data = np.zeros((2, 2),
                               dtype=[('A', np.float32), ('B', np.float32), ('C', np.float32)])

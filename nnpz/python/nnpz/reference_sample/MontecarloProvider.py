@@ -37,7 +37,7 @@ class MontecarloProvider(BaseProvider):
         if self._current_data_provider:
             self._current_data_provider.flush()
 
-    def _swapProvider(self, index):
+    def _swap_provider(self, index):
         if index != self._current_data_index:
             if self._current_data_provider is not None:
                 self._current_data_provider.flush()
@@ -46,7 +46,7 @@ class MontecarloProvider(BaseProvider):
                 self._data_pattern.format(index)
             )
 
-    def getDtype(self, parameter: str = None) -> np.dtype:
+    def get_dtype(self, parameter: str = None) -> np.dtype:
         """
         Returns:
             The dtype of the given parameter, or of all of them if undefined
@@ -54,13 +54,13 @@ class MontecarloProvider(BaseProvider):
         if not self._data_files:
             raise UninitializedException('MontecarloProvider not initialized')
         if not self._current_data_provider:
-            self._swapProvider(next(iter(self._data_files)))
+            self._swap_provider(next(iter(self._data_files)))
         if parameter:
             return self._current_data_provider.read(0)[parameter].dtype
         else:
             return self._current_data_provider.read(0).dtype
 
-    def getNSamples(self) -> int:
+    def get_n_samples(self) -> int:
         """
         Returns:
             How many samples each reference object has
@@ -68,45 +68,45 @@ class MontecarloProvider(BaseProvider):
         if not self._data_files:
             raise UninitializedException('MontecarloProvider not initialized')
         if not self._current_data_provider:
-            self._swapProvider(next(iter(self._data_files)))
+            self._swap_provider(next(iter(self._data_files)))
         return len(self._current_data_provider.read(0))
 
-    def getData(self, obj_id: int) -> np.ndarray:
+    def get_data(self, obj_id: int) -> np.ndarray:
         if obj_id < 0:
-            return np.zeros_like(self.getDtype())
+            return np.zeros_like(self.get_dtype())
         loc = self._index.get(obj_id, self._key)
         if not loc:
             return None
-        self._swapProvider(loc.file)
+        self._swap_provider(loc.file)
         return self._current_data_provider.read(loc.offset)
 
-    def getDataForIndex(self, obj_idxs: np.ndarray) -> np.ndarray:
+    def get_data_for_index(self, obj_idxs: np.ndarray) -> np.ndarray:
         assert len(obj_idxs.shape) == 2
         sorted_order = np.argsort(obj_idxs[:, 0])
         sorted_idxs = obj_idxs[sorted_order]
-        ids = self._index.getIds()[sorted_idxs[:, 0]]
-        output = np.zeros(len(obj_idxs), dtype=self.getDtype())
+        ids = self._index.get_ids()[sorted_idxs[:, 0]]
+        output = np.zeros(len(obj_idxs), dtype=self.get_dtype())
         for i, obj_id in zip(sorted_order, ids):
-            output[i] = self.getData(obj_id)[sorted_idxs[i, 1]]
+            output[i] = self.get_data(obj_id)[sorted_idxs[i, 1]]
         return output
 
-    def _getWriteableDataProvider(self):
+    def _get_writeable_data_provider(self):
         """
         Returns:
             A suitable data provider to add new data
         """
         if not self._last_data_index:
             self._last_data_index = 1
-            self._swapProvider(self._last_data_index)
+            self._swap_provider(self._last_data_index)
 
         # Check if the last file exceeded the size limit and create a new one
         if self._current_data_provider.size() >= self._data_limit:
             self._last_data_index += 1
-            self._swapProvider(self._last_data_index)
+            self._swap_provider(self._last_data_index)
 
         return self._last_data_index, self._current_data_provider
 
-    def addData(self, object_ids: Iterable[int] = None, data: np.ndarray = None):
+    def add_data(self, object_ids: Iterable[int] = None, data: np.ndarray = None):
         """
         Add new data to the MC provider
 
@@ -134,7 +134,7 @@ class MontecarloProvider(BaseProvider):
         )
 
         # First available provider and merge whatever is possible
-        provider_idx, provider = self._getWriteableDataProvider()
+        provider_idx, provider = self._get_writeable_data_provider()
         available_size = self._data_limit - provider.size()
         nfit = available_size // record_size + (available_size % record_size > 0)
 
@@ -150,9 +150,9 @@ class MontecarloProvider(BaseProvider):
             selection = slice(nfit + records_per_file * file_i,
                               nfit + records_per_file * (file_i + 1))
 
-            provider_idx, provider = self._getWriteableDataProvider()
+            provider_idx, provider = self._get_writeable_data_provider()
             index_data['id'][selection] = object_ids[selection]
             index_data[file_field][selection] = provider_idx
             index_data[offset_field][selection] = provider.append(data[selection])
 
-        self._index.bulkAdd(index_data)
+        self._index.bulk_add(index_data)

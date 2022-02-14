@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -29,12 +29,12 @@ from nnpz.exceptions import CorruptedFileException, InvalidAxisException, \
     InvalidDimensionsException, UninitializedException
 
 
-class SedDataProvider(object):
+class SedDataProvider:
     """
     Class for handling the SED data file of NNPZ format
     """
 
-    def __tryLoad(self):
+    def __try_load(self):
         """
         Initialize internal members and perform some checks if the datafile exists
         """
@@ -68,7 +68,7 @@ class SedDataProvider(object):
         self.__entries = 0
         self.__full = None
         self.__knots = 0
-        self.__tryLoad()
+        self.__try_load()
 
     def __enter__(self):
         return self
@@ -91,13 +91,13 @@ class SedDataProvider(object):
         """
         return os.path.getsize(self.__filename) if os.path.exists(self.__filename) else 0
 
-    def getKnots(self) -> int:
+    def get_knots_size(self) -> int:
         """
         Return how many knots store this SED provider
         """
         return self.__knots
 
-    def __fromCache(self, pos: int) -> int:
+    def __from_cache(self, pos: int) -> int:
         """
         Return the offset within the cache
         """
@@ -109,7 +109,7 @@ class SedDataProvider(object):
             self.__cache = np.load(self.__filename, mmap_mode='r')
         return pos
 
-    def readSed(self, pos: int) -> np.ndarray:
+    def read_sed(self, pos: int) -> np.ndarray:
         """
         Reads the data of an SED.
 
@@ -130,10 +130,10 @@ class SedDataProvider(object):
             raise UninitializedException()
         if self.__full is not None:
             return self.__full[pos]
-        offset = self.__fromCache(pos)
+        offset = self.__from_cache(pos)
         return self.__cache[offset]
 
-    def appendSed(self, data: Union[np.ndarray, list]) -> int:
+    def append_sed(self, data: Union[np.ndarray, list]) -> int:
         """
         Appends an SED to the end of the file.
 

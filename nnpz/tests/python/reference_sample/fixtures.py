@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -26,7 +26,6 @@ import numpy as np
 import pytest
 from astropy.io import fits
 from astropy.table import Column, Table
-from nnpz.utils.fits import tableToHdu
 
 # noinspection PyUnresolvedReferences
 from ..fixtures.util_fixtures import temp_dir_fixture
@@ -285,7 +284,7 @@ def photometry_file_fixture(temp_dir_fixture: str, photometry_ids_fixure: np.nda
         t[filter_name] = Column(photometry_data_fixture[filter_name][:, 0])
         t[filter_name + '_ERR'] = Column(photometry_data_fixture[filter_name][:, 1])
 
-    hdus.append(tableToHdu(t))
+    hdus.append(fits.BinTableHDU(t))
 
     for name, data in filters_fixture.items():
         if name == 'vis':
@@ -294,7 +293,7 @@ def photometry_file_fixture(temp_dir_fixture: str, photometry_ids_fixure: np.nda
         t.meta['EXTNAME'] = name
         t['Wavelength'] = Column(data[:, 0])
         t['Transmission'] = Column(data[:, 1])
-        hdus.append(tableToHdu(t))
+        hdus.append(fits.BinTableHDU(t))
 
     filename = os.path.join(temp_dir_fixture, 'phot.fits')
     hdus.writeto(filename)

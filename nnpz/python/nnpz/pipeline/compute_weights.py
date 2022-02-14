@@ -31,10 +31,10 @@ from nnpz.photometry.photometry import Photometry
 
 class ComputeWeights:
     def __init__(self, conf_manager: ConfigManager):
-        target_system = conf_manager.getObject('target_system')
-        ref_system = conf_manager.getObject('reference_system')
+        target_system = conf_manager.get('target_system')
+        ref_system = conf_manager.get('reference_system')
         self.__ref_filter_indexes = ref_system.get_band_indexes(target_system.bands)
-        self.__weight_calculator = conf_manager.getObject('weight_calculator')
+        self.__weight_calculator = conf_manager.get('weight_calculator')
 
     @u.quantity_input
     def __call__(self, target: Photometry, neighbor_photo: u.uJy,

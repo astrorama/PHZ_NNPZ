@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -44,7 +44,7 @@ class ListFileFilterProvider(FilterProviderInterface):
     """
 
     @staticmethod
-    def __parseFilterListFile(list_file: str):
+    def __parse_filter_list_file(list_file: str):
         """
         Parses the given file in a list of (filtername, filename) pairs
         """
@@ -97,7 +97,7 @@ class ListFileFilterProvider(FilterProviderInterface):
             raise FileNotFoundError(list_file + ' does not exist')
 
         # Get the list with the (filtername, filename) pairs
-        filter_file_pairs = self.__parseFilterListFile(list_file)
+        filter_file_pairs = self.__parse_filter_list_file(list_file)
 
         # Populate the member variables
         self.__name_list = []
@@ -107,11 +107,11 @@ class ListFileFilterProvider(FilterProviderInterface):
             self.__name_list.append(filtername)
             self.__file_map[filtername] = filename
 
-    def getFilterNames(self) -> List[str]:
+    def get_filter_names(self) -> List[str]:
         """Returns the names of the filters"""
         return self.__name_list
 
-    def getFilterTransmission(self, name: str) -> np.ndarray:
+    def get_filter_transmission(self, name: str) -> np.ndarray:
         """Provides the transmission curve of the filter with the given name.
 
         Args:

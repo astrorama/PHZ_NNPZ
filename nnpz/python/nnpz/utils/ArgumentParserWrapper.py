@@ -22,7 +22,7 @@ Author: Alejandro Alvarez Ayllon
 import argparse
 
 
-class ArgumentParserWrapper(object):
+class ArgumentParserWrapper:
     """
     Wraps an ArgumentParser, "tricking" Elements, so the configuration file can be handled
     by us directly (it is Python code).

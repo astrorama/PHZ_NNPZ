@@ -37,12 +37,12 @@ logger = Logging.getLogger(__name__)
 
 class NeighborFinder:
     def __init__(self, conf_manager: ConfigManager):
-        self.__ref_data: Photometry = conf_manager.getObject('reference_photometry')
-        self.__source_independent_ebv = conf_manager.getObject('source_independent_ebv')
-        self.__selector = conf_manager.getObject('neighbor_selector')
-        self.__knn = conf_manager.getObject('neighbor_no')
+        self.__ref_data: Photometry = conf_manager.get('reference_photometry')
+        self.__source_independent_ebv = conf_manager.get('source_independent_ebv')
+        self.__selector = conf_manager.get('neighbor_selector')
+        self.__knn = conf_manager.get('neighbor_no')
         # Train the selector
-        self.__selector.fit(self.__ref_data, conf_manager.getObject('target_system'))
+        self.__selector.fit(self.__ref_data, conf_manager.get('target_system'))
 
     def __call__(self, target: Photometry, out: np.ndarray):
         assert 'NEIGHBOR_INDEX' in out.dtype.names

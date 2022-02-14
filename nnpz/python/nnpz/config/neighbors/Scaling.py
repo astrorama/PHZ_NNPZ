@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2022 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 #  This library is free software; you can redistribute it and/or modify it under the terms of
 #  the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -14,6 +14,7 @@
 #  MA 02110-1301 USA
 #
 import os
+from typing import Any, Callable, Dict, Union
 
 from astropy.table import Table
 from nnpz.config import ConfigManager
@@ -27,7 +28,7 @@ class Scaling(ConfigManager.ConfigHandler):
         self.__scaler = None
 
     @staticmethod
-    def getScalePrior(prior):
+    def get_scale_prior(prior: Union[str, Callable[[float], float]]) -> Callable[[float], float]:
         if hasattr(prior, '__call__'):
             return prior
         if prior == 'uniform':
@@ -37,21 +38,21 @@ class Scaling(ConfigManager.ConfigHandler):
             return interpolate.interp1d(table.columns[0], table.columns[1], kind='linear')
         raise Exception('Unknown prior')
 
-    def __setupScalePrior(self, args):
+    def __setup_scale_prior(self, args: Dict[str, Any]):
         scale_prior = args.get('scale_prior', None)
         batch_size = args.get('batch_size')
         if scale_prior:
-            self.__scaler = Chi2Scaling(prior=self.getScalePrior(scale_prior),
+            self.__scaler = Chi2Scaling(prior=self.get_scale_prior(scale_prior),
                                         batch_size=batch_size,
                                         max_iter=args.get('scale_max_iter', 20),
                                         rtol=args.get('scale_rtol', 1e-4))
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__initialized:
-            self.__setupScalePrior(args)
+            self.__setup_scale_prior(args)
         return {
             'scaler': self.__scaler
         }
 
 
-ConfigManager.addHandler(Scaling)
+ConfigManager.add_handler(Scaling)

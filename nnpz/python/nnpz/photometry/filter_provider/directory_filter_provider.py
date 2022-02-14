@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -47,7 +47,7 @@ class DirectoryFilterProvider(FilterProviderInterface):
     """
 
     @staticmethod
-    def __parseFilterListFile(path: str, dir_contents: List[str]) -> List[Tuple[str, str]]:
+    def __parse_filter_list_file(path: str) -> List[Tuple[str, str]]:
         """
         Parses the filter_list.txt in a list of (filtername, filename) pairs
         """
@@ -103,7 +103,7 @@ class DirectoryFilterProvider(FilterProviderInterface):
                     dir_contents.append(os.path.relpath(filter_path, path))
 
         if 'filter_list.txt' in dir_contents:
-            filter_file_pairs = self.__parseFilterListFile(path, dir_contents)
+            filter_file_pairs = self.__parse_filter_list_file(path)
         else:
             filter_file_pairs = [(os.path.splitext(f)[0], f) for f in dir_contents]
 
@@ -115,11 +115,11 @@ class DirectoryFilterProvider(FilterProviderInterface):
             self.__name_list.append(filtername)
             self.__file_map[filtername] = os.path.join(path, filename)
 
-    def getFilterNames(self) -> List[str]:
+    def get_filter_names(self) -> List[str]:
         """Returns the names of the filters"""
         return self.__name_list
 
-    def getFilterTransmission(self, name: str) -> np.ndarray:
+    def get_filter_transmission(self, name: str) -> np.ndarray:
         """Provides the transmission curve of the filter with the given name.
 
         Args:

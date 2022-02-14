@@ -1,3 +1,20 @@
+#
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of
+# the GNU Lesser General Public License as published by the Free Software Foundation;
+# either version 3.0 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library;
+# if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301 USA
+#
+from typing import Any, Dict
+
 import numpy as np
 from nnpz.config import ConfigManager
 from nnpz.config.output.OutputHandlerConfig import OutputHandlerConfig
@@ -31,29 +48,29 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         self.__args = []
         self.__samplers = {}
 
-    def __parse_args_common(self, args):
-        output_config = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)
-        ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
+    def __parse_args_common(self, args: Dict[str, Any]):
+        output_config = ConfigManager.get_handler(OutputHandlerConfig).parse_args(args)
+        ref_config = ConfigManager.get_handler(ReferenceConfig).parse_args(args)
 
         self.__output = output_config['output_handler']
         self.__ref_ids = ref_config['reference_ids']
         self.__ref_sample = ref_config['reference_sample']
         self.__take_n = args.get('mc_pdf_take_n', 100)
 
-    def __add_common(self, args):
+    def __add_common(self, args: Dict[str, Any]):
         for cfg_key in ['mc_1d_pdf', 'mc_2d_pdf', 'mc_samples', 'mc_count', 'mc_slice_aggregate']:
             cfg = args.get(cfg_key, {})
             for provider_name, _ in cfg.items():
                 if provider_name in self.__samplers:
                     continue
-                provider = self.__ref_sample.getProvider(provider_name)
+                provider = self.__ref_sample.get_provider(provider_name)
                 sampler = McSampler(
                     take_n=self.__take_n, mc_provider=provider, ref_ids=self.__ref_ids
                 )
                 self.__samplers[provider_name] = sampler
                 self.__output.add_column_provider(sampler)
 
-    def __add_mc_1d_pdf(self, args):
+    def __add_mc_1d_pdf(self, args: Dict[str, Any]):
         mc_1d_pdf = args.get('mc_1d_pdf', None)
         if not mc_1d_pdf:
             return
@@ -68,7 +85,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                 # Histogram binning
                 self.__output.add_extension_table_provider(McPdf1DBins(param, binning))
 
-    def __add_mc_2d_pdf(self, args):
+    def __add_mc_2d_pdf(self, args: Dict[str, Any]):
         mc_2d_pdf = args.get('mc_2d_pdf', None)
         if not mc_2d_pdf:
             return
@@ -86,7 +103,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                     McPdf2DBins((param1, param2), (binning1, binning2))
                 )
 
-    def __add_samples(self, args):
+    def __add_samples(self, args: Dict[str, Any]):
         mc_samples = args.get('mc_samples', None)
         if not mc_samples:
             return
@@ -96,7 +113,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
             for parameter_set in parameters:
                 self.__output.add_column_provider(McSamples(sampler, parameter_set))
 
-    def __add_counters(self, args):
+    def __add_counters(self, args: Dict[str, Any]):
         mc_counters = args.get('mc_count', None)
         if not mc_counters:
             return
@@ -104,7 +121,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         for provider_name, parameters in mc_counters.items():
             sampler = self.__samplers[provider_name]
             for parameter, bins in parameters:
-                pdtype = sampler.get_provider().getDtype(parameter)
+                pdtype = sampler.get_provider().get_dtype(parameter)
                 if not np.issubdtype(pdtype, np.int) and not np.issubdtype(pdtype, np.bool):
                     raise Exception('Can only count integer types, got {}'.format(pdtype))
                 if not np.issubdtype(bins.dtype, np.int) and not np.issubdtype(bins.dtype, np.bool):
@@ -113,7 +130,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                 self.__output.add_column_provider(McCounter(sampler, parameter, bins))
                 self.__output.add_extension_table_provider(McCounterBins(parameter, bins))
 
-    def __add_slicers(self, args):
+    def __add_slicers(self, args: Dict[str, Any]):
         mc_slicers = args.get('mc_slice_aggregate', None)
         if not mc_slicers:
             return
@@ -130,7 +147,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                         target, sliced, suffix, binning
                     ))
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__added:
             self.__parse_args_common(args)
             self.__add_common(args)
@@ -143,4 +160,4 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         return {}
 
 
-ConfigManager.addHandler(McPdfConfig)
+ConfigManager.add_handler(McPdfConfig)

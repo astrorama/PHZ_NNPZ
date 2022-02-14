@@ -23,8 +23,8 @@ from .fixtures import *
 def test_correctedPhotometry(reference_provider_fixture: PhotometryProvider,
                              reference_photometry: Photometry, target_photometry: Photometry):
     # Given
-    ebv_corr = reference_provider_fixture.getEBVCorrectionFactors()
-    shift_corr = reference_provider_fixture.getShiftCorrectionFactors()
+    ebv_corr = reference_provider_fixture.get_ebv_correction_factors()
+    shift_corr = reference_provider_fixture.get_shift_correction_factors()
 
     # When
     corrected = CorrectPhotometry(dict(reference_system=reference_photometry.system,

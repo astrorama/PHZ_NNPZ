@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -83,7 +83,7 @@ def test_getType(photometry_file_fixture: str):
     provider = PhotometryProvider(photometry_file_fixture)
 
     # When
-    type = provider.getType()
+    type = provider.get_type()
 
     # Then
     assert type == 'F_nu_uJy'
@@ -101,7 +101,7 @@ def test_getFilterList(photometry_file_fixture: str, filters_fixture: Dict[str, 
 
     # When
     provider = PhotometryProvider(photometry_file_fixture)
-    filter_list = set(provider.getFilterList())
+    filter_list = set(provider.get_filter_list())
 
     # Then
     assert filter_list == expected
@@ -122,7 +122,7 @@ def test_getFilterTransmission_wrongName(photometry_file_fixture: str):
 
     # Then
     with pytest.raises(UnknownNameException):
-        provider.getFilterTransmission(wrong_name)
+        provider.get_filter_transmission(wrong_name)
 
 
 ###############################################################################
@@ -140,7 +140,7 @@ def test_getFilterTransmission_missingData(photometry_file_fixture: str):
 
     # Then
     with pytest.raises(MissingDataException):
-        provider.getFilterTransmission(filter)
+        provider.get_filter_transmission(filter)
 
 
 ###############################################################################
@@ -159,7 +159,7 @@ def test_getFilterTransmission_success(photometry_file_fixture: str,
             continue
 
         # When
-        trans = provider.getFilterTransmission(name)
+        trans = provider.get_filter_transmission(name)
 
         # Then
         assert np.array_equal(trans, expected)
@@ -176,7 +176,7 @@ def test_getIds(photometry_file_fixture: str, photometry_ids_fixure: np.ndarray)
     provider = PhotometryProvider(photometry_file_fixture)
 
     # When
-    ids = provider.getIds()
+    ids = provider.get_ids()
 
     # Then
     assert np.array_equal(ids, photometry_ids_fixure)
@@ -197,7 +197,7 @@ def test_getData_wrongFilter(photometry_file_fixture: str):
 
     # Then
     with pytest.raises(UnknownNameException):
-        provider.getData(wrong_name)
+        provider.get_data(wrong_name)
 
 
 ###############################################################################
@@ -209,8 +209,8 @@ def test_getData_noFilterList(photometry_file_fixture: str, photometry_data_fixt
 
     # When
     provider = PhotometryProvider(photometry_file_fixture)
-    data = provider.getData()
-    filters = provider.getFilterList()
+    data = provider.get_data()
+    filters = provider.get_filter_list()
 
     # Then
     assert np.array_equal(data[:, 0, :], photometry_data_fixture[filters[0]])
@@ -230,7 +230,7 @@ def test_getData_withArgs(photometry_file_fixture: str, photometry_data_fixture:
     provider = PhotometryProvider(photometry_file_fixture)
 
     # When
-    data = provider.getData(['vis', 'Y'])
+    data = provider.get_data(['vis', 'Y'])
 
     # Then
     assert np.array_equal(data[:, 0, :], photometry_data_fixture['vis'])

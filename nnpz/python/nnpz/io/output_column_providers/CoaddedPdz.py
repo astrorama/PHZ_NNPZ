@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -42,8 +42,8 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
 
     def __init__(self, reference_sample: ReferenceSample):
         super(CoaddedPdz, self).__init__()
-        self.__pdz_provider = reference_sample.getProvider('pdz')
-        self.__pdz_bins = self.__pdz_provider.getRedshiftBins()
+        self.__pdz_provider = reference_sample.get_provider('pdz')
+        self.__pdz_bins = self.__pdz_provider.get_redshift_bins()
 
     def get_column_definition(self) \
             -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
@@ -56,7 +56,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         neighbor_weights = neighbor_info['NEIGHBOR_WEIGHTS']
         output_pdz = output['REDSHIFT_PDF']
 
-        neighbor_pdz = self.__pdz_provider.getPdzForIndex(neighbor_idx.ravel())
+        neighbor_pdz = self.__pdz_provider.get_pdz_for_index(neighbor_idx.ravel())
         neighbor_pdz = neighbor_pdz.reshape(*neighbor_idx.shape, -1)
 
         # Coadd

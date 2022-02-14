@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -21,9 +21,9 @@ Author: Nikolaos Apostolakos
 
 import tempfile
 
-from nnpz import ReferenceSample
 from nnpz.exceptions import *
 from nnpz.reference_sample.MontecarloProvider import MontecarloProvider
+from nnpz.reference_sample.ReferenceSample import ReferenceSample
 
 from .fixtures import *
 
@@ -59,7 +59,7 @@ def test_createNew_dirExists(temp_dir_fixture):
 
     # Then
     with pytest.raises(OSError):
-        ReferenceSample.createNew(dir_name)
+        ReferenceSample.create(dir_name)
 
 
 ###############################################################################
@@ -73,7 +73,7 @@ def test_createNew_success(temp_dir_fixture):
     dir_name = os.path.join(temp_dir_fixture, 'ref_sample')
 
     # When
-    result = ReferenceSample.createNew(dir_name)
+    result = ReferenceSample.create(dir_name)
 
     # Then
 
@@ -197,7 +197,7 @@ def test_getIds(reference_sample_dir_fixture, sed_list_fixture):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    ids = sample.getIds()
+    ids = sample.get_ids()
 
     # Then
     assert np.all(sorted(ids) == sorted(expected))
@@ -215,7 +215,7 @@ def test_getSedData_dataUnset(reference_sample_dir_fixture):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    sed_data = [sample.getSedData(i) for i in unset_sed_ids]
+    sed_data = [sample.get_sed_data(i) for i in unset_sed_ids]
 
     # Then
     assert sed_data[0] is None
@@ -238,7 +238,7 @@ def test_getSedData_withData(reference_sample_dir_fixture, sed_list_fixture):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    sed_data = [sample.getSedData(i) for i in id_list]
+    sed_data = [sample.get_sed_data(i) for i in id_list]
 
     # Then
     for i in range(len(id_list)):
@@ -278,7 +278,7 @@ def test_getPdzData_dataUnset(reference_sample_dir_fixture):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    pdz_data = [sample.getPdzData(i) for i in unset_pdz_ids]
+    pdz_data = [sample.get_pdz_data(i) for i in unset_pdz_ids]
 
     # Then
     assert pdz_data[0] is None
@@ -297,7 +297,7 @@ def test_getMcData_dataUnset(reference_sample_dir_fixture, providers_with_mc):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
-    mc_data = [sample.getData('mc', i) for i in unset_mc_ids]
+    mc_data = [sample.get_data('mc', i) for i in unset_mc_ids]
 
     # Then
     assert mc_data[0] is None
@@ -320,7 +320,7 @@ def test_getMcData_withData(reference_sample_dir_fixture, mc_data_fixture, provi
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
-    data = [sample.getData('mc', i) for i in id_list]
+    data = [sample.get_data('mc', i) for i in id_list]
 
     # Then
     for i in range(len(id_list)):
@@ -338,7 +338,7 @@ def test_getPdzData_withData(reference_sample_dir_fixture, pdz_list_fixture, red
 
     for obj in pdz_list_fixture.values():
         for obj_id, expected in obj:
-            pdz = sample.getPdzData(obj_id)
+            pdz = sample.get_pdz_data(obj_id)
             assert pdz.shape == (len(expected),)
             assert np.array_equal(pdz, expected)
 
@@ -422,17 +422,17 @@ def test_importRefSample(reference_sample_dir_fixture):
     """
     new_ref_dir = tempfile.mktemp(prefix='nnpz_test_new_ref')
 
-    new_ref = ReferenceSample.createNew(new_ref_dir)
-    new_ref.importDirectory(reference_sample_dir_fixture)
+    new_ref = ReferenceSample.create(new_ref_dir)
+    new_ref.import_directory(reference_sample_dir_fixture)
 
     old_ref = ReferenceSample(reference_sample_dir_fixture)
     assert len(old_ref) == len(new_ref)
 
-    for obj_id in old_ref.getIds():
-        nsed = new_ref.getSedData(obj_id)
-        npdz = new_ref.getPdzData(obj_id)
-        assert np.array_equal(nsed, old_ref.getSedData(obj_id))
-        assert np.array_equal(npdz, old_ref.getPdzData(obj_id))
+    for obj_id in old_ref.get_ids():
+        nsed = new_ref.get_sed_data(obj_id)
+        npdz = new_ref.get_pdz_data(obj_id)
+        assert np.array_equal(nsed, old_ref.get_sed_data(obj_id))
+        assert np.array_equal(npdz, old_ref.get_pdz_data(obj_id))
 
 
 ###############################################################################
@@ -451,10 +451,10 @@ def test_addProvider(reference_sample_dir_fixture):
 
     ref_sample = ReferenceSample(reference_sample_dir_fixture)
     with pytest.raises(KeyError):
-        ref_sample.getProvider('mc2')
+        ref_sample.get_provider('mc2')
 
     # When
-    ref_sample.addProvider(
+    ref_sample.add_provider(
         'MontecarloProvider', name='mc2',
         data_pattern='mc2_data_{}.npy',
         object_ids=[100, 101],
@@ -462,11 +462,11 @@ def test_addProvider(reference_sample_dir_fixture):
     )
 
     # Then
-    prov = ref_sample.getProvider('mc2')
+    prov = ref_sample.get_provider('mc2')
     assert prov is not None
     assert isinstance(prov, MontecarloProvider)
 
-    data = ref_sample.getData('mc2', 100)
+    data = ref_sample.get_data('mc2', 100)
     assert all(
         [np.allclose(expected_data[c][0], data[c].reshape(1, 100)) for c in data.dtype.names]
     )
@@ -488,10 +488,10 @@ def test_addProviderExists(reference_sample_dir_fixture):
 
     ref_sample = ReferenceSample(reference_sample_dir_fixture)
     with pytest.raises(KeyError):
-        ref_sample.getProvider('mc2')
+        ref_sample.get_provider('mc2')
 
     # When
-    ref_sample.addProvider(
+    ref_sample.add_provider(
         'MontecarloProvider', name='mc2',
         data_pattern='mc2_data_{}.npy',
         object_ids=[100, 101],
@@ -500,7 +500,7 @@ def test_addProviderExists(reference_sample_dir_fixture):
 
     # Then
     with pytest.raises(AlreadySetException):
-        ref_sample.addProvider(
+        ref_sample.add_provider(
             'MontecarloProvider', name='mc2',
             data_pattern='mc2_data_{}.npy',
             object_ids=[205, 206],
@@ -524,10 +524,10 @@ def test_addProviderOverwrite(reference_sample_dir_fixture):
 
     ref_sample = ReferenceSample(reference_sample_dir_fixture)
     with pytest.raises(KeyError):
-        ref_sample.getProvider('mc2')
+        ref_sample.get_provider('mc2')
 
     # When
-    ref_sample.addProvider(
+    ref_sample.add_provider(
         'MontecarloProvider', name='mc2',
         data_pattern='mc2_data_{}.npy',
         object_ids=[100, 101],
@@ -535,7 +535,7 @@ def test_addProviderOverwrite(reference_sample_dir_fixture):
     )
 
     # Then
-    ref_sample.addProvider(
+    ref_sample.add_provider(
         'MontecarloProvider', name='mc2',
         data_pattern='mc2_data_{}.npy',
         object_ids=[205, 206],

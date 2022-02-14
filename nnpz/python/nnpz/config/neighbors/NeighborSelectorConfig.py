@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,6 +18,7 @@
 Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
+from typing import Any, Dict
 
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
@@ -41,14 +42,14 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         self.__neighbors_no = None
         self.__ref_bands = None
 
-    def __createSelector(self, args):
-        self._checkParameterExists('neighbor_method', args)
-        self._checkParameterExists('neighbors_no', args)
-        self._checkParameterExists('reference_sample_phot_filters', args)
+    def __create_selector(self, args: Dict[str, Any]):
+        self._exists_parameter('neighbor_method', args)
+        self._exists_parameter('neighbors_no', args)
+        self._exists_parameter('reference_sample_phot_filters', args)
 
         neighbor_method = args['neighbor_method']
 
-        scaler = ConfigManager.getHandler(Scaling).parseArgs(args)['scaler']
+        scaler = ConfigManager.get_handler(Scaling).parse_args(args)['scaler']
 
         self.__neighbors_no = args['neighbors_no']
         self.__ref_bands = args['reference_sample_phot_filters']
@@ -65,7 +66,7 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
                 self.__neighbors_no, balanced=args.get('balanced_kdtree', True)
             )
         elif neighbor_method == 'Combined':
-            self._checkParameterExists('batch_size', args)
+            self._exists_parameter('batch_size', args)
             self.__selector = CombinedSelector(
                 self.__neighbors_no, args['batch_size'],
                 balanced=args.get('balanced_kdtree', True)
@@ -75,13 +76,13 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         else:
             self.__selector = BruteForceSelector(self.__neighbors_no)
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if self.__selector is None:
-            self.__createSelector(args)
+            self.__create_selector(args)
         return {
             'neighbor_selector': self.__selector,
             'neighbor_no': self.__neighbors_no
         }
 
 
-ConfigManager.addHandler(NeighborSelectorConfig)
+ConfigManager.add_handler(NeighborSelectorConfig)

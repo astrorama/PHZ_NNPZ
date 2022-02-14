@@ -13,26 +13,28 @@
 #  if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301 USA
 #
-from nnpz.config import ConfigManager
+from typing import Any, Dict
+
 from Weights import WeightCalculator
+from nnpz.config import ConfigManager
 
 
 class WeightConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__calculator = None
 
-    def __createCalculator(self, args):
-        self._checkParameterExists('weight_method', args)
+    def __create_calculator(self, args: Dict[str, Any]):
+        self._exists_parameter('weight_method', args)
         method = args['weight_method']
         alternative = args.get('weight_method_alternative', 'Euclidean')
         self.__calculator = WeightCalculator(method, alternative)
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if self.__calculator is None:
-            self.__createCalculator(args)
+            self.__create_calculator(args)
         return {
             'weight_calculator': self.__calculator,
         }
 
 
-ConfigManager.addHandler(WeightConfig)
+ConfigManager.add_handler(WeightConfig)

@@ -35,6 +35,7 @@ from nnpz.utils.ArgumentParserWrapper import ArgumentParserWrapper
 logger = logging.getLogger(__name__)
 
 
+# noinspection PyPep8Naming
 def defineSpecificProgramOptions():
     """
     Program options. Returns a ArgumentParserWrapper that tricks Elements so we can
@@ -44,6 +45,7 @@ def defineSpecificProgramOptions():
     return ArgumentParserWrapper(description='Nearest Neighbor Photo-Z (neighbor search)')
 
 
+# noinspection PyPep8Naming
 def mainMethod(args):
     """
     Entry point for NNPZ
@@ -55,13 +57,13 @@ def mainMethod(args):
     conf_manager = ConfigManager(args.config_file, args.extra_arguments)
 
     # Read the target catalog data
-    input_photometry: Photometry = conf_manager.getObject('target_photometry')
-    id_col: str = conf_manager.getObject('target_id_column')
+    input_photometry: Photometry = conf_manager.get('target_photometry')
+    id_col: str = conf_manager.get('target_id_column')
 
     # 1. Find
     neighbor_finder: NeighborFinder = NeighborFinder(conf_manager)
-    ref_data: Photometry = conf_manager.getObject('reference_photometry')
-    knn: int = conf_manager.getObject('neighbor_no')
+    ref_data: Photometry = conf_manager.get('reference_photometry')
+    knn: int = conf_manager.get('neighbor_no')
 
     # 2. Correct
     corrector: CorrectPhotometry = CorrectPhotometry(conf_manager)
@@ -70,7 +72,7 @@ def mainMethod(args):
     weighter: ComputeWeights = ComputeWeights(conf_manager)
 
     # 4. Output
-    output_handler: OutputHandler = conf_manager.getObject('output_handler')
+    output_handler: OutputHandler = conf_manager.get('output_handler')
 
     # Dtype for work area
     neighbor_columns = [
@@ -83,7 +85,7 @@ def mainMethod(args):
     ]
 
     # Chunks
-    chunks: List[slice] = conf_manager.getObject('target_idx_slices')
+    chunks: List[slice] = conf_manager.get('target_idx_slices')
 
     # Process in chunks
     start = datetime.utcnow()

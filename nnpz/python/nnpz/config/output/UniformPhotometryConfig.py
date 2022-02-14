@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -13,6 +13,7 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+from typing import Any, Dict
 
 from nnpz.config import ConfigManager
 from nnpz.config.output import OutputHandlerConfig
@@ -25,15 +26,15 @@ class UniformPhotometryConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__added = False
 
-    def __addColumnProviders(self, args):
+    def __add_column_providers(self, args: Dict[str, Any]):
         corrected_phot = args.get('corrected_photometry', None)
         if not corrected_phot:
             return
 
         # Get dependencies
-        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
-        ref_config = ConfigManager.getHandler(ReferenceConfig).parseArgs(args)
-        output_config = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)
+        target_config = ConfigManager.get_handler(TargetCatalogConfig).parse_args(args)
+        ref_config = ConfigManager.get_handler(ReferenceConfig).parse_args(args)
+        output_config = ConfigManager.get_handler(OutputHandlerConfig).parse_args(args)
 
         target_phot = target_config['target_photometry']
         ref_phot = ref_config['reference_photometry']
@@ -43,11 +44,11 @@ class UniformPhotometryConfig(ConfigManager.ConfigHandler):
             UniformPhotometry(target_phot, ref_phot, corrected_phot)
         )
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__added:
-            self.__addColumnProviders(args)
+            self.__add_column_providers(args)
             self.__added = True
         return {}
 
 
-ConfigManager.addHandler(UniformPhotometryConfig)
+ConfigManager.add_handler(UniformPhotometryConfig)

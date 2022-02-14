@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -29,12 +29,12 @@ from nnpz.exceptions import AlreadySetException, CorruptedFileException, Invalid
     InvalidDimensionsException, UninitializedException
 
 
-class PdzDataProvider(object):
+class PdzDataProvider:
     """
     Class for handling the PDZ data file of NNPZ format
     """
 
-    def __tryLoad(self):
+    def __try_load(self):
         """
         Initialize internal members and perform some checks if the datafile exists
         """
@@ -66,7 +66,7 @@ class PdzDataProvider(object):
         self.__entries = 0
         self.__full = None
         self.__redshift_bins = None
-        self.__tryLoad()
+        self.__try_load()
 
     def __enter__(self):
         return self
@@ -89,7 +89,7 @@ class PdzDataProvider(object):
         """
         return os.path.getsize(self.__filename) if os.path.exists(self.__filename) else 0
 
-    def setRedshiftBins(self, bins: np.ndarray):
+    def set_redshift_bins(self, bins: np.ndarray):
         """
         Sets the redshift bins of the PDZs in the file.
 
@@ -116,7 +116,7 @@ class PdzDataProvider(object):
         self.__redshift_bins = np.asarray(bins, dtype=np.float32)
         self.__full = self.__redshift_bins.reshape((1, -1))
 
-    def getRedshiftBins(self) -> np.ndarray:
+    def get_redshift_bins(self) -> np.ndarray:
         """
         Returns the redshift bins of the PDZs in the file.
 
@@ -125,7 +125,7 @@ class PdzDataProvider(object):
         """
         return self.__redshift_bins
 
-    def __fromCache(self, pos: int) -> int:
+    def __from_cache(self, pos: int) -> int:
         """
         Return the offset within the cache
         """
@@ -137,7 +137,7 @@ class PdzDataProvider(object):
             self.__cache = np.load(self.__filename, mmap_mode='r')
         return pos
 
-    def readPdz(self, pos: int) -> np.ndarray:
+    def read_pdz(self, pos: int) -> np.ndarray:
         """
         Reads a PDZ from the given position.
 
@@ -155,10 +155,10 @@ class PdzDataProvider(object):
             raise UninitializedException()
         if self.__full is not None:
             return self.__full[pos]
-        offset = self.__fromCache(pos)
+        offset = self.__from_cache(pos)
         return self.__cache[offset]
 
-    def appendPdz(self, data: Union[np.ndarray, list]) -> Union[int, Iterable]:
+    def append_pdz(self, data: Union[np.ndarray, list]) -> Union[int, Iterable]:
         """
         Appends a PDZ to the end of the file.
 

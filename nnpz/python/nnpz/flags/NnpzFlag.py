@@ -13,10 +13,9 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-from typing import List
 
-Empty = 0x00
-AlternativeWeightFlag = 0x01
+NO_FLAG = 0x00
+ALTERNATIVE_WEIGHT_FLAG = 0x01
 
-Flags = [AlternativeWeightFlag]
-FlagNames = ['AlternativeWeightFlag']
+FLAGS = [ALTERNATIVE_WEIGHT_FLAG]
+FLAG_NAMES = ['AlternativeWeightFlag']

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,6 +18,7 @@
 Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
+from typing import Any, Dict
 
 import nnpz.io.output_column_providers as ocp
 import numpy as np
@@ -35,10 +36,10 @@ class CopyInputColumnsConfig(ConfigManager.ConfigHandler):
         self.__added = False
 
     @staticmethod
-    def __addColumnProvider(args):
-        target_config = ConfigManager.getHandler(TargetCatalogConfig).parseArgs(args)
+    def __add_column_provider(args: Dict[str, Any]):
+        target_config = ConfigManager.get_handler(TargetCatalogConfig).parse_args(args)
         cat_to_copy = target_config['target_hdu']
-        output = ConfigManager.getHandler(OutputHandlerConfig).parseArgs(args)['output_handler']
+        output = ConfigManager.get_handler(OutputHandlerConfig).parse_args(args)['output_handler']
 
         do_copy = args.get('copy_input_columns', False)
         if do_copy:
@@ -47,11 +48,11 @@ class CopyInputColumnsConfig(ConfigManager.ConfigHandler):
             id_column = target_config['target_id_column']
             output.add_column_provider(ocp.CatalogCopy(np.dtype([id_column]), cat_to_copy))
 
-    def parseArgs(self, args):
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if not self.__added:
-            self.__addColumnProvider(args)
+            self.__add_column_provider(args)
             self.__added = True
         return {}
 
 
-ConfigManager.addHandler(CopyInputColumnsConfig)
+ConfigManager.add_handler(CopyInputColumnsConfig)

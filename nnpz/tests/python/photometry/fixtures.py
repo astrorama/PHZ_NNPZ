@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -169,9 +169,9 @@ def reference_provider_fixture(temp_dir_fixture, filters_fixture) -> PhotometryP
 @pytest.fixture
 def reference_photometry(reference_provider_fixture: PhotometryProvider) -> Photometry:
     return Photometry(
-        reference_provider_fixture.getIds(),
-        reference_provider_fixture.getData() * u.uJy,
-        system=PhotometricSystem(reference_provider_fixture.getFilterList()),
+        reference_provider_fixture.get_ids(),
+        reference_provider_fixture.get_data() * u.uJy,
+        system=PhotometricSystem(reference_provider_fixture.get_filter_list()),
         colorspace=RestFrame)
 
 
