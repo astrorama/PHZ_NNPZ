@@ -17,11 +17,21 @@ import numpy as np
 
 
 def euclidean(ref: np.ndarray, target: np.ndarray, out: np.ndarray = None) -> np.ndarray:
+    """
+    Euclidean distance. Ignores errors.
+    """
     x = ref[:, :, 0] - target[:, 0]
     return np.sqrt(np.sum(x * x, axis=1, out=out), out=out)
 
 
 def chi2(ref: np.ndarray, target: np.ndarray, out: np.ndarray = None) -> np.ndarray:
+    """
+    χ2 distance. Takes errors into account.
+    Warnings:
+        If *both* reference and target errors are 0, the results will be +Inf (or indeterminate
+        if the Euclidean distance is 0).
+        Use Euclidean instead if that is the case.
+    """
     nom = ref[:, :, 0] - target[:, 0]
     den = ref[:, :, 1] * ref[:, :, 1] + target[:, 1] * target[:, 1]
     return np.sum(nom * nom / den, axis=1, out=out)

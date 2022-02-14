@@ -23,6 +23,13 @@ from nnpz.io.output_column_providers.UniformPhotometry import UniformPhotometry
 
 
 class UniformPhotometryConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the output of the uniform photometry.
+
+    See Also:
+        UniformPhotometry for a detailed description of what it is and how it is computed.
+    """
+
     def __init__(self):
         self.__added = False
 

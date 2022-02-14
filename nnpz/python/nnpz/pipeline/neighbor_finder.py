@@ -36,6 +36,10 @@ logger = Logging.getLogger(__name__)
 
 
 class NeighborFinder:
+    """
+    Find the neighbors for a set of target objects
+    """
+
     def __init__(self, conf_manager: ConfigManager):
         self.__ref_data: Photometry = conf_manager.get('reference_photometry')
         self.__source_independent_ebv = conf_manager.get('source_independent_ebv')

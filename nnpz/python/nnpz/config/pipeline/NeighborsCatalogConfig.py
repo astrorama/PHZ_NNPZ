@@ -19,6 +19,13 @@ from nnpz.config import ConfigManager
 
 
 class NeighborsCatalog(ConfigManager.ConfigHandler):
+    """
+    Configure the intermediate catalog to use when running stages
+    (neighbor find, photometry correction, weighting and output) separately.
+
+    This has *no* effect when running the single `nnpz` command.
+    """
+
     def __init__(self):
         self.__catalog = None
 

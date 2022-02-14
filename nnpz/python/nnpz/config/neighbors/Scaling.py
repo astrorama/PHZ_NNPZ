@@ -23,6 +23,11 @@ from scipy.interpolate import interpolate
 
 
 class Scaling(ConfigManager.ConfigHandler):
+    """
+    Configure the computation of the scaling factor, including the acceptable range
+    and the associated prior function.
+    """
+
     def __init__(self):
         self.__initialized = False
         self.__scaler = None

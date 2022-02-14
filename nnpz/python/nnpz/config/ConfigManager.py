@@ -58,6 +58,9 @@ class ConfigManager:
 
         @staticmethod
         def _exists_parameter(param: str, args: Dict[str, Any]):
+            """
+            Abort the program execution if the parameter param is not in the dictionary
+            """
             if param not in args:
                 logger.error('Missing parameter: %s', param)
                 exit(-1)

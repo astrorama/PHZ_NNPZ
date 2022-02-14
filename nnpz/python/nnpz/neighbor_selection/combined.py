@@ -18,6 +18,7 @@ from typing import Callable, Tuple
 
 import numpy as np
 from nnpz.exceptions import InvalidDimensionsException, UninitializedException
+from nnpz.neighbor_selection import SelectorInterface
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
 from scipy import spatial
@@ -26,18 +27,41 @@ from .kdtree import _warn_long_execution
 from ..utils.distances import chi2
 
 
-class CombinedSelector:
+class CombinedSelector(SelectorInterface):
+    """
+    This method first finds a batch of neighbors in Euclidean
+    distance using a KDTree, and then it finds the closest neighbors inside
+    the batch, by using chi2 distance.
+    Args:
+        k: int
+            Number of neighbors
+        batch: int
+            Number of reference objects to look for in Euclidean distance for reducing the
+            bruteforce search space 
+        balanced: bool
+            Train a balanced KDTree. See scipy cKDTree implementation.
+        bruteforce: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
+            A function that computes the distances from all reference objects (first parameter),
+            to a target object (second parameter). A third parameter, out, must be accepted
+            to avoid allocating a new array. The method must return out, or a newly allocated
+            array if out was None
+    """
+
     def __init__(self, k: int, batch: int, balanced: bool = True,
-                 bruteforce_method: Callable = chi2):
+                 bruteforce: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray] = chi2):
         self.__k = k
         self.__batch = batch
         self.__balanced = balanced
         self.__reference_photo = None
         self.__kdtree = None
         self.__system = None
-        self.__bruteforce_method = bruteforce_method
+        self.__bruteforce_method = bruteforce
 
     def fit(self, train: Photometry, system: PhotometricSystem):
+        """
+        See Also:
+            SelectorInterface.fit
+        """
         timer = threading.Timer(120, _warn_long_execution)
         timer.start()
         # False positive of pylint
@@ -49,6 +73,10 @@ class CombinedSelector:
         self.__system = system
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        See Also:
+            SelectorInterface.query
+        """
         if self.__kdtree is None:
             raise UninitializedException()
         if target.system != self.__system:

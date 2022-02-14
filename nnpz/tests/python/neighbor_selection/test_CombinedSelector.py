@@ -51,7 +51,7 @@ def test_Combined(reference_values: Photometry, target_values: Photometry):
     Query for the 7 nearest neighbors, which are those falling in the center of each face, plus the
     middle one.
     """
-    erbf_selector = CombinedSelector(k=7, batch=18, bruteforce_method=euclidean)
+    erbf_selector = CombinedSelector(k=7, batch=18, bruteforce=euclidean)
     erbf_selector.fit(reference_values, reference_values.system)
 
     idx, scales = erbf_selector.query(target_values)
@@ -69,7 +69,7 @@ def test_Combined2(reference_values, target_values):
     Query for the 10 nearest neighbors, which are those falling in the center of each face, plus the
     middle one, and some vertex. In this case, we check that not all distances are the same.
     """
-    erbf_selector = CombinedSelector(k=10, batch=18, bruteforce_method=euclidean)
+    erbf_selector = CombinedSelector(k=10, batch=18, bruteforce=euclidean)
     erbf_selector.fit(reference_values, reference_values.system)
 
     idx, scales = erbf_selector.query(target_values)

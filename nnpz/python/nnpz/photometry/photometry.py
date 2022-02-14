@@ -13,7 +13,7 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-from typing import List, Union
+from typing import Iterable, List, Union
 
 import numpy as np
 from astropy import units as u
@@ -23,6 +23,24 @@ from nnpz.photometry.photometric_system import PhotometricSystem
 
 
 class Photometry:
+    """
+    Wraps an array with photometry values together with the system it was measured with,
+    the colorspace that modifies it, and the set of object IDs.
+
+    Args:
+        ids: np.ndarray
+            Object IDs
+        values: u.Quantity
+            Numpy array with an associated unit which must be *equivalent* to uJy
+        system: PhotometricSystem
+        colorspace: ColorSpace
+        copy: bool
+            If True, make a copy of IDs and values
+
+    Warnings:
+        ids and values are set to read-only, so the values can not be accidentally modified.
+    """
+
     def __init__(self, ids: np.ndarray, values: u.Quantity,
                  system: PhotometricSystem, colorspace: ColorSpace, copy=False):
         if not values.unit.is_equivalent(u.uJy):
@@ -50,12 +68,25 @@ class Photometry:
         self.ids.flags.writeable = False
         self.values.flags.writeable = False
 
-    def subsystem(self, bands: List[str]):
+    def subsystem(self, bands: List[str]) -> 'Photometry':
+        """
+        Extract a Photometry object with a subset of the bands
+        """
         cols = [self.system.bands.index(b) for b in bands]
         return Photometry(ids=self.ids, values=self.values[:, cols],
                           system=self.system[bands], colorspace=self.colorspace)
 
     def get_fluxes(self, bands: Union[List[str], str], return_error=False) -> u.Quantity:
+        """
+        Extract the photometry values for a subset of the bands.
+
+        Args:
+            bands: Union[List[str], str]
+                Bands to extract.
+            return_error: bool
+                If True, the returned array will have a last axis of size 2, with
+                the pair (value, error)
+        """
         if isinstance(bands, str):
             c = self.system.bands.index(bands)
         else:
@@ -66,7 +97,7 @@ class Photometry:
             return self.values[:, c, 0]
 
     @property
-    def unit(self):
+    def unit(self) -> u.Unit:
         return self.values.unit
 
     def __len__(self) -> int:
@@ -83,5 +114,5 @@ class Photometry:
     Photometric system: {}
 """.format(len(self), self.unit, str(self.system))
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable:
         return iter(self.values)

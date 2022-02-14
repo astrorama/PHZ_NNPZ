@@ -18,7 +18,25 @@ import numpy as np
 
 
 @u.quantity_input
-def correct_ebv(ref_photo: u.uJy, corr_coef: np.ndarray, ebv: float, out: u.uJy = None):
+def correct_ebv(ref_photo: u.uJy, corr_coef: np.ndarray, ebv: np.ndarray, out: u.uJy = None):
+    """
+    Correct for EBV reddening. i.e., project from the reference (rest frame) colorspace,
+    to a reddened colorspace that matches the target objects.
+
+    Args:
+        ref_photo: u.uJy
+            Reference objects photometry for a given band.
+        corr_coef: np.ndarray
+            E(B-V) correction factors for each reference object.
+        ebv: np.ndarray
+            E(B-V) for the observed target objects.
+        out: u.uJy
+            If specified, store the computation here.
+    Returns:
+        out if it was None, otherwise a newly allocated array.
+    See Also:
+        nnpz.photometry.calculator.photometry_with_corrections_calculator
+    """
     if out is None:
         out = np.copy(ref_photo)
     corr = (10 ** (-0.4 * corr_coef * ebv[:, np.newaxis]))[:, :, np.newaxis]

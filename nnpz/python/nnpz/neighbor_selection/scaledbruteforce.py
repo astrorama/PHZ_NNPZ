@@ -16,12 +16,28 @@
 from typing import Callable, Tuple
 
 import numpy as np
+from nnpz.neighbor_selection import SelectorInterface
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
 from nnpz.utils.distances import chi2
 
 
-class ScaledBruteForceSelector:
+class ScaledBruteForceSelector(SelectorInterface):
+    """
+    Looks for neighbors using a brute force approach, but applying a scale factor
+    to the reference objects to bring them closer to the target one.
+
+    Args:
+        k: int
+            Number of neighbors
+        scaler: Callable
+            A function that computes a good scale factor *for each reference object* that bring
+            them closer to the target object
+
+    See Also:
+        nnpz.scaling.Chi2Scaling
+    """
+
     def __init__(self, k: int, scaler: Callable[[Photometry, Photometry], np.ndarray]):
         self.__k = k
         self.__prior = scaler
@@ -29,9 +45,17 @@ class ScaledBruteForceSelector:
         self.__scaler = scaler
 
     def fit(self, train: Photometry, system: PhotometricSystem):
+        """
+        See Also:
+            SelectorInterface.fit
+        """
         self.__reference = train.subsystem(system.bands)
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        See Also:
+            SelectorInterface.query
+        """
         assert target.unit == self.__reference.unit
         assert target.system == self.__reference.system
 

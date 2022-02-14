@@ -20,6 +20,26 @@ import numpy as np
 @u.quantity_input
 def correct_filter_variation(ref_photo: u.uJy, corr_coef: np.ndarray, shift: np.ndarray,
                              out: u.uJy):
+    """
+    Correct for filter variation. i.e., project from the reference colorspace (nominal
+    average filter transmission) to the target colorspace (actual average filter transmission,
+    which depends on the location on the FOV).
+    Args:
+        ref_photo: u.uJy
+            Reference objects photometry for a given band.
+        corr_coef: np.ndarray
+            Correction coefficients computed when building the reference photometry.
+        shift: np.ndarray
+            Filter shift for the band (delta between the nominal average transmission and the
+            actual one).
+        out: u.uJy
+            If specified, store the computation here.
+
+    Returns:
+        out if it was None, otherwise a newly allocated array.
+    See Also:
+        nnpz.photometry.calculator.photometry_with_corrections_calculator
+    """
     if out is None:
         out = np.copy(ref_photo)
     shift = shift[:, np.newaxis]

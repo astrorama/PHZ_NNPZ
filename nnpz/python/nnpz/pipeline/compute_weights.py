@@ -30,6 +30,11 @@ from nnpz.photometry.photometry import Photometry
 
 
 class ComputeWeights:
+    """
+    Compute the weights for the selected neighbors for a set of target objects.
+    (May or may not follow the photometry correction).
+    """
+
     def __init__(self, conf_manager: ConfigManager):
         target_system = conf_manager.get('target_system')
         ref_system = conf_manager.get('reference_system')

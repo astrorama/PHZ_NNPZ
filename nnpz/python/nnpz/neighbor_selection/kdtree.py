@@ -34,6 +34,17 @@ def _warn_long_execution():
 
 
 class KDTreeSelector:
+    """
+    Fastest method, finding the neighbors using Euclidean distance.
+    Args:
+        k: int
+            Number of neighbors
+        balanced: bool
+            Train a balanced KDTree. See scipy cKDTree implementation.
+    Warnings:
+           All errors are ignored when this method is used.
+    """
+
     def __init__(self, k: int, balanced: bool = True):
         self.__k = k
         self.__balanced = balanced
@@ -42,6 +53,10 @@ class KDTreeSelector:
         self.__system = None
 
     def fit(self, train: Photometry, system: PhotometricSystem):
+        """
+        See Also:
+            SelectorInterface.fit
+        """
         timer = threading.Timer(120, _warn_long_execution)
         timer.start()
         # False positive of pylint
@@ -53,6 +68,10 @@ class KDTreeSelector:
         self.__system = system
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        See Also:
+            SelectorInterface.query
+        """
         if self.__kdtree is None:
             raise UninitializedException()
         if target.system != self.__system:

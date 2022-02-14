@@ -13,11 +13,22 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+from typing import Any, Dict, List, Union
+
 import numpy as np
 
 
 class ColorSpace:
-    def __init__(self, **factors):
+    """
+    A ColorSpace wraps a set of effects that alter the measured photometry. For instance,
+    EBV reddening or filter variation
+
+    Args:
+        **factors: A list of key=value pairs that model the factor. For instance,
+        ebv=np.ndarray(ebv on the line of sight...)
+    """
+
+    def __init__(self, **factors: Dict[str, Any]):
         self.__factors = factors
         lens = list(
             map(len, filter(lambda x: isinstance(x, (list, np.ndarray)), self.__factors.values()))
@@ -26,19 +37,28 @@ class ColorSpace:
         for l in lens:
             assert l == self.__len
 
-    def copy(self):
+    def copy(self) -> 'ColorSpace':
+        """
+        Returns: A deep copy of the ColorSpace
+        """
         return ColorSpace(**{k: v.copy() for k, v in self.__factors.items()})
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.__len
 
-    def __getattr__(self, item):
+    def __getattr__(self, item) -> Any:
         return self.__factors[item]
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         return item in self.__factors
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: Union[slice, List[int], np.ndarray]) -> 'ColorSpace':
+        """
+        Args:
+            item:
+        Returns:
+            A subset of the colorspace, row-wise
+        """
         return ColorSpace(**{k: v[item] for k, v in self.__factors.items()})
 
     def __str__(self) -> str:

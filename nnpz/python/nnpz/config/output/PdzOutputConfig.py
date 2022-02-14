@@ -32,6 +32,9 @@ logger = Logging.getLogger('Configuration')
 
 
 class PdzOutputConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the output of the co-added PDZ, quantiles and/or samples
+    """
 
     def __init__(self):
         self.__added = False

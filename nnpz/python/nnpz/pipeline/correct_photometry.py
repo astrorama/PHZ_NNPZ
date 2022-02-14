@@ -34,6 +34,12 @@ logger = Logging.getLogger(__name__)
 
 
 class CorrectPhotometry:
+    """
+    Correct the photometry for the selected neighbors for a set of target objects.
+
+    See Also:
+        correct_ebv, correct_filter_variation
+    """
     def __init__(self, conf_manager: Union[ConfigManager, Dict]):
         self.__ref_system = conf_manager.get('reference_system')
         self.__ebv_corr_coefs = conf_manager.get('reference_ebv_correction')

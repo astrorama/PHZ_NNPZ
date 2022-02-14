@@ -13,25 +13,49 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-from typing import Tuple
+from typing import Callable, Tuple
 
 import numpy as np
 from nnpz.exceptions import InvalidDimensionsException, UninitializedException
+from nnpz.neighbor_selection import SelectorInterface
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
 from nnpz.utils.distances import chi2
 
 
-class BruteForceSelector:
-    def __init__(self, k: int, method=chi2):
+class BruteForceSelector(SelectorInterface):
+    """
+    Look for neighbors using a bruteforce method (i.e. compare with every single reference
+    object)
+
+    Args:
+        k: int
+            Number of neighbors
+        method: Callable
+            A function that computes the distances from all reference objects (first parameter),
+            to a target object (second parameter). A third parameter, out, must be accepted
+            to avoid allocating a new array. The method must return out, or a newly allocated
+            array if out was None.
+    """
+
+    def __init__(self, k: int,
+                 method: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray] = chi2):
         self.__k = k
         self.__reference = None
         self.__method = method
 
     def fit(self, train: Photometry, system: PhotometricSystem):
+        """
+        See Also:
+            SelectorInterface.fit
+        """
         self.__reference = train.subsystem(system.bands)
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        See Also:
+            SelectorInterface.query
+        """
         if self.__reference is None:
             raise UninitializedException()
         if target.system != self.__reference.system:

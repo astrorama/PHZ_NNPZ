@@ -28,6 +28,12 @@ logger = Logging.getLogger('Configuration')
 
 
 class ReferenceSampleConfig(ConfigManager.ConfigHandler):
+    """
+    Load the reference sample, minus photometry
+
+    See Also:
+        ReferenceSamplePhotometryConfig
+    """
 
     def __init__(self):
         self.__sample = None

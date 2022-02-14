@@ -20,6 +20,10 @@ from nnpz.config import ConfigManager
 
 
 class WeightConfig(ConfigManager.ConfigHandler):
+    """
+    Configure the weighting method of the best neighbors
+    """
+
     def __init__(self):
         self.__calculator = None
 
