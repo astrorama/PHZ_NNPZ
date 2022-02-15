@@ -14,10 +14,10 @@
 #  MA 02110-1301 USA
 #
 import copy
-
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
-import nnpz.config.neighbors.GalacticUnreddenerConfig
+from typing import Dict, Union
+
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 import nnpz.config.neighbors.NeighborSelectorConfig
@@ -40,7 +40,7 @@ class NeighborFinder:
     Find the neighbors for a set of target objects
     """
 
-    def __init__(self, conf_manager: ConfigManager):
+    def __init__(self, conf_manager: Union[ConfigManager, Dict]):
         self.__ref_data: Photometry = conf_manager.get('reference_photometry')
         self.__source_independent_ebv = conf_manager.get('source_independent_ebv')
         self.__selector = conf_manager.get('neighbor_selector')

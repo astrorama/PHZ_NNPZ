@@ -16,6 +16,7 @@
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
 from datetime import datetime
+from typing import Dict, Union
 
 import astropy.units as u
 # noinspection PyUnresolvedReferences
@@ -35,7 +36,7 @@ class ComputeWeights:
     (May or may not follow the photometry correction).
     """
 
-    def __init__(self, conf_manager: ConfigManager):
+    def __init__(self, conf_manager: Union[ConfigManager, Dict]):
         target_system = conf_manager.get('target_system')
         ref_system = conf_manager.get('reference_system')
         self.__ref_filter_indexes = ref_system.get_band_indexes(target_system.bands)
@@ -49,7 +50,7 @@ class ComputeWeights:
         nn_photo = neighbor_photo[:, :, self.__ref_filter_indexes, :]
         nn_photo *= neighbor_scales[..., np.newaxis, np.newaxis]
 
-        # FITS stores in big-endian, and we can't not pass that directly to cython
+        # FITS stores in big-endian, and we can't pass that directly to cython
         if nn_photo.dtype.byteorder == '>':
             nn_photo = nn_photo.newbyteorder().byteswap(inplace=True)
 

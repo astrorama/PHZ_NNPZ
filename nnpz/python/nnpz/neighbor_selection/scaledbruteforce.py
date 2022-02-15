@@ -16,6 +16,7 @@
 from typing import Callable, Tuple
 
 import numpy as np
+from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.neighbor_selection import SelectorInterface
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
@@ -56,8 +57,11 @@ class ScaledBruteForceSelector(SelectorInterface):
         See Also:
             SelectorInterface.query
         """
+        if self.__reference is None:
+            raise UninitializedException()
+        if self.__reference.system != target.system:
+            raise InvalidDimensionsException()
         assert target.unit == self.__reference.unit
-        assert target.system == self.__reference.system
 
         neighbors = np.zeros((len(target), self.__k), dtype=int)
         scales = np.ones_like(neighbors, dtype=np.float32)

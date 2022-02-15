@@ -170,7 +170,7 @@ def reference_provider_fixture(temp_dir_fixture, filters_fixture) -> PhotometryP
 def reference_photometry(reference_provider_fixture: PhotometryProvider) -> Photometry:
     return Photometry(
         reference_provider_fixture.get_ids(),
-        reference_provider_fixture.get_data() * u.uJy,
+        reference_provider_fixture.get_data().astype(np.float64) * u.uJy,
         system=PhotometricSystem(reference_provider_fixture.get_filter_list()),
         colorspace=RestFrame)
 
@@ -188,9 +188,15 @@ def target_photometry(reference_photometry: Photometry) -> Photometry:
     shifts['vis'] = [0., 1500, 1500., 1500., 0.]
     shifts['g'] = [0., 0., 1000., 1000., 0.]
     shifts['Y'] = [0., 0., 0., -999., 0.]
+
+    photo = np.zeros((n_targets, len(reference_photometry.system), 2), dtype=np.float64)
+    for i in range(photo.shape[1]):
+        photo[:, i, 0] = np.arange(1, 6, dtype=np.float64) * (
+                    i + 1) / 10. + np.random.standard_normal(5) / 100
+
     return Photometry(
         np.arange(1, n_targets + 1),
-        values=np.zeros((n_targets, len(reference_photometry.system), 2)) * u.uJy,
+        values=photo * u.uJy,
         system=reference_photometry.system,
         colorspace=ColorSpace(ebv=np.zeros(n_targets), shifts=shifts)
     )
