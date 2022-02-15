@@ -25,7 +25,6 @@ from typing import List
 import numpy as np
 from astropy.table import Table
 
-from nnpz.exceptions import UnknownNameException
 from .filter_provider_interface import FilterProviderInterface
 
 
@@ -90,8 +89,8 @@ class ListFileFilterProvider(FilterProviderInterface):
             list_file: The file containing the list of the filters
 
         Raises:
-            FileNotFoundException: If the list_file does not exist
-            FileNotFoundException: If a file in the list_file does not exist
+            FileNotFoundError: If the list_file does not exist
+            FileNotFoundError: If a file in the list_file does not exist
         """
         if not os.path.exists(list_file):
             raise FileNotFoundError(list_file + ' does not exist')
@@ -125,7 +124,7 @@ class ListFileFilterProvider(FilterProviderInterface):
             [0,1]).
 
         Raises:
-            UnknownNameException: If there is no filter with the given name
+            KeyError: If there is no filter with the given name
         """
 
         # First check if we have already read the data from the file
@@ -134,7 +133,7 @@ class ListFileFilterProvider(FilterProviderInterface):
 
         # Here we need to read the data from the file
         if name not in self.__file_map:
-            raise UnknownNameException('Unknown filter:' + name)
+            raise KeyError('Unknown filter:' + name)
 
         table = Table.read(self.__file_map[name], format='ascii')
         data = np.ndarray((len(table), 2), dtype='float32')

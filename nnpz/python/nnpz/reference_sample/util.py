@@ -17,7 +17,6 @@
 import os
 from typing import Set
 
-from nnpz.exceptions import FileNotFoundException
 from nnpz.reference_sample import IndexProvider
 
 
@@ -45,7 +44,7 @@ def validate_data_files(pattern: str, index: IndexProvider, key: str) -> Set[str
     if not existing_files.issuperset(index_files):
         missing_files = index_files.difference(existing_files)
         missing_files = list(map(pattern.format, missing_files))
-        raise FileNotFoundException(
+        raise FileNotFoundError(
             'Missing {} data files: {}'.format(key, ', '.join(missing_files))
         )
     return existing_files

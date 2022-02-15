@@ -54,6 +54,6 @@ class FilterProviderInterface(metaclass=abc.ABCMeta):
             [0,1]).
 
         Raises:
-            UnknownNameException: If there is no filter with the given name
+            KeyError: If there is no filter with the given name
         """
         return

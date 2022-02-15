@@ -45,12 +45,6 @@ class PhotometryBuilder:
         shifts: To be used for the computation of the filter variation correction factors
         ncores:
             Number of cores to use
-
-    Raises:
-        WrongTypeException: If the filter_provider is not an implementation
-            of FilterProviderInterface
-        WrongTypeException: If the pre_post_processor is not an
-            implementation of PhotometryPrePostProcessorInterface
     """
 
     class SedIter:
@@ -73,7 +67,7 @@ class PhotometryBuilder:
             filter_list: A list with the filter names
 
         Raises:
-            UnknownNameException: If there is any filter which is not known by
+            KeyError: If there is any filter which is not known by
                 the filter_provider passed to the constructor
 
         Note that if this method is not called at all, the default behavior is

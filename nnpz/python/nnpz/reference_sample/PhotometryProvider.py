@@ -26,8 +26,7 @@ import astropy.io.fits as fits
 import numpy as np
 from astropy.io.fits import HDUList
 from astropy.table import Table, join
-from nnpz.exceptions import MissingDataException, UnknownNameException, \
-    WrongFormatException
+from nnpz.exceptions import MissingDataException, WrongFormatException
 
 
 class PhotometryProvider:
@@ -102,7 +101,7 @@ class PhotometryProvider:
             ref_ids: (Optional) the order of the IDs that should be used
 
         Raises:
-            FileNotFoundException: If the file does not exist
+            FileNotFoundError: If the file does not exist
             WrongFormatException: If the file is not a NNPZ photometry file
         """
 
@@ -170,16 +169,16 @@ class PhotometryProvider:
             transmission, in the range [0,1].
 
         Raises:
-            UnknownNameException: If the file does not contain photometry for
+            KeyError: If the file does not contain photometry for
                 the given filter
             MissingDataException: If the HDU for the given filter transmission
                 is missing
         """
         if filter_name not in self.__filter_data:
-            raise UnknownNameException('Unknown filter {}'.format(filter_name))
+            raise KeyError('Unknown filter {}'.format(filter_name))
         if self.__filter_data[filter_name] is None:
             raise MissingDataException(
-                'File does not contain tranmission for {} filter'.format(filter_name))
+                'File does not contain transmission for {} filter'.format(filter_name))
         return self.__filter_data[filter_name]
 
     def get_ids(self):
@@ -205,7 +204,7 @@ class PhotometryProvider:
             element represents the photometry value and te second the uncertainty.
 
         Raises:
-            UnknownNameException: If the file does not contain photometry for
+            KeyError: If the file does not contain photometry for
                 any of the given filters
 
         If the file does not contain uncertainty columns for  some filters, the
@@ -224,7 +223,7 @@ class PhotometryProvider:
                 filter_idx = np.array(list(map(self.__filter_list.index, filter_list)))
         except ValueError as e:
             missing = str(e).split()[0]
-            raise UnknownNameException('File does not contain photometry for {}'.format(missing))
+            raise KeyError('File does not contain photometry for {}'.format(missing))
 
         # Return a view rather than a copy
         return self.__phot_data[:, filter_idx, :]
@@ -242,7 +241,7 @@ class PhotometryProvider:
                 filter_idx = np.array(list(map(self.__filter_list.index, filter_list)))
         except ValueError as e:
             missing = str(e).split()[0]
-            raise UnknownNameException('File does not contain corrections for {}'.format(missing))
+            raise KeyError('File does not contain corrections for {}'.format(missing))
 
             # Return a view rather than a copy
         return self.__ebv_corr_data[:, filter_idx]
@@ -260,7 +259,7 @@ class PhotometryProvider:
                 filter_idx = np.array(list(map(self.__filter_list.index, filter_list)))
         except ValueError as e:
             missing = str(e).split()[0]
-            raise UnknownNameException('File does not contain corrections for {}'.format(missing))
+            raise KeyError('File does not contain corrections for {}'.format(missing))
 
         # Return a view rather than a copy
         return self.__shift_corr_data[:, filter_idx, :]

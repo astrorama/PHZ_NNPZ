@@ -121,7 +121,7 @@ def test_getFilterTransmission_wrongName(photometry_file_fixture: str):
     provider = PhotometryProvider(photometry_file_fixture)
 
     # Then
-    with pytest.raises(UnknownNameException):
+    with pytest.raises(KeyError):
         provider.get_filter_transmission(wrong_name)
 
 
@@ -196,7 +196,7 @@ def test_getData_wrongFilter(photometry_file_fixture: str):
     provider = PhotometryProvider(photometry_file_fixture)
 
     # Then
-    with pytest.raises(UnknownNameException):
+    with pytest.raises(KeyError):
         provider.get_data(wrong_name)
 
 

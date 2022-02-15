@@ -25,7 +25,7 @@ from typing import Iterable, Union
 
 import numpy as np
 from ElementsKernel import Logging
-from nnpz.exceptions import AlreadySetException, FileNotFoundException
+from nnpz.exceptions import AlreadySetException
 from nnpz.reference_sample import IndexProvider
 from nnpz.reference_sample.MontecarloProvider import MontecarloProvider
 from nnpz.reference_sample.PdzProvider import PdzProvider
@@ -126,11 +126,11 @@ class ReferenceSample:
 
         # Check that the directory exists
         if not os.path.exists(self.__root_path):
-            raise FileNotFoundException(self.__root_path + ' does not exist')
+            raise FileNotFoundError(self.__root_path + ' does not exist')
         if not os.path.isdir(self.__root_path):
             raise NotADirectoryError(self.__root_path + ' is not a directory')
         if not create and not os.path.exists(self.__index_path):
-            raise FileNotFoundException(self.__index_path + ' does not exist')
+            raise FileNotFoundError(self.__index_path + ' does not exist')
 
         self.__index = IndexProvider(self.__index_path)
         self.__providers = self.__setup_providers(providers)
@@ -177,7 +177,6 @@ class ReferenceSample:
             value.
 
         Raises:
-            IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the SED data file
         """
@@ -199,7 +198,6 @@ class ReferenceSample:
             probability value.
 
         Raises:
-            IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the PDZ data file
         """

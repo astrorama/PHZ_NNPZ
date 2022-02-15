@@ -79,9 +79,8 @@ class IndexProvider:
             filename: string, or pathlib.Path
 
         Raises:
-            FileNotFoundException: If the file does not exist
             CorruptedFileException: If the file is malformed
-            IdMismatchException: If there are duplicate IDs
+            DuplicateIdException: If there are duplicate IDs
             InvalidPositionException: If a SED or PDZ position is less than -1
         """
         self.__filename = filename

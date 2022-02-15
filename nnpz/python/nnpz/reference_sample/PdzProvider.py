@@ -88,7 +88,6 @@ class PdzProvider(BaseProvider):
             probability value.
 
         Raises:
-            IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the PDZ data file
         """

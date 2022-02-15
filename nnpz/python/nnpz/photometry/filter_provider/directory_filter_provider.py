@@ -26,7 +26,6 @@ from typing import List, Tuple
 
 import numpy as np
 
-from nnpz.exceptions import UnknownNameException
 from .filter_provider_interface import FilterProviderInterface
 
 
@@ -88,8 +87,8 @@ class DirectoryFilterProvider(FilterProviderInterface):
             path: The directory to read the filters from
 
         Raises:
-            InvalidPathException: If there is no such directory
-            FileNotFoundException: If a file in the filter_list.txt does not exist
+            NotADirectoryError: If there is no such directory
+            FileNotFoundError: If a file in the filter_list.txt does not exist
         """
         if not os.path.isdir(path):
             raise NotADirectoryError(path + ' is not a directory')
@@ -133,7 +132,7 @@ class DirectoryFilterProvider(FilterProviderInterface):
             [0,1]).
 
         Raises:
-            UnknownNameException: If there is no filter with the given name
+            KeyError: If there is no filter with the given name
         """
 
         # First check if we have already read the data from the file
@@ -142,7 +141,7 @@ class DirectoryFilterProvider(FilterProviderInterface):
 
         # Here we need to read the data from the file
         if name not in self.__file_map:
-            raise UnknownNameException('Unknown filter:' + name)
+            raise KeyError('Unknown filter:' + name)
 
         from astropy.table import Table
         table = Table.read(self.__file_map[name], format='ascii')

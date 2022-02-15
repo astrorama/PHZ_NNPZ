@@ -90,9 +90,8 @@ class SedProvider(BaseProvider):
             value.
 
         Raises:
-            IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
-                different than the one stored in the SED data file
+                different from the one stored in the SED data file
         """
         sed_loc = self._index.get(obj_id, self._key)
         if not sed_loc:

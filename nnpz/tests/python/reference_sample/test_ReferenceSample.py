@@ -98,7 +98,7 @@ def test_constructor_missingDir(temp_dir_fixture):
     dir_name = os.path.join(temp_dir_fixture, 'missing')
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(dir_name)
 
 
@@ -130,7 +130,7 @@ def test_constructor_missingSedDataFile(reference_sample_dir_fixture):
     os.remove(os.path.join(reference_sample_dir_fixture, 'sed_data_1.npy'))
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(reference_sample_dir_fixture)
 
 
@@ -145,7 +145,7 @@ def test_constructor_missingPdzDataFile(reference_sample_dir_fixture):
     os.remove(os.path.join(reference_sample_dir_fixture, 'pdz_data_1.npy'))
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(reference_sample_dir_fixture)
 
 
@@ -160,7 +160,7 @@ def test_constructor_missingMcDataFile(reference_sample_dir_fixture, providers_w
     os.remove(os.path.join(reference_sample_dir_fixture, 'mc_data_1.npy'))
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
 
 
@@ -554,7 +554,7 @@ def test_missingIndex(reference_sample_dir_fixture):
     os.unlink(os.path.join(reference_sample_dir_fixture, 'index.npy'))
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(reference_sample_dir_fixture)
 
 ###############################################################################

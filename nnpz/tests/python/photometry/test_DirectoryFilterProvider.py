@@ -18,7 +18,6 @@
 Created on: 04/12/17
 Author: Nikolaos Apostolakos
 """
-from nnpz.exceptions import *
 from nnpz.photometry.filter_provider.directory_filter_provider import DirectoryFilterProvider
 
 from .fixtures import *
@@ -161,7 +160,7 @@ def test_getFilterTransmission_unknownName(filter_dir_fixture: str):
     provider = DirectoryFilterProvider(filter_dir_fixture)
 
     # Then
-    with pytest.raises(UnknownNameException):
+    with pytest.raises(KeyError):
         provider.get_filter_transmission(wrong_name)
 
 

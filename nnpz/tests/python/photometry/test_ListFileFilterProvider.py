@@ -19,7 +19,6 @@ Created on: 18/12/17
 Author: Nikolaos Apostolakos
 """
 
-from nnpz.exceptions import *
 from nnpz.photometry.filter_provider.list_file_filter_provider import ListFileFilterProvider
 
 from .fixtures import *
@@ -147,7 +146,7 @@ def test_getFilterTransmission_unknownName(filter_list_file_fixture: str):
     provider = ListFileFilterProvider(filter_list_file_fixture)
 
     # Then
-    with pytest.raises(UnknownNameException):
+    with pytest.raises(KeyError):
         provider.get_filter_transmission(wrong_name)
 
 
