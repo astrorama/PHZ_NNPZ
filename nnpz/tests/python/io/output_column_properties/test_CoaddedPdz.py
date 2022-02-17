@@ -31,6 +31,6 @@ def test_CoaddedPdz(reference_sample: MockReferenceSample, neighbor_info: np.nda
     coadded.generate_output(np.arange(len(neighbor_info)), neighbor_info, output)
 
     # Always the first one if the most weighted, and the first one increments
-    assert np.array_equal(output['REDSHIFT_PDF'].argmax(axis=1), np.arange(50))
+    np.testing.assert_array_equal(output['REDSHIFT_PDF'].argmax(axis=1), np.arange(50))
 
 ###############################################################################

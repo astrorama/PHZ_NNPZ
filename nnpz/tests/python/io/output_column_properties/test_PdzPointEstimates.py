@@ -33,6 +33,7 @@ def test_PdzPointEstimates(reference_sample: MockReferenceSample,
     columns = mock_output_handler.get_data_for_provider(pdz_point)
     assert len(columns.dtype.fields) == 3
 
-    assert np.array_equal(columns['REDSHIFT_MODE'], np.arange(len(columns)))
-    assert np.allclose(columns['REDSHIFT_MEDIAN'], np.arange(len(columns)), atol=1)
-    assert np.all(columns['REDSHIFT_MEAN'] > np.arange(len(columns)))
+    np.testing.assert_array_equal(columns['REDSHIFT_MODE'], np.arange(len(columns)))
+    np.testing.assert_array_less(np.arange(len(columns)), columns['REDSHIFT_MEDIAN'])
+    np.testing.assert_array_less(columns['REDSHIFT_MEDIAN'], np.arange(len(columns)) + 1)
+    np.testing.assert_array_less(np.arange(len(columns)), columns['REDSHIFT_MEAN'])

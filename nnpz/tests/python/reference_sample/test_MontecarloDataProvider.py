@@ -91,7 +91,7 @@ def test_appendMc_empty_success(temp_dir_fixture):
 
     # Then
     array = np.load(filename)
-    assert np.array_equal(array[pos].reshape(100, 4), expected_data)
+    np.testing.assert_array_equal(array[pos].reshape(100, 4), expected_data)
 
 
 ###############################################################################
@@ -114,7 +114,7 @@ def test_appendMc_success(mc_data_files_fixture):
 
     # Then
     array = np.load(mc_data_files_fixture[1])
-    assert np.array_equal(array[pos].reshape(100,), expected_data)
+    np.testing.assert_array_equal(array[pos].reshape(100, ), expected_data)
 
 
 ###############################################################################
@@ -178,4 +178,5 @@ def test_appendBulk(mc_data_files_fixture):
     assert len(offsets) == len(expected_data)
     for i, o in enumerate(offsets):
         data = provider.read(o)
-        assert all([np.allclose(expected_data[c][i], data[c]) for c in data.dtype.names])
+        for c in data.dtype.names:
+            np.testing.assert_allclose(expected_data[c][i], data[c])

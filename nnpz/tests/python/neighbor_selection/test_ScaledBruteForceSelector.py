@@ -63,5 +63,5 @@ def test_BruteForceSmallest(reference_values: Photometry, target_values: Photome
     assert (len(idx) == len(scales))
     assert (len(idx) == 1)
     assert idx[0] == len(reference_values) - 1
-    assert np.all(distances.value <= 0.1)
-    assert np.allclose(scales, 1.)
+    np.testing.assert_array_less(distances.value, 0.1)
+    np.testing.assert_allclose(scales, 1.)

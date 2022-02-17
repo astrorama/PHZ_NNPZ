@@ -25,7 +25,6 @@ except ModuleNotFoundError:
     from unittest.mock import Mock
 import numpy as np
 
-import pytest
 from nnpz.photometry.calculator import PhotometryPrePostProcessorInterface
 from nnpz.photometry.calculator.photometry_calculator import PhotometryCalculator
 
@@ -92,10 +91,10 @@ def test_compute():
     for args in pre_post_processor.post_process.call_args_list:
         intensity, filter_name = args[0]
         assert filter_name in expected
-        assert intensity == pytest.approx(expected[filter_name], rel=1e-1)
+        np.testing.assert_approx_equal(intensity, expected[filter_name], significant=1)
 
     # Check that the result has the correct values
-    assert photometry['first'][0] == pytest.approx(expected['first'], rel=1e-1)
-    assert photometry['second'][0] == pytest.approx(expected['second'], rel=1e-1)
+    np.testing.assert_approx_equal(photometry['first'][0], expected['first'], significant=1)
+    np.testing.assert_approx_equal(photometry['second'][0], expected['second'], significant=1)
 
 ###############################################################################

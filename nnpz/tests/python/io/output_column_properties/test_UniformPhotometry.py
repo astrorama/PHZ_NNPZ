@@ -58,12 +58,12 @@ def test_uniform_photometry(reference_photometry, target_photometry, reference_m
     target_b = target_photometry.get_fluxes('B')[0].value
     target_c = target_photometry.get_fluxes('C')[0].value
 
-    assert np.isclose(columns['MY_A_A'][0], target_a * 0.75)
-    assert np.isclose(columns['MY_B_B'][0], target_b * 0.62745)
-    assert np.isclose(columns['MY_C_C'][0], target_c * 0.75)
+    np.testing.assert_almost_equal(columns['MY_A_A'][0], target_a * 0.75, decimal=4)
+    np.testing.assert_almost_equal(columns['MY_B_B'][0], target_b * 0.62745, decimal=4)
+    np.testing.assert_almost_equal(columns['MY_C_C'][0], target_c * 0.75, decimal=4)
     # In this case the output uniform photometry is C*, so the ratio is computed
     # as C* / A
     #   First  reference: 3.5187345 / (1*0.5626045) = 6.254366077768664
     #   Second reference: 2.6067620 / (2*0.9424200) = 1.3830150039260625
     #   So the mean ratio is 3.818690540847363
-    assert np.isclose(columns['MY_C_A'][0], target_a * 3.818690540847363)
+    np.testing.assert_almost_equal(columns['MY_C_A'][0], target_a * 3.818690540847363, decimal=4)

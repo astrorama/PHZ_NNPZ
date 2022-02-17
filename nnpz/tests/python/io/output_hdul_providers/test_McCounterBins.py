@@ -27,4 +27,4 @@ def test_McCounterBins(fits_fixture: FITS):
     assert 'BINS_MC_COUNT_PARAM' in fits_fixture
     hdu = fits_fixture['BINS_MC_COUNT_PARAM']
     assert isinstance(hdu, fitsio.hdu.TableHDU)
-    assert np.array_equal(hdu['BINS'][:], bins)
+    np.testing.assert_array_equal(hdu['BINS'][:], bins)

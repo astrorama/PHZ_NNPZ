@@ -42,10 +42,10 @@ def test_slice(sampler: McSampler, mock_output_handler: MockOutputHandler,
     assert column.shape == (2, 5)
 
     # First object can not have any sample from 2
-    assert np.equal(column[0, 2], -99.)
-    assert np.isclose(column[0, 0].mean(), ref0['P1'].mean())
-    assert np.isclose(column[0, 1].mean(), ref1['P1'].mean())
+    np.testing.assert_array_equal(column[0, 2], -99.)
+    np.testing.assert_almost_equal(column[0, 0].mean(), ref0['P1'].mean())
+    np.testing.assert_almost_equal(column[0, 1].mean(), ref1['P1'].mean())
     # Second object
-    assert np.isclose(column[1, 0].mean(), ref0['P1'].mean())
-    assert np.isclose(column[1, 1].mean(), ref1['P1'].mean())
-    assert np.isclose(column[1, 2].mean(), ref2['P1'].mean())
+    np.testing.assert_almost_equal(column[1, 0].mean(), ref0['P1'].mean())
+    np.testing.assert_almost_equal(column[1, 1].mean(), ref1['P1'].mean())
+    np.testing.assert_almost_equal(column[1, 2].mean(), ref2['P1'].mean())

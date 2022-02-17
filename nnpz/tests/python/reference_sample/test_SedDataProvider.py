@@ -19,7 +19,6 @@ Created on: 10/11/17
 Author: Nikolaos Apostolakos
 """
 
-
 from nnpz.exceptions import *
 from nnpz.reference_sample.SedDataProvider import SedDataProvider
 
@@ -79,7 +78,7 @@ def test_readSed_success(sed_data_files_fixture, sed_list_fixture):
         found_data = provider.read_sed(pos)
 
         # Then
-        assert np.array_equal(found_data, expected_data)
+        np.testing.assert_array_equal(found_data, expected_data)
 
         pos += 1
 
@@ -101,7 +100,7 @@ def test_appendSed_success(sed_data_files_fixture):
     # Then
     with SedDataProvider(sed_data_files_fixture[1]) as provider:
         data = provider.read_sed(pos)
-        np.array_equal(expected_data, data)
+        np.testing.assert_array_equal(expected_data, data)
 
 
 ###############################################################################
@@ -153,8 +152,8 @@ def test_appendBulkSed(sed_data_files_fixture):
 
     # Given
     new_sed = np.asarray([
-        [(1., 100.), (1.5, 168.3),],
-        [(1., 400.), (1.5, 700.),],
+        [(1., 100.), (1.5, 168.3), ],
+        [(1., 400.), (1.5, 700.), ],
     ])
 
     # When
@@ -165,4 +164,4 @@ def test_appendBulkSed(sed_data_files_fixture):
     assert len(offsets) == len(new_sed)
     for i, o in enumerate(offsets):
         sed = provider.read_sed(o)
-        assert np.allclose(new_sed[i], sed)
+        np.testing.assert_allclose(new_sed[i], sed)

@@ -48,7 +48,7 @@ def test_CatalogCopy(catalog_fixture: fitsio.hdu.TableHDU):
     output = np.zeros(catalog_fixture.get_nrows(), dtype=col_defs)
     cat_copy.generate_output(indexes=np.arange(0, 10), neighbor_info=None, output=output)
 
-    assert np.array_equal(output['ID'], catalog_fixture['ID'][:])
-    assert np.array_equal(output['DEC'], catalog_fixture['DEC'][:])
+    np.testing.assert_array_equal(output['ID'], catalog_fixture['ID'][:])
+    np.testing.assert_array_equal(output['DEC'], catalog_fixture['DEC'][:])
 
 ###############################################################################

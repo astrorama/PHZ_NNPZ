@@ -29,5 +29,5 @@ def test_McPdf2DBins(fits_fixture: FITS):
     assert isinstance(hdu, fitsio.hdu.TableHDU)
     # Note that the output is the bin mid-point, so the shape correspond to the histogram values
     expected = np.meshgrid((bins_x[1:] + bins_x[:-1]) / 2, (bins_y[1:] + bins_y[:-1]) / 2)
-    assert np.allclose(hdu['PARAM_X'][:], expected[0].T.ravel())
-    assert np.allclose(hdu['PARAM_Y'][:], expected[1].T.ravel())
+    np.testing.assert_almost_equal(hdu['PARAM_X'][:], expected[0].T.ravel())
+    np.testing.assert_almost_equal(hdu['PARAM_Y'][:], expected[1].T.ravel())

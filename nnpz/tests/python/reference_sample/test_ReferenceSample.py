@@ -200,7 +200,7 @@ def test_getIds(reference_sample_dir_fixture, sed_list_fixture):
     ids = sample.get_ids()
 
     # Then
-    assert np.all(sorted(ids) == sorted(expected))
+    np.testing.assert_array_equal(sorted(ids), sorted(expected))
 
 
 ###############################################################################
@@ -243,7 +243,7 @@ def test_getSedData_withData(reference_sample_dir_fixture, sed_list_fixture):
     # Then
     for i in range(len(id_list)):
         assert sed_data[i].shape == expected_data[i].shape
-        assert np.all(sed_data[i] == expected_data[i])
+        np.testing.assert_array_equal(sed_data[i], expected_data[i])
 
 
 ###############################################################################
@@ -325,7 +325,8 @@ def test_getMcData_withData(reference_sample_dir_fixture, mc_data_fixture, provi
     # Then
     for i in range(len(id_list)):
         assert data[i].shape == expected_data[i].shape
-        assert all([np.allclose(data[i][c], expected_data[i][c]) for c in data[i].dtype.names])
+        for c in data[i].dtype.names:
+            np.testing.assert_allclose(data[i][c], expected_data[i][c])
 
 
 ###############################################################################
@@ -340,7 +341,7 @@ def test_getPdzData_withData(reference_sample_dir_fixture, pdz_list_fixture, red
         for obj_id, expected in obj:
             pdz = sample.get_pdz_data(obj_id)
             assert pdz.shape == (len(expected),)
-            assert np.array_equal(pdz, expected)
+            np.testing.assert_array_equal(pdz, expected)
 
 
 ###############################################################################
@@ -386,12 +387,12 @@ def test_iterate_seds(reference_sample_dir_fixture, sed_list_fixture):
         if obj.sed is None:
             assert sed_list[obj.id] is None
         else:
-            assert np.all(obj.sed == sed_list[obj.id])
+            np.testing.assert_array_equal(obj.sed, sed_list[obj.id])
 
 
 ###############################################################################
 
-def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_list_fixture):
+def test_iterate_pdzs(reference_sample_dir_fixture, pdz_list_fixture):
     """
     Test iteration of the sample for the PDZ values
     """
@@ -411,7 +412,7 @@ def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_l
         if obj.pdz is None:
             assert pdz_list[obj.id] is None
         else:
-            assert np.array_equal(obj.pdz, pdz_list[obj.id])
+            np.testing.assert_array_equal(obj.pdz, pdz_list[obj.id])
 
 
 ###############################################################################
@@ -431,8 +432,8 @@ def test_importRefSample(reference_sample_dir_fixture):
     for obj_id in old_ref.get_ids():
         nsed = new_ref.get_sed_data(obj_id)
         npdz = new_ref.get_pdz_data(obj_id)
-        assert np.array_equal(nsed, old_ref.get_sed_data(obj_id))
-        assert np.array_equal(npdz, old_ref.get_pdz_data(obj_id))
+        np.testing.assert_array_equal(nsed, old_ref.get_sed_data(obj_id))
+        np.testing.assert_array_equal(npdz, old_ref.get_pdz_data(obj_id))
 
 
 ###############################################################################
@@ -467,9 +468,8 @@ def test_addProvider(reference_sample_dir_fixture):
     assert isinstance(prov, MontecarloProvider)
 
     data = ref_sample.get_data('mc2', 100)
-    assert all(
-        [np.allclose(expected_data[c][0], data[c].reshape(1, 100)) for c in data.dtype.names]
-    )
+    for c in data.dtype.names:
+        np.testing.assert_allclose(expected_data[c][0], data[c].reshape(100))
 
 
 ###############################################################################

@@ -32,9 +32,10 @@ def test_PdfSampling(reference_sample: MockReferenceSample, mock_output_handler:
     columns = mock_output_handler.get_data_for_provider(pdf_sampling)
     assert len(columns.dtype.fields) == 2
 
-    assert np.all(columns['REDSHIFT_PDF_QUANTILES'][:, 0] < columns['REDSHIFT_PDF_QUANTILES'][:, 1])
-    assert np.all(
-        columns['REDSHIFT_PDF_QUANTILES'][1:, 0] > columns['REDSHIFT_PDF_QUANTILES'][:-1, 0])
+    np.testing.assert_array_less(columns['REDSHIFT_PDF_QUANTILES'][:, 0],
+                                 columns['REDSHIFT_PDF_QUANTILES'][:, 1])
+    np.testing.assert_array_less(columns['REDSHIFT_PDF_QUANTILES'][:-1, 0],
+                                 columns['REDSHIFT_PDF_QUANTILES'][1:, 0])
 
     bins = reference_sample.get_provider('pdz').get_redshift_bins()
     for i, c in enumerate(columns['REDSHIFT_PDF_MC']):

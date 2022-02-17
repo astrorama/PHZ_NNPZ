@@ -57,8 +57,8 @@ def test_simple_uniform_prior(target_object, exact_reference_objects, reference_
     computed_s = scaling_method(exact_reference_objects, target_object)
     computed_d = chi2(computed_s[:, np.newaxis, np.newaxis] * exact_reference_objects,
                       target_object)
-    assert np.allclose(computed_s, 1. / reference_scaling, rtol=1e-3)
-    assert np.allclose(computed_d, 0, atol=1e-6)
+    np.testing.assert_allclose(computed_s, 1. / reference_scaling, rtol=1e-3)
+    np.testing.assert_allclose(computed_d, 0, atol=1e-6)
 
 
 ###############################################################################
@@ -71,10 +71,10 @@ def test_simple_delta_prior(target_object, exact_reference_objects):
     computed_s = scaling_method(exact_reference_objects, target_object)
     computed_d = chi2(computed_s[:, np.newaxis, np.newaxis] * exact_reference_objects,
                       target_object)
-    assert np.allclose(computed_s, 1.)
+    np.testing.assert_allclose(computed_s, 1.)
 
     reference_d = chi2(exact_reference_objects, target_object)
 
-    assert np.allclose(computed_d, reference_d)
+    np.testing.assert_allclose(computed_d, reference_d)
 
 ###############################################################################

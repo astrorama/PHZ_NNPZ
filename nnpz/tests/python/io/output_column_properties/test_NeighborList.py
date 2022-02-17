@@ -34,6 +34,6 @@ def test_NeighborList(mock_output_handler: MockOutputHandler):
     columns = mock_output_handler.get_data_for_provider(nlist)
     assert len(columns.dtype.fields) == 3
 
-    assert np.array_equal(columns['NEIGHBOR_IDS'][0], [99, 98])
-    assert np.array_equal(columns['NEIGHBOR_WEIGHTS'][0], [1., 1.])
-    assert np.array_equal(columns['NEIGHBOR_SCALING'][0], [0., 0.])
+    np.testing.assert_array_equal(columns['NEIGHBOR_IDS'][0], [99, 98])
+    np.testing.assert_array_equal(columns['NEIGHBOR_WEIGHTS'][0], [1., 1.])
+    np.testing.assert_array_equal(columns['NEIGHBOR_SCALING'][0], [0., 0.])

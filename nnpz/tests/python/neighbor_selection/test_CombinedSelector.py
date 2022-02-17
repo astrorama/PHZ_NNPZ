@@ -58,8 +58,8 @@ def test_Combined(reference_values: Photometry, target_values: Photometry):
     distances = euclidean(reference_values.values[idx[0]], target_values.values[0])
     assert (len(idx) == len(scales))
     assert (len(idx[0]) == 7)
-    assert (np.all(distances.value <= 1.01))
-    assert (np.all(scales == 1.))
+    np.testing.assert_array_less(distances.value, 1.01)
+    np.testing.assert_allclose(scales, 1.)
 
 
 ###############################################################################
@@ -78,6 +78,6 @@ def test_Combined2(reference_values, target_values):
     assert (len(idx[0]) == 10)
     assert ((distances <= 1.01).sum() == 7)
     assert ((distances > 1.01).sum() == 3)
-    assert (np.all(scales == 1.))
+    np.testing.assert_allclose(scales, 1.)
 
 ###############################################################################

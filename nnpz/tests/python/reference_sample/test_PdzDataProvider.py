@@ -19,7 +19,6 @@ Created on: 10/11/17
 Author: Nikolaos Apostolakos
 """
 
-
 from nnpz.exceptions import *
 from nnpz.reference_sample.PdzDataProvider import PdzDataProvider
 
@@ -81,7 +80,7 @@ def test_setRedshiftBins_notSetBefore(temp_dir_fixture):
     # Then
     array = np.load(filename)
     assert array.shape[1] == len(expected_bins)
-    assert np.array_equal(array[0, :], expected_bins)
+    np.testing.assert_array_equal(array[0, :], expected_bins)
 
 
 ###############################################################################
@@ -154,7 +153,7 @@ def test_getRedshiftBins_alreadySet(pdz_data_files_fixture, redshift_bins_fixtur
     bins = provider.get_redshift_bins()
 
     # Then
-    assert np.array_equal(bins, redshift_bins_fixture)
+    np.testing.assert_array_equal(bins, redshift_bins_fixture)
 
 
 ###############################################################################
@@ -190,7 +189,7 @@ def test_readPdz_success(pdz_data_files_fixture, pdz_list_fixture, redshift_bins
         found_data = provider.read_pdz(i + 1)
 
         # Then
-        assert np.array_equal(found_data, expected_data[1])
+        np.testing.assert_array_equal(found_data, expected_data[1])
 
 
 ###############################################################################
@@ -227,7 +226,7 @@ def test_appendPdz_success(pdz_data_files_fixture, redshift_bins_fixture):
 
     # Then
     array = np.load(pdz_data_files_fixture[1])
-    assert np.array_equal(array[pos, :], expected_data)
+    np.testing.assert_array_equal(array[pos, :], expected_data)
 
 
 ###############################################################################
@@ -303,4 +302,4 @@ def test_appendBulkPdz(pdz_data_files_fixture, redshift_bins_fixture):
     assert len(offsets) == len(new_pdz)
     for i, o in enumerate(offsets):
         pdz = provider.read_pdz(o)
-        assert np.allclose(new_pdz[i, :], pdz)
+        np.testing.assert_allclose(new_pdz[i, :], pdz)

@@ -166,7 +166,7 @@ def test_getFilterTransmission_success(filter_list_file_fixture: str,
         data = provider.get_filter_transmission(name)
 
         # Then
-        assert np.array_equal(data, np.asarray(expected_data, dtype=np.float32))
+        np.testing.assert_array_equal(data, np.asarray(expected_data, dtype=np.float32))
 
 
 ###############################################################################
@@ -196,6 +196,6 @@ def test_getFilterTransmission_success_absolutePath(temp_dir_fixture: str,
     data = provider.get_filter_transmission('abs')
 
     # Then
-    assert np.array_equal(data, expected_data)
+    np.testing.assert_array_equal(data, expected_data)
 
 ###############################################################################

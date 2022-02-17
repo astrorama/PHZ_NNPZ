@@ -13,6 +13,7 @@
 #  if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301 USA
 #
+import numpy as np
 from nnpz.io.output_column_providers.MeanPhotometry import MeanPhotometry
 
 from .fixtures import *
@@ -40,6 +41,9 @@ def test_MeanPhotometry(reference_photometry: Photometry, target_photometry: Pho
     assert set(columns.dtype.fields) == {'A_MEAN', 'A_MEAN_ERR', 'B_MEAN', 'B_MEAN_ERR', 'C_MEAN',
                                          'C_MEAN_ERR'}
 
-    assert np.isclose(columns['A_MEAN'][0], np.mean(reference_matched_photometry[0, :, 0, 0]))
-    assert np.isclose(columns['B_MEAN'][0], np.mean(reference_matched_photometry[0, :, 1, 0]))
-    assert np.isclose(columns['C_MEAN'][0], np.mean(reference_matched_photometry[0, :, 2, 0]))
+    np.testing.assert_almost_equal(columns['A_MEAN'][0],
+                                   np.mean(reference_matched_photometry[0, :, 0, 0]))
+    np.testing.assert_almost_equal(columns['B_MEAN'][0],
+                                   np.mean(reference_matched_photometry[0, :, 1, 0]))
+    np.testing.assert_almost_equal(columns['C_MEAN'][0],
+                                   np.mean(reference_matched_photometry[0, :, 2, 0]))

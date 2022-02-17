@@ -39,7 +39,7 @@ def test_findNeighborsNoEBV(reference_photometry: Photometry, target_photometry:
 
     nn_idx = list(map(set, out['NEIGHBOR_INDEX']))
 
-    assert np.all(out['NEIGHBOR_SCALING'] == 1.)
+    np.testing.assert_array_equal(out['NEIGHBOR_SCALING'], 1.)
 
     assert nn_idx[1] in [{0, 1}, {1, 2}]
     assert nn_idx[2] in [{1, 2}, {2, 3}]
@@ -47,8 +47,10 @@ def test_findNeighborsNoEBV(reference_photometry: Photometry, target_photometry:
     assert nn_idx[4] == {3, 4}
 
     assert nn_idx[0] == {0, 1}
-    assert np.array_equal(out['NEIGHBOR_PHOTOMETRY'][0, 0], reference_photometry.values[0].value)
-    assert np.array_equal(out['NEIGHBOR_PHOTOMETRY'][0, 1], reference_photometry.values[1].value)
+    np.testing.assert_array_equal(out['NEIGHBOR_PHOTOMETRY'][0, 0],
+                                  reference_photometry.values[0].value)
+    np.testing.assert_array_equal(out['NEIGHBOR_PHOTOMETRY'][0, 1],
+                                  reference_photometry.values[1].value)
 
 
 ###############################################################################
@@ -83,7 +85,7 @@ def test_findNeighborsEBV(reference_photometry: Photometry, target_photometry: P
 
     nn_idx = list(map(set, out['NEIGHBOR_INDEX']))
 
-    assert np.all(out['NEIGHBOR_SCALING'] == 1.)
+    np.testing.assert_array_equal(out['NEIGHBOR_SCALING'], 1.)
     assert nn_idx[0] == {3, 4}
     assert nn_idx[1] in [{2, 3}, {3, 4}]
     assert nn_idx[2] in [{1, 2}, {2, 3}]

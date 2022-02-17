@@ -27,4 +27,4 @@ def test_McPdf1DBins(fits_fixture: FITS):
     hdu = fits_fixture['BINS_MC_PDF_1D_PARAM']
     assert isinstance(hdu, fitsio.hdu.TableHDU)
     # Note that the output is the bin mid-point, so the shape correspond to the histogram values
-    assert np.allclose(hdu['BINS_PDF'][:], (bins[1:] + bins[:-1]) / 2)
+    np.testing.assert_almost_equal(hdu['BINS_PDF'][:], (bins[1:] + bins[:-1]) / 2)

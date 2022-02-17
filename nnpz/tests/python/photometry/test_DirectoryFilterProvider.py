@@ -180,6 +180,6 @@ def test_getFilterTransmission_success(filter_dir_fixture: str,
         data = provider.get_filter_transmission(name)
 
         # Then
-        assert np.array_equal(data, np.asarray(expected_data, dtype=np.float32))
+        np.testing.assert_array_equal(data, np.asarray(expected_data, dtype=np.float32))
 
 ###############################################################################

@@ -162,7 +162,7 @@ def test_getFilterTransmission_success(photometry_file_fixture: str,
         trans = provider.get_filter_transmission(name)
 
         # Then
-        assert np.array_equal(trans, expected)
+        np.testing.assert_array_equal(trans, expected)
 
 
 ###############################################################################
@@ -179,7 +179,7 @@ def test_getIds(photometry_file_fixture: str, photometry_ids_fixure: np.ndarray)
     ids = provider.get_ids()
 
     # Then
-    assert np.array_equal(ids, photometry_ids_fixure)
+    np.testing.assert_array_equal(ids, photometry_ids_fixure)
 
 
 ###############################################################################
@@ -213,9 +213,9 @@ def test_getData_noFilterList(photometry_file_fixture: str, photometry_data_fixt
     filters = provider.get_filter_list()
 
     # Then
-    assert np.array_equal(data[:, 0, :], photometry_data_fixture[filters[0]])
-    assert np.array_equal(data[:, 1, :], photometry_data_fixture[filters[1]])
-    assert np.array_equal(data[:, 2, :], photometry_data_fixture[filters[2]])
+    np.testing.assert_array_equal(data[:, 0, :], photometry_data_fixture[filters[0]])
+    np.testing.assert_array_equal(data[:, 1, :], photometry_data_fixture[filters[1]])
+    np.testing.assert_array_equal(data[:, 2, :], photometry_data_fixture[filters[2]])
 
 
 ###############################################################################
@@ -233,7 +233,7 @@ def test_getData_withArgs(photometry_file_fixture: str, photometry_data_fixture:
     data = provider.get_data(['vis', 'Y'])
 
     # Then
-    assert np.array_equal(data[:, 0, :], photometry_data_fixture['vis'])
-    assert np.array_equal(data[:, 1, :], photometry_data_fixture['Y'])
+    np.testing.assert_array_equal(data[:, 0, :], photometry_data_fixture['vis'])
+    np.testing.assert_array_equal(data[:, 1, :], photometry_data_fixture['Y'])
 
 ###############################################################################

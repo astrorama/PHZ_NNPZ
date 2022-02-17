@@ -27,4 +27,4 @@ def test_McSliceAggregateBins(fits_fixture: FITS):
     assert 'BINS_MC_SLICE_AGGREGATE_DEPENDENT_INDEPENDENT_FOO' in fits_fixture
     hdu = fits_fixture['BINS_MC_SLICE_AGGREGATE_DEPENDENT_INDEPENDENT_FOO']
     assert isinstance(hdu, fitsio.hdu.TableHDU)
-    assert np.allclose(hdu['INDEPENDENT'][:], bins)
+    np.testing.assert_almost_equal(hdu['INDEPENDENT'][:], bins)

@@ -108,7 +108,7 @@ def test_getIdList(temp_dir_fixture, index_data):
     id_list = provider.get_ids()
 
     # Then
-    assert np.array_equal(id_list, [1, 2, 3, 4])
+    np.testing.assert_array_equal(id_list, [1, 2, 3, 4])
 
 
 ###############################################################################
@@ -127,7 +127,7 @@ def test_getFileList(temp_dir_fixture, index_data):
     file_list = sorted(list(provider.get_files('sed')))
 
     # Then
-    assert np.array_equal(file_list, [0, 1, 2])
+    np.testing.assert_array_equal(file_list, [0, 1, 2])
 
 
 ###############################################################################
@@ -334,7 +334,7 @@ def test_bulkAppendVertical(temp_dir_fixture, index_data):
     provider.bulk_add(new_data)
 
     # Then
-    assert np.array_equal(provider.get_ids(), [1, 2, 3, 4])
+    np.testing.assert_array_equal(provider.get_ids(), [1, 2, 3, 4])
 
 
 ###############################################################################
@@ -357,4 +357,4 @@ def test_bulkAppendMixed(temp_dir_fixture, index_data):
     provider.bulk_add(new_data)
 
     # Then
-    assert np.array_equal(provider.get_ids(), [1, 2, 3, 4, 10, 11])
+    np.testing.assert_array_equal(provider.get_ids(), [1, 2, 3, 4, 10, 11])

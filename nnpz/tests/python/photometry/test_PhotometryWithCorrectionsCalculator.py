@@ -84,9 +84,9 @@ def test_photometryWithCorrectionsCalculator(filter_trans_map: Dict[str, np.ndar
     assert shift_corr_map.shape == (2,)
 
     # Photometry values should match EBV 0.0 and no shift
-    assert np.isclose(photo_map['First'][0], 0.6)
-    assert np.isclose(photo_map['Second'][0], 4.1)
-    assert np.isclose(photo_map['Third'][0], 11.3)
+    np.testing.assert_allclose(photo_map['First'][0], 0.6)
+    np.testing.assert_allclose(photo_map['Second'][0], 4.1)
+    np.testing.assert_allclose(photo_map['Third'][0], 11.3)
 
     # EBV extinction is greater the highest the lambda
     assert ebv_corr_map['First'] > ebv_corr_map['Second']
@@ -106,7 +106,7 @@ def test_photometryWithCorrectionsCalculator(filter_trans_map: Dict[str, np.ndar
             expected = np.trapz(finterp * sinterp, x=grid)
             corr = a * dx * dx + b * dx + 1
             corrected = photo_map[fname][0] * corr
-            assert (np.isclose(expected, corrected, rtol=0.3))
+            np.testing.assert_approx_equal(expected, corrected, significant=1)
 
 
 ###############################################################################
