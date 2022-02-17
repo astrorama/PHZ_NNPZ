@@ -30,6 +30,12 @@ class McPdf2DBins(OutputHandler.OutputExtensionProviderInterface):
             The two parameters to generate the 2D PDF for
         binning:
             A one dimensional numpy array with the histogram binning
+
+    Notes:
+        The output must have one entry per histogram value. i.e. the first
+        value corresponds to the cell (0, 0), the second value corresponds to the cell
+        (0, 1)... up to the cell (|binx|, |biny|). The HDU stores the list of
+        X, Y coordinates of this grid.
     """
 
     def __init__(self, param_names: Tuple[str, str], binning: Tuple[np.ndarray, np.ndarray]):

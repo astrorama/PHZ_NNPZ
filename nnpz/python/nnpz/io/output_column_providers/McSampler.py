@@ -65,6 +65,9 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
     def get_provider(self):
         return self.__provider
 
+    def get_n_samples(self):
+        return self.__take_n
+
     def get_column_definition(self) \
             -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         """

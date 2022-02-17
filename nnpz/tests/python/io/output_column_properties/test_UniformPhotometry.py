@@ -13,57 +13,10 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-import astropy.units as u
-import numpy as np
-import pytest
 from nnpz.io.output_column_providers.UniformPhotometry import UniformPhotometry
-from nnpz.photometry.colorspace import RestFrame
-from nnpz.photometry.photometric_system import PhotometricSystem
-from nnpz.photometry.photometry import Photometry
 
 # noinspection PyUnresolvedReferences
-from .fixtures import MockOutputHandler, mock_output_handler
-
-
-class DummyPhotometry:
-    def __init__(self):
-        self._data = np.zeros((2, 2),
-                              dtype=[('A', np.float32), ('B', np.float32), ('C', np.float32)])
-        self._data['A'][:, 0] = [0.5626045, 0.94242]
-        self._data['B'][:, 0] = [1.7679665, 1.8930919]
-        self._data['C'][:, 0] = [3.5187345, 2.606762]
-
-    def getData(self, *filter_list):
-        data = np.zeros((len(self._data), len(filter_list), 2), dtype=np.float32)
-        for i, f in enumerate(filter_list):
-            data[:, i, 0] = self._data[f][:, 0]
-        return data
-
-
-@pytest.fixture
-def reference_photometry():
-    return Photometry(
-        ids=np.arange(2), values=np.array(
-            [((0.5626045, 0.), (1.7679665, 0.), (3.5187345, 0.)),
-             ((0.94242, 0.), (1.8930919, 0.), (2.606762, 0.))]) * u.uJy,
-        system=PhotometricSystem(['A', 'B', 'C']), colorspace=RestFrame)
-
-
-@pytest.fixture()
-def reference_matched_photometry(reference_photometry):
-    matched = np.zeros((1, 2, 3, 2), dtype=np.float32)
-    matched[0, :, 0, 0] = reference_photometry.values[:, 0, 0] * np.array([1., 2.])
-    matched[0, :, 1, 0] = reference_photometry.values[:, 1, 0] * np.array([1.5, 1.7])
-    matched[0, :, 2, 0] = reference_photometry.values[:, 2, 0] * np.array([1.2, 1.5])
-    return matched
-
-
-@pytest.fixture
-def target_photometry():
-    return Photometry(
-        ids=np.array([0]), values=np.array(
-            [((10., 0.), (10., 0.), (10., 0.))]) * u.uJy,
-        system=PhotometricSystem(['A', 'B', 'C']), colorspace=RestFrame)
+from .fixtures import *
 
 
 def test_uniform_photometry(reference_photometry, target_photometry, reference_matched_photometry,

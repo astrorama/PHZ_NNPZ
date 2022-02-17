@@ -13,7 +13,7 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-from typing import Tuple
+from typing import List
 
 import astropy.units as u
 import numpy as np
@@ -26,16 +26,16 @@ class McSamples(OutputHandler.OutputColumnProviderInterface):
     Store the samples themselves into the output catalog
     """
 
-    def __init__(self, sampler: McSampler, parameters: Tuple[str]):
+    def __init__(self, sampler: McSampler, parameters: List[str]):
         self.__sampler = sampler
         self.__params = parameters
         self.__output = {}
 
     def get_column_definition(self):
         col_defs = []
-        nsamples = self.__sampler.getSampleCount()
+        nsamples = self.__sampler.get_n_samples()
         for param in self.__params:
-            dtype = self.__sampler.getDtype(param)
+            dtype = self.__sampler.get_provider().get_dtype(param)
             col_defs.append((
                 'MC_SAMPLES_' + param.upper(), dtype, u.dimensionless_unscaled, nsamples
             ))
