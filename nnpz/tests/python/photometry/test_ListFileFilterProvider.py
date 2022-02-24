@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,61 +19,68 @@ Created on: 18/12/17
 Author: Nikolaos Apostolakos
 """
 
+from nnpz.photometry.filter_provider.list_file_filter_provider import ListFileFilterProvider
 
-import pytest
-import os
-import numpy as np
+from .fixtures import *
 
-from nnpz.exceptions import *
-from nnpz.photometry import ListFileFilterProvider
-
-from .fixtures import filters_fixture, filter_list_file_fixture, temp_dir_fixture
 
 ###############################################################################
 
 def test_constructor_wrongPath():
-    """Test the case where the given path does not exist"""
+    """
+    Test the case where the given path does not exist
+    """
 
     # Given
     wrong_path = '/wrong/path/file.txt'
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ListFileFilterProvider(wrong_path)
+
 
 ###############################################################################
 
-def test_constructor_missingFilterFile(filter_list_file_fixture):
-    """Test the case where there is a file declared in list file which is missing"""
+def test_constructor_missingFilterFile(filter_list_file_fixture: str):
+    """
+    Test the case where there is a file declared in list file which is missing
+    """
 
     # Given
     with open(filter_list_file_fixture, 'a') as f:
         f.write('MissingFile.txt : Missing')
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ListFileFilterProvider(filter_list_file_fixture)
+
 
 ###############################################################################
 
-def test_getFilterNames(filter_list_file_fixture, filters_fixture):
-    """Test the filter names from the list file, when names are defined"""
+def test_getFilterNames(filter_list_file_fixture: str, filters_fixture: Dict[str, np.ndarray]):
+    """
+    Test the filter names from the list file, when names are defined
+    """
 
     # Given
-    expected_names = [name for name,_ in filters_fixture]
+    expected_names = list(filters_fixture.keys())
 
     # When
     provider = ListFileFilterProvider(filter_list_file_fixture)
-    names = provider.getFilterNames()
+    names = provider.get_filter_names()
 
     # Then
     assert len(names) == len(expected_names)
     assert names == expected_names
 
+
 ###############################################################################
 
-def test_getFilterNames_undefinedName(filter_list_file_fixture, filters_fixture):
-    """Test the case where the filter list contains entries without the name"""
+def test_getFilterNames_undefinedName(filter_list_file_fixture: str,
+                                      filters_fixture: Dict[str, np.ndarray]):
+    """
+    Test the case where the filter list contains entries without the name
+    """
 
     # Given
     with open(filter_list_file_fixture) as f:
@@ -82,21 +89,25 @@ def test_getFilterNames_undefinedName(filter_list_file_fixture, filters_fixture)
     with open(filter_list_file_fixture, 'w') as f:
         for l in lines:
             f.write(l)
-    expected_names = [name for name,_ in filters_fixture]
+    expected_names = list(filters_fixture.keys())
     expected_names[1] = expected_names[1] + 'File'
 
     # When
     provider = ListFileFilterProvider(filter_list_file_fixture)
-    names = provider.getFilterNames()
+    names = provider.get_filter_names()
 
     # Then
     assert len(names) == len(expected_names)
     assert names == expected_names
 
+
 ###############################################################################
 
-def test_getFilterNames_absolutePath(temp_dir_fixture, filter_list_file_fixture, filters_fixture):
-    """Test the case where the filter list contains an absolute path"""
+def test_getFilterNames_absolutePath(temp_dir_fixture: str, filter_list_file_fixture: str,
+                                     filters_fixture: Dict[str, np.ndarray]):
+    """
+    Test the case where the filter list contains an absolute path
+    """
 
     # Given
     abs_filter_file = os.path.abspath(os.path.join(temp_dir_fixture, 'abs.txt'))
@@ -110,11 +121,11 @@ def test_getFilterNames_absolutePath(temp_dir_fixture, filter_list_file_fixture,
     with open(filter_list_file_fixture, 'w') as f:
         for l in lines:
             f.write(l)
-    expected_names = [name for name,_ in filters_fixture] + ['abs']
+    expected_names = list(filters_fixture.keys()) + ['abs']
 
     # When
     provider = ListFileFilterProvider(filter_list_file_fixture)
-    names = provider.getFilterNames()
+    names = provider.get_filter_names()
 
     # Then
     assert len(names) == len(expected_names)
@@ -123,8 +134,10 @@ def test_getFilterNames_absolutePath(temp_dir_fixture, filter_list_file_fixture,
 
 ###############################################################################
 
-def test_getFilterTransmission_unknownName(filter_list_file_fixture):
-    """Test the getFilterTransmission with a wrong filter name"""
+def test_getFilterTransmission_unknownName(filter_list_file_fixture: str):
+    """
+    Test the getFilterTransmission with a wrong filter name
+    """
 
     # Given
     wrong_name = 'wrong_name'
@@ -133,29 +146,36 @@ def test_getFilterTransmission_unknownName(filter_list_file_fixture):
     provider = ListFileFilterProvider(filter_list_file_fixture)
 
     # Then
-    with pytest.raises(UnknownNameException):
-        provider.getFilterTransmission(wrong_name)
+    with pytest.raises(KeyError):
+        provider.get_filter_transmission(wrong_name)
+
 
 ###############################################################################
 
-def test_getFilterTransmission_success(filter_list_file_fixture, filters_fixture):
-    """Test the getFilterTransmission() successful call"""
+def test_getFilterTransmission_success(filter_list_file_fixture: str,
+                                       filters_fixture: Dict[str, np.ndarray]):
+    """
+    Test the getFilterTransmission() successful call
+    """
 
     # Given
     provider = ListFileFilterProvider(filter_list_file_fixture)
 
-    for name, expected_data in filters_fixture:
-
+    for name, expected_data in filters_fixture.items():
         # When
-        data = provider.getFilterTransmission(name)
+        data = provider.get_filter_transmission(name)
 
         # Then
-        assert np.array_equal(data, np.asarray(expected_data, dtype=np.float32))
+        np.testing.assert_array_equal(data, np.asarray(expected_data, dtype=np.float32))
+
 
 ###############################################################################
 
-def test_getFilterTransmission_success_absolutePath(temp_dir_fixture, filter_list_file_fixture, filters_fixture):
-    """Test the getFilterTransmission() successful call for an absolute path"""
+def test_getFilterTransmission_success_absolutePath(temp_dir_fixture: str,
+                                                    filter_list_file_fixture: str):
+    """
+    Test the getFilterTransmission() successful call for an absolute path
+    """
 
     # Given
     abs_filter_file = os.path.abspath(os.path.join(temp_dir_fixture, 'abs.txt'))
@@ -173,10 +193,9 @@ def test_getFilterTransmission_success_absolutePath(temp_dir_fixture, filter_lis
 
     # When
     provider = ListFileFilterProvider(filter_list_file_fixture)
-    data = provider.getFilterTransmission('abs')
+    data = provider.get_filter_transmission('abs')
 
     # Then
-    assert np.array_equal(data, expected_data)
+    np.testing.assert_array_equal(data, expected_data)
 
 ###############################################################################
-

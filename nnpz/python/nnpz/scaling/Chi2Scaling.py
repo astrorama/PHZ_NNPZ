@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -22,8 +22,8 @@ A minimization is done later, taking into account all errors, looking for the sc
 that minimizes the chi^2 distance between reference an target object.
 """
 
-
 import warnings
+from typing import Callable
 
 import numpy as np
 from ElementsKernel import Logging
@@ -33,7 +33,8 @@ logger = Logging.getLogger(__name__)
 
 
 # Chi2
-def chi2(a, refval, referr, coordval, coorderr):
+def _chi2(a: float, refval: np.ndarray, referr: np.ndarray, coordval: np.ndarray,
+          coorderr: np.ndarray) -> np.ndarray:
     """
     chi2 distance
     """
@@ -42,23 +43,24 @@ def chi2(a, refval, referr, coordval, coorderr):
     return np.sum(nom / den, axis=1)
 
 
-class Chi2Scaling(object):
-    """Find the appropriate scaling minimizing the chi2 and applying a prior"""
+class Chi2Scaling:
+    """
+    Find the appropriate scaling minimizing the chi2 and applying a prior
 
-    def __init__(self, prior, a_min=1e-5, a_max=1e5, n_samples=1000,
-                 batch_size=1000, max_iter=20, rtol=1e-4, epsilon=1e-4):
-        """
-        Constructor
-        Args:
-            prior: A function that models the prior for the scale factor a
-            a_min: Minimum acceptable value for the scale
-            a_max: Maximum acceptable value for the scale
-            n_samples: Number of samples to use for finding the edges of the prior
-            batch_size: Limit the minimization to this number of closest points
-            max_iter: Maximum number of iterations for the minimizer
-            rtol: Relative tolerance for the stop condition
-            epsilon: Epsilon used for the numeric derivative
-        """
+    Args:
+        prior: A function that models the prior for the scale factor a
+        a_min: Minimum acceptable value for the scale
+        a_max: Maximum acceptable value for the scale
+        n_samples: Number of samples to use for finding the edges of the prior
+        batch_size: Limit the minimization to this number of closest points
+        max_iter: Maximum number of iterations for the minimizer
+        rtol: Relative tolerance for the stop condition
+        epsilon: Epsilon used for the numeric derivative
+    """
+
+    def __init__(self, prior: Callable[[float], float], a_min: float = 1e-5, a_max: float = 1e5,
+                 n_samples: int = 1000, batch_size: int = 1000, max_iter: int = 20,
+                 rtol: float = 1e-4, epsilon: float = 1e-4):
         if not hasattr(prior, '__call__'):
             raise TypeError('prior must be callable')
         self.prior = prior
@@ -78,23 +80,24 @@ class Chi2Scaling(object):
         self.__rtol = rtol
         self.__epsilon = epsilon
 
-    def __call__(self, ref_values, ref_errors, coord_values, coord_errors):
+    def __call__(self, reference: np.ndarray, target: np.ndarray) -> np.ndarray:
         """
-        Minimizes the chi2 distance using the scale factor a, which is constrained by
+        Minimizes the chi2 distance using the scale factor `a`, which is constrained by
         the prior passed to the constructor
         """
+        ref_values = reference[..., 0]
+        ref_errors = reference[..., 1]
+        coord_values = target[..., 0]
+        coord_errors = target[..., 1]
 
-        # Mask out nans!
-        mask = np.isfinite(coord_values)
-        coord_values = coord_values[mask]
-        coord_errors = coord_errors[mask]
-        ref_values = ref_values[:, mask]
-        ref_errors = ref_errors[:, mask]
+        # We expect no NaNs
+        assert not np.any(np.isnan(coord_values))
+        assert not np.any(np.isnan(coord_errors))
 
         # Target function to be minimized
         def chi2_prior(scale, *args):
             # pylint: disable=no-value-for-parameter
-            return chi2(scale, *args) / 2 - np.log(self.prior(scale))
+            return _chi2(scale, *args) / 2 - np.log(self.prior(scale))
 
         # Use Newton method to optimize all within in one go
         # Implies looking for a 0 on the derivative
@@ -121,7 +124,7 @@ class Chi2Scaling(object):
         if reference_mask.any():
             # Compute chi2 with the guessed scaling
             distances = np.full(len(reference_mask), np.inf)
-            distances[reference_mask] = chi2(
+            distances[reference_mask] = _chi2(
                 scale[reference_mask], ref_values[reference_mask, :], ref_errors[reference_mask, :],
                 coord_values, coord_errors
             )

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -21,23 +21,24 @@ Created on: 07/11/18
 Author: nikoapos
 """
 
-import sys
-if sys.version_info[0] < 3:
-    from future_builtins import *
+import os
 
 import py.test
-import os
+import sys
+
 
 def _runTests():
     return len([s for s in sys.argv if s.endswith('RunPyTest_test.py')]) == 0
 
+
 @py.test.mark.skipif(_runTests(), reason='File is not called explicitly')
-class TestRunPyTestInDir(object):
+class TestRunPyTestInDir:
     """
     @class TestTempClass
     @brief Unit Test class
     !!! Test class example for python             !!!
     !!! Please remove it and add your tests there !!!
     """
+
     def testRunPyTestInDir(self):
-        assert py.test.cmdline.main(['--ignore='+__file__, os.path.dirname(__file__)]) == 0
+        assert py.test.cmdline.main(['--ignore=' + __file__, os.path.dirname(__file__)]) == 0

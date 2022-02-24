@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,8 +19,9 @@ Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
 
-
 import abc
+from ast import literal_eval
+from typing import Any, Dict, List, Type
 
 from ElementsKernel import Configuration, Logging
 
@@ -29,7 +30,7 @@ logger = Logging.getLogger('Configuration')
 _handler_map = {}
 
 
-class ConfigManager(object):
+class ConfigManager:
     """
     The ConfigManager handles the lifetime and interdependency of the different classes that model
     the configuration of NNPZ.
@@ -49,20 +50,23 @@ class ConfigManager(object):
             expressions, so you could use 'range(10)', for instance.
     """
 
-    class ConfigHandler(object):
+    class ConfigHandler:
         """
         Configuration classes must implement this interface
         """
         __metaclass__ = abc.ABCMeta
 
         @staticmethod
-        def _checkParameterExists(param, args):
+        def _exists_parameter(param: str, args: Dict[str, Any]):
+            """
+            Abort the program execution if the parameter param is not in the dictionary
+            """
             if param not in args:
                 logger.error('Missing parameter: %s', param)
                 exit(-1)
 
         @abc.abstractmethod
-        def parseArgs(self, args):
+        def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
             """
             Parse the arguments the class knows about. Ignore any others.
             Args:
@@ -71,7 +75,7 @@ class ConfigManager(object):
             """
 
     @staticmethod
-    def addHandler(handler_type):
+    def add_handler(handler_type: Type[ConfigHandler]):
         """
         Register a configuration handler
         Args:
@@ -82,7 +86,7 @@ class ConfigManager(object):
         _handler_map[handler_type] = handler_type()
 
     @staticmethod
-    def getHandler(handler_type):
+    def get_handler(handler_type: Type[ConfigHandler]) -> ConfigHandler:
         """
         Get the instance (singleton) of a given configuration handler
         Args:
@@ -92,22 +96,22 @@ class ConfigManager(object):
         """
         return _handler_map.get(handler_type)
 
-    def __init__(self, config_file, extra_arguments):
+    def __init__(self, config_file: str, extra_arguments: List[str]):
         # Populate values from the configuration file
         if not config_file:
             config_file = Configuration.getConfigurationPath('nnpz.conf', True)
         args = {}
         # pylint: disable=exec-used
-        exec(open(config_file).read(), args)
+        exec(open(config_file).read(), args)  # nosec
 
-        self._parseExtraArgs(args, extra_arguments)
+        self._parse_extra_args(args, extra_arguments)
 
         self.__objects = {}
         for handler in _handler_map.values():
-            self.__objects.update(handler.parseArgs(args))
+            self.__objects.update(handler.parse_args(args))
 
     @staticmethod
-    def _parseExtraArgs(args, extra_arguments):
+    def _parse_extra_args(args: Dict[str, Any], extra_arguments: List[str]):
         """
         Overload/add new key/values to args from additional command-line arguments
         Args:
@@ -131,22 +135,21 @@ class ConfigManager(object):
                 value = extra_arguments[i]
 
             try:
-                # pylint: disable=eval-used
-                args[key] = eval(value)
-            except (SyntaxError, NameError):
+                args[key] = literal_eval(value)
+            except (SyntaxError, NameError, ValueError):
                 # If the evaluation failed use the argument as a string
                 args[key] = value
 
             i += 1
 
-    def getAvailableObjectList(self):
+    def get_available_object_list(self) -> List[str]:
         """
         Returns: list of str
             Known configuration keys
         """
         return list(self.__objects.keys())
 
-    def getObject(self, name):
+    def get(self, name: str) -> Any:
         """
         Args:
             name: str

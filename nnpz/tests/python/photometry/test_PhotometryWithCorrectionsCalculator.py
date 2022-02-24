@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -13,9 +13,9 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-import numpy as np
-from nnpz.photometry import PhotometryPrePostProcessorInterface
-from nnpz.photometry.PhotometryWithCorrectionsCalculator import PhotometryWithCorrectionsCalculator
+from nnpz.photometry.calculator import PhotometryPrePostProcessorInterface
+from nnpz.photometry.calculator.photometry_with_corrections_calculator import \
+    PhotometryWithCorrectionsCalculator
 
 from .fixtures import *
 
@@ -24,19 +24,21 @@ from .fixtures import *
 
 class MockPrePostProcessor(PhotometryPrePostProcessorInterface):
 
-    def preProcess(self, sed):
+    def pre_process(self, sed):
         return sed
 
-    def postProcess(self, intensity, filter_name):
+    def post_process(self, intensity, filter_name):
         return intensity
 
 
 ###############################################################################
 
-
 @pytest.fixture
-def filter_trans_map(filters_fixture):
-    return dict(filters_fixture)
+def filter_trans_map():
+    return {'First': np.asarray([(1, 0.1), (2, 0.2), (3, 0.4)], dtype=np.float32),
+            'Second': np.asarray([(4, 0.4), (5, 0.5), (6, 0.6)], dtype=np.float32),
+            'Third': np.asarray([(7, 0.7), (8, 0.8), (9, 0.9)], dtype=np.float32),
+            'Fourth': np.asarray([(1, 0.11), (2, 0.22), (3, 0.44)], dtype=np.float32)}
 
 
 ###############################################################################
@@ -61,7 +63,9 @@ def reddening_fixture():
 
 ###############################################################################
 
-def test_photometryWithCorrectionsCalculator(filter_trans_map, sed_fixture, reddening_fixture):
+def test_photometryWithCorrectionsCalculator(filter_trans_map: Dict[str, np.ndarray],
+                                             sed_fixture: np.ndarray,
+                                             reddening_fixture: np.ndarray):
     shifts = np.array([-1, 1, 2, 3, 4, 5], dtype=np.float32)
     calculator = PhotometryWithCorrectionsCalculator(filter_trans_map,
                                                      MockPrePostProcessor(),
@@ -80,9 +84,9 @@ def test_photometryWithCorrectionsCalculator(filter_trans_map, sed_fixture, redd
     assert shift_corr_map.shape == (2,)
 
     # Photometry values should match EBV 0.0 and no shift
-    assert np.isclose(photo_map['First'][0], 0.6)
-    assert np.isclose(photo_map['Second'][0], 4.1)
-    assert np.isclose(photo_map['Third'][0], 11.3)
+    np.testing.assert_allclose(photo_map['First'][0], 0.6)
+    np.testing.assert_allclose(photo_map['Second'][0], 4.1)
+    np.testing.assert_allclose(photo_map['Third'][0], 11.3)
 
     # EBV extinction is greater the highest the lambda
     assert ebv_corr_map['First'] > ebv_corr_map['Second']
@@ -102,7 +106,7 @@ def test_photometryWithCorrectionsCalculator(filter_trans_map, sed_fixture, redd
             expected = np.trapz(finterp * sinterp, x=grid)
             corr = a * dx * dx + b * dx + 1
             corrected = photo_map[fname][0] * corr
-            assert (np.isclose(expected, corrected, rtol=0.3))
+            np.testing.assert_approx_equal(expected, corrected, significant=1)
 
 
 ###############################################################################

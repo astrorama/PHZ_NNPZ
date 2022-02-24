@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -13,12 +13,13 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+
+import fitsio
 import numpy as np
-from astropy.table import Table
 from nnpz.io import OutputHandler
 
 
-class McSliceAggregateBins(OutputHandler.OutputExtensionTableProviderInterface):
+class McSliceAggregateBins(OutputHandler.OutputExtensionProviderInterface):
     """
     Store an extension table with the binning used for the sliced aggregate values
 
@@ -32,15 +33,10 @@ class McSliceAggregateBins(OutputHandler.OutputExtensionTableProviderInterface):
         self.__suffix = suffix
         self.__slice_binning = slice_binning
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        pass
-
-    def getExtensionTables(self):
-        return {
-            'BINS_MC_SLICE_AGGREGATE_{}_{}_{}'.format(
-                self.__target_param.upper(), self.__slice_param.upper(), self.__suffix
-            ): Table(
-                {
-                    self.__slice_param.upper(): self.__slice_binning.ravel(),
-                })
-        }
+    def add_extensions(self, fits: fitsio.FITS):
+        target_col = self.__target_param.upper()
+        slice_col = self.__slice_param.upper()
+        extname = 'BINS_MC_SLICE_AGGREGATE_{}_{}_{}'.format(target_col, slice_col, self.__suffix)
+        val = self.__slice_binning.ravel()
+        fits.create_table_hdu({slice_col: val}, extname=extname)
+        fits[extname].write_column(slice_col, val)

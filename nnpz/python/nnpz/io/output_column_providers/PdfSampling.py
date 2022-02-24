@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,11 +18,12 @@
 Created on: 15/02/18
 Author: Nikolaos Apostolakos
 """
+from typing import Any, Dict, List, Optional, Tuple
 
-
+import astropy.units as u
 import numpy as np
 from nnpz.io import OutputHandler
-from scipy import interpolate
+from nnpz.reference_sample import ReferenceSample
 
 
 class PdfSampling(OutputHandler.OutputColumnProviderInterface,
@@ -40,45 +41,51 @@ class PdfSampling(OutputHandler.OutputColumnProviderInterface,
             How many Montecarlo samples to generate
     """
 
-    def __sample(self, pdf, bins, quantiles):
-        cum_prob = np.zeros(len(bins))
-        cum_prob[1:] = np.cumsum(np.diff(bins) * ((pdf[:-1] + pdf[1:]) / 2.))
-        inv_cum = interpolate.interp1d(cum_prob / max(cum_prob), bins, kind='linear')
-        return inv_cum(quantiles)
+    def __sample(self, pdfs: np.ndarray, bins: np.ndarray, quantiles: np.ndarray,
+                 output: np.ndarray):
+        if len(quantiles.shape) == 1:
+            quantiles = np.tile(quantiles, (len(output), 1))
 
-    def __init__(self, pdf_provider, quantiles=None, mc_samples=0):
-        self.__pdf_provider = pdf_provider
-        self.__qs = quantiles if quantiles else []
+        cum_prob = np.zeros((len(pdfs), len(bins)))
+        bin_diff = np.diff(bins)[np.newaxis]
+        pdfs_med = (pdfs[:, :-1] + pdfs[:, 1:]) / 2.
+        cum_prob[:, 1:] = np.cumsum(bin_diff * pdfs_med, axis=-1)
+        cum_prob[:] /= cum_prob[:, -1, np.newaxis]
+        for i in range(len(output)):
+            output[i] = np.interp(quantiles[i], cum_prob[i], bins)
+        return output
+
+    def __init__(self, ref_sample: ReferenceSample, quantiles: List[float] = None,
+                 mc_samples: int = 0):
+        self.__pdz_bins = ref_sample.get_provider('pdz').get_redshift_bins()
+        self.__qs = np.asarray(quantiles) if quantiles else []
         self.__mc_no = mc_samples
-        self.__quantiles = None
-        self.__mc = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self) \
+            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         def_cols = []
-        if self.__qs:
-            def_cols.append(('REDSHIFT_PDF_QUANTILES', np.float32, len(self.__qs)))
+        if self.__qs is not None:
+            def_cols.append(
+                ('REDSHIFT_PDF_QUANTILES', np.float32, u.dimensionless_unscaled, len(self.__qs))
+            )
         if self.__mc_no > 0:
-            def_cols.append(('REDSHIFT_PDF_MC', np.float32, self.__mc_no))
+            def_cols.append(('REDSHIFT_PDF_MC', np.float32, u.dimensionless_unscaled, self.__mc_no))
         return def_cols
 
-    def setWriteableArea(self, output_area):
-        if self.__qs:
-            self.__quantiles = output_area['REDSHIFT_PDF_QUANTILES']
-        if self.__mc_no > 0:
-            self.__mc = output_area['REDSHIFT_PDF_MC']
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,
+                        output: np.ndarray):
+        # From CoaddedPdz
+        pdfs = output['REDSHIFT_PDF']
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        pass
-
-    def fillColumns(self):
-        bins = self.__pdf_provider.getPdzBins()
-        pdfs = self.__pdf_provider.getPdz()
-
-        if self.__qs:
-            for pdf in pdfs:
-                self.__quantiles[:] = self.__sample(pdf, bins, self.__qs)
+        if self.__qs is not None:
+            self.__sample(pdfs, self.__pdz_bins, self.__qs, output=output['REDSHIFT_PDF_QUANTILES'])
 
         if self.__mc_no > 0:
-            for pdf in pdfs:
-                samples = np.random.rand(self.__mc_no)
-                self.__mc[:] = self.__sample(pdf, bins, samples)
+            samples = np.random.rand(len(output), self.__mc_no)
+            self.__sample(pdfs, self.__pdz_bins, samples, output=output['REDSHIFT_PDF_MC'])
+
+    def get_headers(self) -> Dict[str, Any]:
+        keys = {}
+        if self.__qs is not None:
+            keys["PDFQUAN"] = ' '.join([str(q) for q in self.__qs])
+        return keys

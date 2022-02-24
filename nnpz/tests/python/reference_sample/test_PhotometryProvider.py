@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,8 +18,6 @@
 Created on: 29/12/18
 Author: Nikolaos Apostolakos
 """
-
-
 from nnpz.exceptions import *
 from nnpz.reference_sample import PhotometryProvider
 
@@ -29,19 +27,21 @@ from .fixtures import *
 ###############################################################################
 
 def test_constructor_missingFile():
-    """Test the constructor raises an exception if the file does not exist"""
+    """
+    Test the constructor raises an exception if the file does not exist
+    """
 
     # Given
     filename = '/does/not/exist.fits'
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         PhotometryProvider(filename)
 
 
 ###############################################################################
 
-def test_constructor_nonFitsFile(temp_dir_fixture):
+def test_constructor_nonFitsFile(temp_dir_fixture: str):
     """Test the constructor with a non FITS file"""
 
     # Given
@@ -56,8 +56,10 @@ def test_constructor_nonFitsFile(temp_dir_fixture):
 
 ###############################################################################
 
-def test_constructor_missingNnpzHdu(photometry_file_fixture):
-    """Test the case where the first table is not named NNPZ_PHOTOMETRY"""
+def test_constructor_missingNnpzHdu(photometry_file_fixture: str):
+    """
+    Test the case where the first table is not named NNPZ_PHOTOMETRY
+    """
 
     # Given
     hdus = fits.open(photometry_file_fixture)
@@ -72,14 +74,16 @@ def test_constructor_missingNnpzHdu(photometry_file_fixture):
 
 ###############################################################################
 
-def test_getType(photometry_file_fixture):
-    """Test the getType method"""
+def test_getType(photometry_file_fixture: str):
+    """
+    Test the getType method
+    """
 
     # Given
     provider = PhotometryProvider(photometry_file_fixture)
 
     # When
-    type = provider.getType()
+    type = provider.get_type()
 
     # Then
     assert type == 'F_nu_uJy'
@@ -87,15 +91,17 @@ def test_getType(photometry_file_fixture):
 
 ###############################################################################
 
-def test_getFilterList(photometry_file_fixture, filters_fixture):
-    """Test the getFilterList() method"""
+def test_getFilterList(photometry_file_fixture: str, filters_fixture: Dict[str, np.ndarray]):
+    """
+    Test the getFilterList() method
+    """
 
     # Given
-    expected = [f for f, d in filters_fixture]
+    expected = set(filters_fixture.keys())
 
     # When
     provider = PhotometryProvider(photometry_file_fixture)
-    filter_list = provider.getFilterList()
+    filter_list = set(provider.get_filter_list())
 
     # Then
     assert filter_list == expected
@@ -103,8 +109,10 @@ def test_getFilterList(photometry_file_fixture, filters_fixture):
 
 ###############################################################################
 
-def test_getFilterTransmission_wrongName(photometry_file_fixture):
-    """Test the getFilterTransmission with wrong filter name"""
+def test_getFilterTransmission_wrongName(photometry_file_fixture: str):
+    """
+    Test the getFilterTransmission with wrong filter name
+    """
 
     # Given
     wrong_name = 'wrong'
@@ -113,64 +121,73 @@ def test_getFilterTransmission_wrongName(photometry_file_fixture):
     provider = PhotometryProvider(photometry_file_fixture)
 
     # Then
-    with pytest.raises(UnknownNameException):
-        provider.getFilterTransmission(wrong_name)
+    with pytest.raises(KeyError):
+        provider.get_filter_transmission(wrong_name)
 
 
 ###############################################################################
 
-def test_getFilterTransmission_missingData(photometry_file_fixture, filters_fixture):
-    """Test the getFilterTransmission with filter for which the FITS has no data"""
+def test_getFilterTransmission_missingData(photometry_file_fixture: str):
+    """
+    Test the getFilterTransmission with filter for which the FITS has no data
+    """
 
     # Given
-    filter = filters_fixture[3][0]
+    filter = 'vis'
 
     # When
     provider = PhotometryProvider(photometry_file_fixture)
 
     # Then
     with pytest.raises(MissingDataException):
-        provider.getFilterTransmission(filter)
+        provider.get_filter_transmission(filter)
 
 
 ###############################################################################
 
-def test_getFilterTransmission_success(photometry_file_fixture, filters_fixture):
-    """Test successful call of getFilterTransmission()"""
+def test_getFilterTransmission_success(photometry_file_fixture: str,
+                                       filters_fixture: Dict[str, np.ndarray]):
+    """
+    Test successful call of getFilterTransmission()
+    """
 
     # Given
     provider = PhotometryProvider(photometry_file_fixture)
 
-    for name, expected in filters_fixture:
-        if name == filters_fixture[3][0]:
+    for name, expected in filters_fixture.items():
+        if name == 'vis':
             continue
 
         # When
-        trans = provider.getFilterTransmission(name)
+        trans = provider.get_filter_transmission(name)
 
         # Then
-        assert np.array_equal(trans, expected)
+        np.testing.assert_array_equal(trans, expected)
 
 
 ###############################################################################
 
-def test_getIds(photometry_file_fixture, photometry_ids_fixure):
-    """Test the getIds() method"""
+def test_getIds(photometry_file_fixture: str, photometry_ids_fixure: np.ndarray):
+    """
+    Test the getIds() method
+    """
 
     # Given
     provider = PhotometryProvider(photometry_file_fixture)
 
     # When
-    ids = provider.getIds()
+    ids = provider.get_ids()
 
     # Then
-    assert np.array_equal(ids, photometry_ids_fixure)
+    np.testing.assert_array_equal(ids, photometry_ids_fixure)
 
 
 ###############################################################################
 
-def test_getData_wrongFilter(photometry_file_fixture):
-    """Test the getData() with a filter name that is not in the file"""
+def test_getData_wrongFilter(photometry_file_fixture: str):
+    """
+    Test the getData() with a filter name that is not in the file
+    """
 
     # Given
     wrong_name = 'wrong_name'
@@ -179,40 +196,44 @@ def test_getData_wrongFilter(photometry_file_fixture):
     provider = PhotometryProvider(photometry_file_fixture)
 
     # Then
-    with pytest.raises(UnknownNameException):
-        provider.getData(wrong_name)
+    with pytest.raises(KeyError):
+        provider.get_data(wrong_name)
 
 
 ###############################################################################
 
-def test_getData_noFilterList(photometry_file_fixture, photometry_data_fixture):
-    """Test that getData() returns all filters when called without argument"""
+def test_getData_noFilterList(photometry_file_fixture: str, photometry_data_fixture: np.ndarray):
+    """
+    Test that getData() returns all filters when called without argument
+    """
 
     # When
     provider = PhotometryProvider(photometry_file_fixture)
-    data = provider.getData()
+    data = provider.get_data()
+    filters = provider.get_filter_list()
 
     # Then
-    assert np.array_equal(data, photometry_data_fixture)
+    np.testing.assert_array_equal(data[:, 0, :], photometry_data_fixture[filters[0]])
+    np.testing.assert_array_equal(data[:, 1, :], photometry_data_fixture[filters[1]])
+    np.testing.assert_array_equal(data[:, 2, :], photometry_data_fixture[filters[2]])
 
 
 ###############################################################################
 
-def test_getData_withArgs(photometry_file_fixture, photometry_data_fixture, filters_fixture):
-    """Test the getData() call for only some of the filters"""
+def test_getData_withArgs(photometry_file_fixture: str, photometry_data_fixture: np.ndarray,
+                          filters_fixture):
+    """
+    Test the getData() call for only some filters
+    """
 
     # Given
-    indices = [2, 1]
-    filters = [filters_fixture[i][0] for i in indices]
-    expected = np.zeros((len(photometry_data_fixture), len(filters), 2), dtype=np.float32)
-    for expected_i, all_i in enumerate(indices):
-        expected[:, expected_i, :] = photometry_data_fixture[:, all_i, :]
+    provider = PhotometryProvider(photometry_file_fixture)
 
     # When
-    provider = PhotometryProvider(photometry_file_fixture)
-    data = provider.getData(*filters)
+    data = provider.get_data(['vis', 'Y'])
 
     # Then
-    assert np.array_equal(data, expected)
+    np.testing.assert_array_equal(data[:, 0, :], photometry_data_fixture['vis'])
+    np.testing.assert_array_equal(data[:, 1, :], photometry_data_fixture['Y'])
 
 ###############################################################################

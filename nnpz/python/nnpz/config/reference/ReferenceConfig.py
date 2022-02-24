@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,11 +18,13 @@
 Created on: 06/04/18
 Author: Nikolaos Apostolakos
 """
+from typing import Any, Dict
 
-
+import numpy as np
 from nnpz.config import ConfigManager
-from nnpz.config.reference import (ReferenceCatalogConfig, ReferenceSampleConfig,
-                                   ReferenceSamplePhotometryConfig)
+from nnpz.config.reference.ReferenceSampleConfig import ReferenceSampleConfig
+from nnpz.config.reference.ReferenceSamplePhotometryConfig import ReferenceSamplePhotometryConfig
+from nnpz.exceptions import CorruptedFileException
 
 
 class ReferenceConfig(ConfigManager.ConfigHandler):
@@ -31,12 +33,22 @@ class ReferenceConfig(ConfigManager.ConfigHandler):
     interchangeably
     """
 
-    def parseArgs(self, args):
+    def __init__(self):
+        self.__validated = False
+
+    def __validate(self, options: Dict[str, Any]):
+        ref_sample_ids = options['reference_ids']
+        ref_photo = options['reference_photometry']
+        if not np.array_equal(ref_sample_ids, ref_photo.ids):
+            raise CorruptedFileException('Reference sample IDs and photometry IDs do not match')
+
+    def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         options = {}
-        options.update(ConfigManager.getHandler(ReferenceSampleConfig).parseArgs(args))
-        options.update(ConfigManager.getHandler(ReferenceCatalogConfig).parseArgs(args))
-        options.update(ConfigManager.getHandler(ReferenceSamplePhotometryConfig).parseArgs(args))
+        options.update(ConfigManager.get_handler(ReferenceSampleConfig).parse_args(args))
+        options.update(ConfigManager.get_handler(ReferenceSamplePhotometryConfig).parse_args(args))
+        if not self.__validated:
+            self.__validate(options)
         return options
 
 
-ConfigManager.addHandler(ReferenceConfig)
+ConfigManager.add_handler(ReferenceConfig)

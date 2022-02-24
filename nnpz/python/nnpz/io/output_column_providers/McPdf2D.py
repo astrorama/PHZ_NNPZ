@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -15,6 +15,7 @@
 #
 from typing import Tuple
 
+import astropy.units as u
 import numpy as np
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
@@ -42,34 +43,21 @@ class McPdf2D(OutputHandler.OutputColumnProviderInterface):
         super(McPdf2D, self).__init__()
         self.__sampler = sampler
         self.__param_names = list(param_names)
-        self.__binning = binning
+        self.__bins = binning
         self.__column = 'MC_PDF_2D_{}_{}'.format(*map(str.upper, self.__param_names))
-        self.__output = None
 
-    def getColumnDefinition(self):
-        shape = (self.__binning[0].shape[0] - 1, self.__binning[1].shape[0] - 1)
+    def get_column_definition(self):
+        shape = (self.__bins[0].shape[0] - 1, self.__bins[1].shape[0] - 1)
         return [
-            (self.__column, np.float32, shape)
+            (self.__column, np.float32, u.dimensionless_unscaled, shape)
         ]
 
-    def setWriteableArea(self, output_area):
-        self.__output = output_area[self.__column]
-        print(self.__output.shape)
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,
+                        output: np.ndarray):
+        samples = self.__sampler.get_samples()
+        param1 = samples[self.__param_names[0]]
+        param2 = samples[self.__param_names[1]]
+        output_col = output[self.__column]
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        """
-        Does nothing for this provider, as the sampling is done by the McSampler
-        """
-        pass
-
-    def fillColumns(self):
-        """
-        See OutputColumnProviderInterface.fillColumns
-        """
-        samples = self.__sampler.getSamples()
-
-        for i, sample in enumerate(samples):
-            self.__output[i, :] = np.histogram2d(
-                sample[self.__param_names[0]], sample[self.__param_names[1]],
-                bins=self.__binning, density=True
-            )[0]
+        for i in range(len(samples)):
+            output_col[i] = np.histogram2d(param1[i], param2[i], bins=self.__bins, density=True)[0]

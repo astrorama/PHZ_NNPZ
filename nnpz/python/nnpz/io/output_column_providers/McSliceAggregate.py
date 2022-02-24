@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -15,6 +15,7 @@
 #
 from typing import Callable
 
+import astropy.units as u
 import numpy as np
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
@@ -39,32 +40,23 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
         self.__column = 'MC_SLICE_AGGREGATE_{}_{}_{}'.format(
             self.__target_param.upper(), self.__slice_param.upper(), self.__suffix
         )
-        self.__output = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self):
         return [
-            (self.__column, np.float32, len(self.__binning) - 1)
+            (self.__column, np.float32, u.dimensionless_unscaled, len(self.__binning) - 1)
         ]
 
-    def setWriteableArea(self, output_area):
-        self.__output = output_area[self.__column]
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,
+                        output: np.ndarray):
+        samples = self.__sampler.get_samples()
+        slice_val = samples[self.__slice_param]
+        target_val = samples[self.__target_param]
+        output_col = output[self.__column]
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        """
-        Does nothing for this provider, as the sampling is done by the McSampler
-        """
-        pass
-
-    def fillColumns(self):
-        """
-        See OutputColumnProviderInterface.fillColumns
-        """
-        samples = self.__sampler.getSamples()
-
-        for i in range(self.__output.shape[1]):
+        for i in range(len(self.__binning) - 1):
             rmin, rmax = self.__binning[i:i + 2]
-            mask = (samples[self.__slice_param] < rmin) | (samples[self.__slice_param] >= rmax)
-            data = np.ma.array(samples[self.__target_param], mask=mask, copy=False)
+            mask = (slice_val < rmin) | (slice_val >= rmax)
+            data = np.ma.array(target_val, mask=mask, copy=False)
             # Technically NaN is more adequate for the mean of an empty set, but this breaks
             # boost on later stages of the PHZ pipeline :(
-            self.__output[:, i] = self.__aggregator(data, axis=1).filled(-99.)
+            output_col[:, i] = self.__aggregator(data, axis=1).filled(-99.)

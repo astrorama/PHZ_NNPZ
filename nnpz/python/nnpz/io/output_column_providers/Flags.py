@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,15 +18,13 @@
 Created on: 20/04/18
 Author: Nikolaos Apostolakos
 """
+from typing import List, Optional, Tuple
 
-
+import astropy.units as u
 import numpy as np
-from nnpz import NnpzFlag
+from nnpz.flags import NnpzFlag
 from nnpz.io import OutputHandler
 
-
-# FIXME: Probably better to have two different output handlers implementing
-#        separate/joint flag columns
 
 class Flags(OutputHandler.OutputColumnProviderInterface):
     """
@@ -40,38 +38,26 @@ class Flags(OutputHandler.OutputColumnProviderInterface):
             maps to a flag.
     """
 
-    def __init__(self, flag_list, separate_columns=False):
-        self.__flag_list = flag_list
+    def __init__(self, separate_columns=False):
         self.__separate_columns = separate_columns
         self.__output_area = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self) \
+            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         if self.__separate_columns:
             return [
-                (name, np.bool) for name in NnpzFlag.getFlagNames()
+                (name, np.bool, u.dimensionless_unscaled) for name in NnpzFlag.FLAG_NAMES
             ]
         return [
-            ('FLAGS_{}'.format(i + 1), np.uint8)
-            for i in range(NnpzFlag.getArraySize())
+            ('FLAGS', np.uint32, u.dimensionless_unscaled)
         ]
 
-    def setWriteableArea(self, output_area):
-        self.__output_area = output_area
+    def _separate_columns(self, flags: np.ndarray, output: np.ndarray):
+        for flag, name in zip(NnpzFlag.FLAGS, NnpzFlag.FLAG_NAMES):
+            self.__output_area[name] = flags ^ flag
 
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        pass
-
-    def _separateColumns(self):
-        for name in NnpzFlag.getFlagNames():
-            self.__output_area[name] = [f.isSet(NnpzFlag(name)) for f in self.__flag_list]
-
-    def _byteColumns(self):
-        flag_list_as_arrays = [f.asArray() for f in self.__flag_list]
-        for i in range(NnpzFlag.getArraySize()):
-            name = 'FLAGS_{}'.format(i + 1)
-            self.__output_area[name] = [flag[i] for flag in flag_list_as_arrays]
-
-    def fillColumns(self):
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
         if self.__separate_columns:
-            return self._separateColumns()
-        return self._byteColumns()
+            self._separate_columns(neighbor_info['FLAGS'], output)
+        else:
+            np.copyto(output['FLAGS'], neighbor_info['FLAGS'], casting='same_kind')

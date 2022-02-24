@@ -30,6 +30,11 @@ elements_depends_on_subdirs(ElementsKernel)
 #                     INCLUDE_DIRS Boost ElementsKernel
 #                     PUBLIC_HEADERS ElementsExamples)
 #===============================================================================
+find_package(Cython REQUIRED)
+find_package(NumPy)
+elements_add_cython_module(src/Cython/lib/Weights.pyx
+        INCLUDE_DIRS NumPy
+        NO_PUBLIC_HEADERS)
 
 #===============================================================================
 # Declare the executables here
@@ -57,6 +62,7 @@ elements_install_python_modules()
 # elements_install_scripts()
 elements_install_aux_files()
 
+
 #===============================================================================
 # Declare the Python programs here
 # Examples :
@@ -65,10 +71,14 @@ elements_install_aux_files()
 #===============================================================================
 elements_add_python_program(NnpzBuildPhotometry
                             nnpz.program.BuildPhotometry)
-elements_add_python_program(NnpzReconstructPDZ
-                            nnpz.program.ReconstructPDZ)
-elements_add_python_program(NnpzDereddenPhotometry
-                            nnpz.program.DereddenPhotometry)
+elements_add_python_program(NnpzComputeNeighbors
+                            nnpz.program.ComputeNeighbors)
+elements_add_python_program(NnpzCorrectPhotometry
+                            nnpz.program.CorrectPhotometry)
+elements_add_python_program(NnpzComputeWeights
+                            nnpz.program.ComputeWeights)
+elements_add_python_program(NnpzGenerateOutput
+                            nnpz.program.GenerateOutput)
 elements_add_python_program(nnpz
                             nnpz.program.Nnpz)
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -21,9 +21,9 @@ Author: Nikolaos Apostolakos
 
 import tempfile
 
-from nnpz import ReferenceSample
 from nnpz.exceptions import *
 from nnpz.reference_sample.MontecarloProvider import MontecarloProvider
+from nnpz.reference_sample.ReferenceSample import ReferenceSample
 
 from .fixtures import *
 
@@ -59,7 +59,7 @@ def test_createNew_dirExists(temp_dir_fixture):
 
     # Then
     with pytest.raises(OSError):
-        ReferenceSample.createNew(dir_name)
+        ReferenceSample.create(dir_name)
 
 
 ###############################################################################
@@ -73,7 +73,7 @@ def test_createNew_success(temp_dir_fixture):
     dir_name = os.path.join(temp_dir_fixture, 'ref_sample')
 
     # When
-    result = ReferenceSample.createNew(dir_name)
+    result = ReferenceSample.create(dir_name)
 
     # Then
 
@@ -98,7 +98,7 @@ def test_constructor_missingDir(temp_dir_fixture):
     dir_name = os.path.join(temp_dir_fixture, 'missing')
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(dir_name)
 
 
@@ -130,7 +130,7 @@ def test_constructor_missingSedDataFile(reference_sample_dir_fixture):
     os.remove(os.path.join(reference_sample_dir_fixture, 'sed_data_1.npy'))
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(reference_sample_dir_fixture)
 
 
@@ -145,7 +145,7 @@ def test_constructor_missingPdzDataFile(reference_sample_dir_fixture):
     os.remove(os.path.join(reference_sample_dir_fixture, 'pdz_data_1.npy'))
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(reference_sample_dir_fixture)
 
 
@@ -160,7 +160,7 @@ def test_constructor_missingMcDataFile(reference_sample_dir_fixture, providers_w
     os.remove(os.path.join(reference_sample_dir_fixture, 'mc_data_1.npy'))
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
 
 
@@ -197,10 +197,10 @@ def test_getIds(reference_sample_dir_fixture, sed_list_fixture):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    ids = sample.getIds()
+    ids = sample.get_ids()
 
     # Then
-    assert np.all(sorted(ids) == sorted(expected))
+    np.testing.assert_array_equal(sorted(ids), sorted(expected))
 
 
 ###############################################################################
@@ -215,7 +215,7 @@ def test_getSedData_dataUnset(reference_sample_dir_fixture):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    sed_data = [sample.getSedData(i) for i in unset_sed_ids]
+    sed_data = [sample.get_sed_data(i) for i in unset_sed_ids]
 
     # Then
     assert sed_data[0] is None
@@ -238,12 +238,12 @@ def test_getSedData_withData(reference_sample_dir_fixture, sed_list_fixture):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    sed_data = [sample.getSedData(i) for i in id_list]
+    sed_data = [sample.get_sed_data(i) for i in id_list]
 
     # Then
     for i in range(len(id_list)):
         assert sed_data[i].shape == expected_data[i].shape
-        assert np.all(sed_data[i] == expected_data[i])
+        np.testing.assert_array_equal(sed_data[i], expected_data[i])
 
 
 ###############################################################################
@@ -278,7 +278,7 @@ def test_getPdzData_dataUnset(reference_sample_dir_fixture):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture)
-    pdz_data = [sample.getPdzData(i) for i in unset_pdz_ids]
+    pdz_data = [sample.get_pdz_data(i) for i in unset_pdz_ids]
 
     # Then
     assert pdz_data[0] is None
@@ -297,7 +297,7 @@ def test_getMcData_dataUnset(reference_sample_dir_fixture, providers_with_mc):
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
-    mc_data = [sample.getData('mc', i) for i in unset_mc_ids]
+    mc_data = [sample.get_data('mc', i) for i in unset_mc_ids]
 
     # Then
     assert mc_data[0] is None
@@ -320,12 +320,13 @@ def test_getMcData_withData(reference_sample_dir_fixture, mc_data_fixture, provi
 
     # When
     sample = ReferenceSample(reference_sample_dir_fixture, providers=providers_with_mc)
-    data = [sample.getData('mc', i) for i in id_list]
+    data = [sample.get_data('mc', i) for i in id_list]
 
     # Then
     for i in range(len(id_list)):
         assert data[i].shape == expected_data[i].shape
-        assert all([np.allclose(data[i][c], expected_data[i][c]) for c in data[i].dtype.names])
+        for c in data[i].dtype.names:
+            np.testing.assert_allclose(data[i][c], expected_data[i][c])
 
 
 ###############################################################################
@@ -338,10 +339,10 @@ def test_getPdzData_withData(reference_sample_dir_fixture, pdz_list_fixture, red
 
     for obj in pdz_list_fixture.values():
         for obj_id, expected in obj:
-            pdz = sample.getPdzData(obj_id)
-            assert pdz.shape == (len(expected), 2)
-            assert np.array_equal(pdz[:, 0], redshift_bins_fixture)
-            assert np.array_equal(pdz[:, 1], expected)
+            pdz = sample.get_pdz_data(obj_id)
+            assert pdz.shape == (len(expected),)
+            np.testing.assert_array_equal(pdz, expected)
+
 
 ###############################################################################
 
@@ -386,12 +387,12 @@ def test_iterate_seds(reference_sample_dir_fixture, sed_list_fixture):
         if obj.sed is None:
             assert sed_list[obj.id] is None
         else:
-            assert np.all(obj.sed == sed_list[obj.id])
+            np.testing.assert_array_equal(obj.sed, sed_list[obj.id])
 
 
 ###############################################################################
 
-def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_list_fixture):
+def test_iterate_pdzs(reference_sample_dir_fixture, pdz_list_fixture):
     """
     Test iteration of the sample for the PDZ values
     """
@@ -400,7 +401,7 @@ def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_l
     pdz_list = {}
     for key in pdz_list_fixture:
         for obj_id, pdz in pdz_list_fixture[key]:
-            pdz_list[obj_id] = np.stack((redshift_bins_fixture, pdz), axis=-1)
+            pdz_list[obj_id] = pdz
 
     # When
     provider = ReferenceSample(reference_sample_dir_fixture)
@@ -411,7 +412,8 @@ def test_iterate_pdzs(reference_sample_dir_fixture, redshift_bins_fixture, pdz_l
         if obj.pdz is None:
             assert pdz_list[obj.id] is None
         else:
-            assert np.array_equal(obj.pdz, pdz_list[obj.id])
+            np.testing.assert_array_equal(obj.pdz, pdz_list[obj.id])
+
 
 ###############################################################################
 
@@ -421,17 +423,17 @@ def test_importRefSample(reference_sample_dir_fixture):
     """
     new_ref_dir = tempfile.mktemp(prefix='nnpz_test_new_ref')
 
-    new_ref = ReferenceSample.createNew(new_ref_dir)
-    new_ref.importDirectory(reference_sample_dir_fixture)
+    new_ref = ReferenceSample.create(new_ref_dir)
+    new_ref.import_directory(reference_sample_dir_fixture)
 
     old_ref = ReferenceSample(reference_sample_dir_fixture)
     assert len(old_ref) == len(new_ref)
 
-    for obj_id in old_ref.getIds():
-        nsed = new_ref.getSedData(obj_id)
-        npdz = new_ref.getPdzData(obj_id)
-        assert np.array_equal(nsed, old_ref.getSedData(obj_id))
-        assert np.array_equal(npdz, old_ref.getPdzData(obj_id))
+    for obj_id in old_ref.get_ids():
+        nsed = new_ref.get_sed_data(obj_id)
+        npdz = new_ref.get_pdz_data(obj_id)
+        np.testing.assert_array_equal(nsed, old_ref.get_sed_data(obj_id))
+        np.testing.assert_array_equal(npdz, old_ref.get_pdz_data(obj_id))
 
 
 ###############################################################################
@@ -450,10 +452,10 @@ def test_addProvider(reference_sample_dir_fixture):
 
     ref_sample = ReferenceSample(reference_sample_dir_fixture)
     with pytest.raises(KeyError):
-        ref_sample.getProvider('mc2')
+        ref_sample.get_provider('mc2')
 
     # When
-    ref_sample.addProvider(
+    ref_sample.add_provider(
         'MontecarloProvider', name='mc2',
         data_pattern='mc2_data_{}.npy',
         object_ids=[100, 101],
@@ -461,14 +463,13 @@ def test_addProvider(reference_sample_dir_fixture):
     )
 
     # Then
-    prov = ref_sample.getProvider('mc2')
+    prov = ref_sample.get_provider('mc2')
     assert prov is not None
     assert isinstance(prov, MontecarloProvider)
 
-    data = ref_sample.getData('mc2', 100)
-    assert all(
-        [np.allclose(expected_data[c][0], data[c].reshape(1, 100)) for c in data.dtype.names]
-    )
+    data = ref_sample.get_data('mc2', 100)
+    for c in data.dtype.names:
+        np.testing.assert_allclose(expected_data[c][0], data[c].reshape(100))
 
 
 ###############################################################################
@@ -487,10 +488,10 @@ def test_addProviderExists(reference_sample_dir_fixture):
 
     ref_sample = ReferenceSample(reference_sample_dir_fixture)
     with pytest.raises(KeyError):
-        ref_sample.getProvider('mc2')
+        ref_sample.get_provider('mc2')
 
     # When
-    ref_sample.addProvider(
+    ref_sample.add_provider(
         'MontecarloProvider', name='mc2',
         data_pattern='mc2_data_{}.npy',
         object_ids=[100, 101],
@@ -499,7 +500,7 @@ def test_addProviderExists(reference_sample_dir_fixture):
 
     # Then
     with pytest.raises(AlreadySetException):
-        ref_sample.addProvider(
+        ref_sample.add_provider(
             'MontecarloProvider', name='mc2',
             data_pattern='mc2_data_{}.npy',
             object_ids=[205, 206],
@@ -523,10 +524,10 @@ def test_addProviderOverwrite(reference_sample_dir_fixture):
 
     ref_sample = ReferenceSample(reference_sample_dir_fixture)
     with pytest.raises(KeyError):
-        ref_sample.getProvider('mc2')
+        ref_sample.get_provider('mc2')
 
     # When
-    ref_sample.addProvider(
+    ref_sample.add_provider(
         'MontecarloProvider', name='mc2',
         data_pattern='mc2_data_{}.npy',
         object_ids=[100, 101],
@@ -534,7 +535,7 @@ def test_addProviderOverwrite(reference_sample_dir_fixture):
     )
 
     # Then
-    ref_sample.addProvider(
+    ref_sample.add_provider(
         'MontecarloProvider', name='mc2',
         data_pattern='mc2_data_{}.npy',
         object_ids=[205, 206],
@@ -553,7 +554,7 @@ def test_missingIndex(reference_sample_dir_fixture):
     os.unlink(os.path.join(reference_sample_dir_fixture, 'index.npy'))
 
     # Then
-    with pytest.raises(FileNotFoundException):
+    with pytest.raises(FileNotFoundError):
         ReferenceSample(reference_sample_dir_fixture)
 
 ###############################################################################

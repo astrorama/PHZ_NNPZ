@@ -23,8 +23,8 @@ def test_sedGenerator():
     # Then
     assert len(generated) == 5
 
-    assert np.array_equal(sed1, generated[0])
-    assert np.array_equal(sed1[:, 0] * 1.5, generated[1][:, 0])
-    assert np.array_equal(sed1[:, 0] * 2.0, generated[2][:, 0])
-    assert np.array_equal(sed2[:, 0] * 2.0, generated[3][:, 0])
-    assert np.array_equal(sed2[:, 0] * 2.5, generated[4][:, 0])
+    np.testing.assert_array_equal(sed1, generated[0])
+    np.testing.assert_array_equal(sed1[:, 0] * 1.5, generated[1][:, 0])
+    np.testing.assert_array_equal(sed1[:, 0] * 2.0, generated[2][:, 0])
+    np.testing.assert_array_equal(sed2[:, 0] * 2.0, generated[3][:, 0])
+    np.testing.assert_array_equal(sed2[:, 0] * 2.5, generated[4][:, 0])

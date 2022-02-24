@@ -1,3 +1,19 @@
+#
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of
+# the GNU Lesser General Public License as published by the Free Software Foundation;
+# either version 3.0 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library;
+# if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301 USA
+#
+
 from typing import List, Union
 
 import numpy as np
@@ -30,7 +46,7 @@ class SedProvider(BaseProvider):
         self._last_index_for_knots = dict()
         for data_file in self._data_files:
             sed_data_prov = SedDataProvider(self._data_pattern.format(data_file))
-            self._last_index_for_knots[sed_data_prov.getKnots()] = data_file
+            self._last_index_for_knots[sed_data_prov.get_knots_size()] = data_file
         self._last_data_index = max(self._data_files) if self._data_files else 0
 
     def flush(self):
@@ -41,13 +57,13 @@ class SedProvider(BaseProvider):
         for provider in self._data_map.values():
             provider.flush()
 
-    def _swapProvider(self, index: int):
+    def _swap_provider(self, index: int):
         if index in self._data_map:
             return
 
         # Load provider
         data_provider = SedDataProvider(self._data_pattern.format(index))
-        knots = data_provider.getKnots()
+        knots = data_provider.get_knots_size()
 
         # Close previous for the same size
         prev_index = self._current_index_for_knots.get(knots, None)
@@ -58,7 +74,7 @@ class SedProvider(BaseProvider):
         self._current_index_for_knots[knots] = index
         self._data_map[index] = data_provider
 
-    def getSedData(self, obj_id: int) -> Union[np.ndarray, None]:
+    def get_sed_data(self, obj_id: int) -> Union[np.ndarray, None]:
         """
         Returns the SED data for the given reference sample object.
 
@@ -74,36 +90,35 @@ class SedProvider(BaseProvider):
             value.
 
         Raises:
-            IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
-                different than the one stored in the SED data file
+                different from the one stored in the SED data file
         """
         sed_loc = self._index.get(obj_id, self._key)
         if not sed_loc:
             return None
-        self._swapProvider(sed_loc.file)
-        return self._data_map[sed_loc.file].readSed(sed_loc.offset)
+        self._swap_provider(sed_loc.file)
+        return self._data_map[sed_loc.file].read_sed(sed_loc.offset)
 
-    def _getWriteableDataProvider(self, knots):
+    def _get_writeable_data_provider(self, knots):
         """
         Get the index of the active SED provider, create a new one if needed
         """
         if knots not in self._last_index_for_knots:
             self._last_data_index += 1
             self._last_index_for_knots[knots] = self._last_data_index
-        self._swapProvider(self._last_index_for_knots[knots])
+        self._swap_provider(self._last_index_for_knots[knots])
 
         # Check if the last file exceeded the size limit and create a new one
         index = self._last_index_for_knots[knots]
         if self._data_map[index].size() >= self._data_limit:
             self._last_data_index += 1
             self._last_index_for_knots[knots] = self._last_data_index
-            self._swapProvider(self._last_data_index)
+            self._swap_provider(self._last_data_index)
             index = self._last_index_for_knots[knots]
 
         return self._last_index_for_knots[knots], self._data_map[index]
 
-    def importData(self, other_index: IndexProvider, data_pattern: str, extra_data: dict):
+    def import_data(self, other_index: IndexProvider, data_pattern: str, extra_data: dict):
         """
         Import a set of SED files
         """
@@ -115,12 +130,12 @@ class SedProvider(BaseProvider):
             other_sed = np.load(other_sed_file, mmap_mode='r')
 
             # Ask for the IDs following disk order
-            other_ids = other_index.getIdsForFile(other_sed_i, self._key)
+            other_ids = other_index.get_ids_for_file(other_sed_i, self._key)
 
             # Import the data
-            self.addData(other_ids, other_sed)
+            self.add_data(other_ids, other_sed)
 
-    def addData(self, object_ids: List[int] = None, data: np.ndarray = None):
+    def add_data(self, object_ids: List[int] = None, data: np.ndarray = None):
         """
         Add new data to the SED provider
 
@@ -149,22 +164,22 @@ class SedProvider(BaseProvider):
         )
 
         # Take the current active provider to store the imported data
-        sed_provider_idx, sed_provider = self._getWriteableDataProvider(data.shape[1])
+        sed_provider_idx, sed_provider = self._get_writeable_data_provider(data.shape[1])
 
         # Fit whatever we can on the current file (approximately)
         available_size = self._data_limit - sed_provider.size()
         nfit = int(len(data) * min(np.ceil(available_size / record_size), 1))
         index_data['id'][:nfit] = object_ids[:nfit]
         index_data[file_field][:nfit] = sed_provider_idx
-        index_data[offset_field][:nfit] = sed_provider.appendSed(data[:nfit])
+        index_data[offset_field][:nfit] = sed_provider.append_sed(data[:nfit])
         sed_provider.flush()
 
         # Create a new one and put in the rest
-        sed_provider_idx, sed_provider = self._getWriteableDataProvider(data.shape[1])
+        sed_provider_idx, sed_provider = self._get_writeable_data_provider(data.shape[1])
         index_data['id'][nfit:] = object_ids[nfit:]
         index_data[file_field][nfit:] = sed_provider_idx
-        index_data[offset_field][nfit:] = sed_provider.appendSed(data[nfit:])
+        index_data[offset_field][nfit:] = sed_provider.append_sed(data[nfit:])
         sed_provider.flush()
 
         # Update the index
-        self._index.bulkAdd(index_data)
+        self._index.bulk_add(index_data)

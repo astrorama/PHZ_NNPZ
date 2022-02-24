@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -14,6 +14,7 @@
 # MA 02110-1301 USA
 #
 
+import astropy.units as u
 import numpy as np
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
@@ -30,7 +31,7 @@ class McCounter(OutputHandler.OutputColumnProviderInterface):
 
     Note: By itself, it could count floating point as well, but the configuration will
           enforce only integral types are counted, as on any given range on the real
-          domain there are potentially infinite posible values
+          domain there are potentially infinite possible values
     """
 
     def __init__(self, sampler: McSampler, param_name: str, binning: np.ndarray):
@@ -38,32 +39,21 @@ class McCounter(OutputHandler.OutputColumnProviderInterface):
         self.__param_name = param_name
         self.__binning = binning
         self.__column = 'MC_COUNT_{}'.format(self.__param_name.upper())
-        self.__output = None
 
-    def getColumnDefinition(self):
+    def get_column_definition(self):
         return [
-            (self.__column, np.uint32, len(self.__binning))
+            (self.__column, np.uint32, u.dimensionless_unscaled, len(self.__binning))
         ]
 
-    def setWriteableArea(self, output_area):
-        self.__output = output_area[self.__column]
-
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        """
-        Does nothing for this provider, as the sampling is done by the McSampler
-        """
-        pass
-
-    def fillColumns(self):
-        """
-        See OutputColumnProviderInterface.fillColumns
-        """
-        samples = self.__sampler.getSamples()[self.__param_name]
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,
+                        output: np.ndarray):
+        samples = self.__sampler.get_samples()[self.__param_name]
+        output_col = output[self.__column]
 
         # Compute the binning as [i-0.5, i+0.5)
         bins = np.append(self.__binning, self.__binning[-1] + 1).astype(np.float32)
         bins -= 0.5
 
         # For each object, take a random weighted sample and generate the histogram
-        for i in range(self.__output.shape[0]):
-            self.__output[i, :] = np.histogram(samples[i], bins=bins, density=False)[0]
+        for i in range(len(output)):
+            output_col[i] = np.histogram(samples[i], bins=bins, density=False)[0]

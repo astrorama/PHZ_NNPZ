@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -22,10 +22,6 @@ from .CatalogCopy import CatalogCopy
 from .CoaddedPdz import CoaddedPdz
 from .Flags import Flags
 from .MeanPhotometry import MeanPhotometry
-from .MeanTrueRedshift import MeanTrueRedshift
-from .MedianTrueRedshift import MedianTrueRedshift
 from .NeighborList import NeighborList
 from .PdfSampling import PdfSampling
 from .PdzPointEstimates import PdzPointEstimates
-from .TrueRedshiftPdz import TrueRedshiftPdz
-from .NeighborPhotometry import NeighborPhotometry

@@ -1,15 +1,16 @@
-from astropy.table import Column
 from nnpz.io.output_column_providers.McPdf1D import McPdf1D
 
 from .fixtures import *
 
 
-def test_pdf1d(sampler: McSampler, mock_output_handler: MockOutputHandler):
+def test_count_samples(sampler: McSampler, mock_output_handler: MockOutputHandler,
+                       contributions: np.ndarray):
     pdf = McPdf1D(sampler, param_name='P1', binning=np.array([-0.5, 0.5, 1.5, 2.5, 3.5]))
-    mock_output_handler.addColumnProvider(pdf)
-    mock_output_handler.initialize(nrows=2)
-    pdf.fillColumns()
-    columns = mock_output_handler.getDataForProvider(pdf)
+    mock_output_handler.add_column_provider(sampler)
+    mock_output_handler.add_column_provider(pdf)
+    mock_output_handler.initialize(nrows=len(contributions))
+    mock_output_handler.write_output_for(np.arange(len(contributions)), contributions)
+    columns = mock_output_handler.get_data_for_provider(pdf)
 
     assert len(columns.dtype.fields) == 1
     assert 'MC_PDF_1D_P1' in columns.dtype.fields

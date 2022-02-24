@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -105,10 +105,10 @@ def test_getIdList(temp_dir_fixture, index_data):
 
     # When
     provider = IndexProvider(filename)
-    id_list = provider.getIds()
+    id_list = provider.get_ids()
 
     # Then
-    assert np.array_equal(id_list, [1, 2, 3, 4])
+    np.testing.assert_array_equal(id_list, [1, 2, 3, 4])
 
 
 ###############################################################################
@@ -124,10 +124,10 @@ def test_getFileList(temp_dir_fixture, index_data):
 
     # When
     provider = IndexProvider(filename)
-    file_list = sorted(list(provider.getFiles('sed')))
+    file_list = sorted(list(provider.get_files('sed')))
 
     # Then
-    assert np.array_equal(file_list, [0, 1, 2])
+    np.testing.assert_array_equal(file_list, [0, 1, 2])
 
 
 ###############################################################################
@@ -287,7 +287,7 @@ def test_bulkAppend(temp_dir_fixture, index_data):
 
     # When
     with IndexProvider(filename) as provider:
-        provider.bulkAdd(expected)
+        provider.bulk_add(expected)
 
     # Then
     provider = IndexProvider(filename)
@@ -311,7 +311,7 @@ def test_bulkAppendDuplicate(temp_dir_fixture, index_data):
 
     # Then
     with pytest.raises(DuplicateIdException):
-        provider.bulkAdd(new_data)
+        provider.bulk_add(new_data)
 
 
 ###############################################################################
@@ -331,10 +331,10 @@ def test_bulkAppendVertical(temp_dir_fixture, index_data):
 
     # When
     provider = IndexProvider(filename)
-    provider.bulkAdd(new_data)
+    provider.bulk_add(new_data)
 
     # Then
-    assert np.array_equal(provider.getIds(), [1, 2, 3, 4])
+    np.testing.assert_array_equal(provider.get_ids(), [1, 2, 3, 4])
 
 
 ###############################################################################
@@ -354,7 +354,7 @@ def test_bulkAppendMixed(temp_dir_fixture, index_data):
 
     # When
     provider = IndexProvider(filename)
-    provider.bulkAdd(new_data)
+    provider.bulk_add(new_data)
 
     # Then
-    assert np.array_equal(provider.getIds(), [1, 2, 3, 4, 10, 11])
+    np.testing.assert_array_equal(provider.get_ids(), [1, 2, 3, 4, 10, 11])

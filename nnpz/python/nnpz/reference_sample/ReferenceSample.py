@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,14 +19,13 @@ Created on: 09/11/17
 Author: Nikolaos Apostolakos
 """
 
-
 import os
 import pathlib
-from typing import Union, Iterable
+from typing import Iterable, Union
 
 import numpy as np
 from ElementsKernel import Logging
-from nnpz.exceptions import FileNotFoundException, AlreadySetException
+from nnpz.exceptions import AlreadySetException
 from nnpz.reference_sample import IndexProvider
 from nnpz.reference_sample.MontecarloProvider import MontecarloProvider
 from nnpz.reference_sample.PdzProvider import PdzProvider
@@ -35,8 +34,10 @@ from nnpz.reference_sample.SedProvider import SedProvider
 logger = Logging.getLogger('ReferenceSample')
 
 
-class ReferenceSample(object):
-    """Object for handling the reference sample format of NNPZ"""
+class ReferenceSample:
+    """
+    Object for handling the reference sample format of NNPZ
+    """
 
     PROVIDER_MAP = dict(
         MontecarloProvider=MontecarloProvider,
@@ -52,8 +53,8 @@ class ReferenceSample(object):
     DEFAULT_INDEX = 'index.npy'
 
     @staticmethod
-    def createNew(path: Union[str, pathlib.Path], index: str = None, providers: dict = None,
-                  max_file_size=2 ** 30):
+    def create(path: Union[str, pathlib.Path], index: str = None, providers: dict = None,
+               max_file_size=2 ** 30) -> 'ReferenceSample':
         """
         Creates a new reference sample directory.
 
@@ -79,7 +80,7 @@ class ReferenceSample(object):
 
         return ReferenceSample(path, index, providers, max_file_size, create=True)
 
-    def __setupProviders(self, providers_dict):
+    def __setup_providers(self, providers_dict):
         providers = dict()
         for provider_type_name, providers_config in providers_dict.items():
             logger.info('Found provider %s', provider_type_name)
@@ -125,14 +126,14 @@ class ReferenceSample(object):
 
         # Check that the directory exists
         if not os.path.exists(self.__root_path):
-            raise FileNotFoundException(self.__root_path + ' does not exist')
+            raise FileNotFoundError(self.__root_path + ' does not exist')
         if not os.path.isdir(self.__root_path):
             raise NotADirectoryError(self.__root_path + ' is not a directory')
         if not create and not os.path.exists(self.__index_path):
-            raise FileNotFoundException(self.__index_path + ' does not exist')
+            raise FileNotFoundError(self.__index_path + ' does not exist')
 
         self.__index = IndexProvider(self.__index_path)
-        self.__providers = self.__setupProviders(providers)
+        self.__providers = self.__setup_providers(providers)
 
     def __len__(self):
         """
@@ -154,13 +155,13 @@ class ReferenceSample(object):
             prov.flush()
         self.__index.flush()
 
-    def getIds(self) -> np.ndarray:
+    def get_ids(self) -> np.ndarray:
         """
         Returns the IDs of the reference sample objects as a numpy array of 64 bits integers
         """
-        return self.__index.getIds()
+        return self.__index.get_ids()
 
-    def getSedData(self, obj_id: int) -> Union[np.ndarray, None]:
+    def get_sed_data(self, obj_id: int) -> Union[np.ndarray, None]:
         """
         Returns the SED data for the given reference sample object.
 
@@ -176,13 +177,12 @@ class ReferenceSample(object):
             value.
 
         Raises:
-            IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the SED data file
         """
-        return self.__providers['sed'].getSedData(obj_id)
+        return self.__providers['sed'].get_sed_data(obj_id)
 
-    def getPdzData(self, obj_id: int) -> Union[np.ndarray, None]:
+    def get_pdz_data(self, obj_id: int) -> Union[np.ndarray, None]:
         """
         Returns the PDZ data for the given reference sample object.
 
@@ -198,16 +198,15 @@ class ReferenceSample(object):
             probability value.
 
         Raises:
-            IdMismatchException: If there is no such ID in the reference sample
             CorruptedFileException: If the ID stored in the index file is
                 different than the one stored in the PDZ data file
         """
-        return self.__providers['pdz'].getPdzData(obj_id)
+        return self.__providers['pdz'].get_pdz_data(obj_id)
 
-    def getData(self, name: str, obj_id: int):
-        return self.__providers[name].getData(obj_id)
+    def get_data(self, name: str, obj_id: int):
+        return self.__providers[name].get_data(obj_id)
 
-    def getProvider(self, name: str):
+    def get_provider(self, name: str):
         return self.__providers[name]
 
     def iterate(self) -> Iterable:
@@ -230,7 +229,7 @@ class ReferenceSample(object):
             the probability value.
         """
 
-        class Element(object):
+        class Element:
 
             def __init__(self, obj_id, ref_sample):
                 self.id = obj_id
@@ -238,15 +237,15 @@ class ReferenceSample(object):
 
             @property
             def sed(self):
-                return self.__ref_sample.getSedData(self.id)
+                return self.__ref_sample.get_sed_data(self.id)
 
             @property
             def pdz(self):
-                return self.__ref_sample.getPdzData(self.id)
+                return self.__ref_sample.get_pdz_data(self.id)
 
-        return (Element(i, self) for i in self.getIds())
+        return (Element(i, self) for i in self.get_ids())
 
-    def importDirectory(self, other: Union[str, pathlib.Path]):
+    def import_directory(self, other: Union[str, pathlib.Path]):
         """
         Bulk import of another reference sample
 
@@ -257,15 +256,15 @@ class ReferenceSample(object):
         other_index = IndexProvider(os.path.join(other, os.path.basename(self.__index_path)))
         for prov_name, provider in self.__providers.items():
             logger.info('Importing provider %s of type %s', prov_name, type(provider).__name__)
-            provider.importData(
+            provider.import_data(
                 other_index,
                 os.path.join(other, os.path.basename(provider.data_pattern)),
                 {}
             )
 
-    def addProvider(self, type_name: str, name=None,
-                    data_pattern: str = None, object_ids: Iterable[int] = None,
-                    data: np.ndarray = None, extra: dict = None, overwrite: bool = False):
+    def add_provider(self, type_name: str, name=None,
+                     data_pattern: str = None, object_ids: Iterable[int] = None,
+                     data: np.ndarray = None, extra: dict = None, overwrite: bool = False):
         """
         Register a new provider after the initialization of the reference sample
         Args:
@@ -298,7 +297,7 @@ class ReferenceSample(object):
             self.__data_file_limit, extra, overwrite=overwrite)
 
         if object_ids is not None and data is not None:
-            provider.addData(object_ids, data)
+            provider.add_data(object_ids, data)
             provider.flush()
         self.__providers[name] = provider
         return provider

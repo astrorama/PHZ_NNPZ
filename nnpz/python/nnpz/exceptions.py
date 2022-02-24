@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,7 +19,6 @@ NNPZ specific exception types
 """
 
 
-
 class NnpzException(Exception):
     """
     Base class for NNPZ specific exceptions
@@ -29,12 +28,6 @@ class NnpzException(Exception):
 class DuplicateIdException(NnpzException):
     """
     The reference sample already has an object with the given ID
-    """
-
-
-class IdMismatchException(NnpzException):
-    """
-    Tried to set an attribute for an object ID that has not been registered
     """
 
 
@@ -62,18 +55,6 @@ class UninitializedException(NnpzException):
     """
 
 
-class FileNotFoundException(NnpzException):
-    """
-    File does not exist
-    """
-
-
-class UnknownNameException(NnpzException):
-    """
-    An input table misses some required attributes
-    """
-
-
 class CorruptedFileException(NnpzException):
     """
     Either the file has been corrupted, or received a file with the wrong format
@@ -86,25 +67,13 @@ class InvalidPositionException(CorruptedFileException):
     """
 
 
-class InvalidPathException(NnpzException):
-    """
-    Equivalent to NotADirectoryError
-    """
-
-
-class WrongTypeException(NnpzException):
-    """
-    A class does not implement an expected method
-    """
-
-
-class WrongFormatException(NnpzException):
+class WrongFormatException(CorruptedFileException):
     """
     A file does not follow the expected format
     """
 
 
-class MissingDataException(NnpzException):
+class MissingDataException(CorruptedFileException):
     """
     Required data is not present
     """

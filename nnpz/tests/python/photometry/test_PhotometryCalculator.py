@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -19,17 +19,14 @@ Created on: 13/12/17
 Author: Nikolaos Apostolakos
 """
 
-
-import pytest
-
 try:
     from mock import Mock
 except ModuleNotFoundError:
     from unittest.mock import Mock
 import numpy as np
 
-from nnpz.photometry import PhotometryPrePostProcessorInterface
-from nnpz.photometry import PhotometryCalculator
+from nnpz.photometry.calculator import PhotometryPrePostProcessorInterface
+from nnpz.photometry.calculator.photometry_calculator import PhotometryCalculator
 
 
 ###############################################################################
@@ -65,8 +62,8 @@ def test_compute():
     }
 
     pre_post_processor = Mock(spec_set=PhotometryPrePostProcessorInterface)
-    pre_post_processor.preProcess.side_effect = lambda x: x
-    pre_post_processor.postProcess.side_effect = lambda x, y: x
+    pre_post_processor.pre_process.side_effect = lambda x: x
+    pre_post_processor.post_process.side_effect = lambda x, y: x
 
     # When
     calculator = PhotometryCalculator(filter_map, pre_post_processor)
@@ -91,13 +88,13 @@ def test_compute():
 
     # Check the postProcess() has been called once per filter with the correct
     # parameters
-    for args in pre_post_processor.postProcess.call_args_list:
+    for args in pre_post_processor.post_process.call_args_list:
         intensity, filter_name = args[0]
         assert filter_name in expected
-        assert intensity == pytest.approx(expected[filter_name], rel=1e-1)
+        np.testing.assert_approx_equal(intensity, expected[filter_name], significant=1)
 
     # Check that the result has the correct values
-    assert photometry['first'][0] == pytest.approx(expected['first'], rel=1e-1)
-    assert photometry['second'][0] == pytest.approx(expected['second'], rel=1e-1)
+    np.testing.assert_approx_equal(photometry['first'][0], expected['first'], significant=1)
+    np.testing.assert_approx_equal(photometry['second'][0], expected['second'], significant=1)
 
 ###############################################################################

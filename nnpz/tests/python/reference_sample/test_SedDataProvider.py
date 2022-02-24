@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -18,7 +18,6 @@
 Created on: 10/11/17
 Author: Nikolaos Apostolakos
 """
-
 
 from nnpz.exceptions import *
 from nnpz.reference_sample.SedDataProvider import SedDataProvider
@@ -76,10 +75,10 @@ def test_readSed_success(sed_data_files_fixture, sed_list_fixture):
     pos = 0
     for _, expected_data in sed_list_fixture[1]:
         # When
-        found_data = provider.readSed(pos)
+        found_data = provider.read_sed(pos)
 
         # Then
-        assert np.array_equal(found_data, expected_data)
+        np.testing.assert_array_equal(found_data, expected_data)
 
         pos += 1
 
@@ -96,12 +95,12 @@ def test_appendSed_success(sed_data_files_fixture):
 
     # When
     with SedDataProvider(sed_data_files_fixture[1]) as provider:
-        pos = provider.appendSed(expected_data)
+        pos = provider.append_sed(expected_data)
 
     # Then
     with SedDataProvider(sed_data_files_fixture[1]) as provider:
-        data = provider.readSed(pos)
-        np.array_equal(expected_data, data)
+        data = provider.read_sed(pos)
+        np.testing.assert_array_equal(expected_data, data)
 
 
 ###############################################################################
@@ -120,9 +119,9 @@ def test_appendSed_invalidDataDimension(sed_data_files_fixture):
 
     # Then
     with pytest.raises(InvalidDimensionsException):
-        provider.appendSed(four_dim_data)
+        provider.append_sed(four_dim_data)
     with pytest.raises(InvalidDimensionsException):
-        provider.appendSed(wrong_second_dimension)
+        provider.append_sed(wrong_second_dimension)
 
 
 ###############################################################################
@@ -140,7 +139,7 @@ def test_appendSed_nonIncreasingWavelength(sed_data_files_fixture):
 
     # Then
     with pytest.raises(InvalidAxisException):
-        provider.appendSed(wrong_wavelength)
+        provider.append_sed(wrong_wavelength)
 
 
 ###############################################################################
@@ -153,16 +152,16 @@ def test_appendBulkSed(sed_data_files_fixture):
 
     # Given
     new_sed = np.asarray([
-        [(1., 100.), (1.5, 168.3),],
-        [(1., 400.), (1.5, 700.),],
+        [(1., 100.), (1.5, 168.3), ],
+        [(1., 400.), (1.5, 700.), ],
     ])
 
     # When
     provider = SedDataProvider(sed_data_files_fixture[1])
 
     # Then
-    offsets = provider.appendSed(new_sed)
+    offsets = provider.append_sed(new_sed)
     assert len(offsets) == len(new_sed)
     for i, o in enumerate(offsets):
-        sed = provider.readSed(o)
-        assert np.allclose(new_sed[i], sed)
+        sed = provider.read_sed(o)
+        np.testing.assert_allclose(new_sed[i], sed)

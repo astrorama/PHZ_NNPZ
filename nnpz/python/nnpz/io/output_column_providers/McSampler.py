@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -13,10 +13,15 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+from typing import List, Optional, Tuple
 
 import numpy as np
+from ElementsKernel import Logging
+from astropy import units as u
 from nnpz.io import OutputHandler
 from nnpz.reference_sample.MontecarloProvider import MontecarloProvider
+
+logger = Logging.getLogger(__name__)
 
 
 class McSampler(OutputHandler.OutputColumnProviderInterface):
@@ -48,83 +53,63 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         consuming.
     """
 
-    def __init__(self, catalog_size: int, n_neighbors: int, take_n: int,
-                 mc_provider: MontecarloProvider, ref_ids: np.ndarray):
-        self.__samples_per_neighbor = mc_provider.getData(ref_ids[0]).shape[0]
-        self.__neighbor_ids = np.zeros((catalog_size, n_neighbors), dtype=np.int32)
-        self.__neighbor_weights = np.zeros((catalog_size, n_neighbors), dtype=np.float32)
+    def __init__(self, take_n: int, mc_provider: MontecarloProvider, ref_ids: np.ndarray):
         self.__take_n = take_n
         self.__provider = mc_provider
         self.__ref_ids = ref_ids
         self.__samples = None
+        self.__dtype = self.__provider.get_dtype()
+        self.__samples_per_neighbor = self.__provider.get_n_samples()
+        self.__rng = np.random.default_rng()
 
-    def getProvider(self):
-        """
-        Return the provider
-        """
+    def get_provider(self):
         return self.__provider
 
-    def getColumnDefinition(self):
-        """
-        This provider does not generate any output
-        """
-        return []
-
-    def setWriteableArea(self, output_area):
-        """
-        This provider does not generate any output
-        """
-        pass
-
-    def addContribution(self, reference_sample_i, neighbor, flags):
-        """
-        See OutputColumnProviderInterface.addContribution
-        """
-        self.__neighbor_ids[neighbor.index, neighbor.position] = self.__ref_ids[reference_sample_i]
-        self.__neighbor_weights[neighbor.index, neighbor.position] = neighbor.weight
-
-    def generateSamples(self, index):
-        """
-        Generated the weighted random sample for the target object i
-        """
-        nb_sample_weight = np.repeat(self.__neighbor_weights[index], self.__samples_per_neighbor)
-        # Replace NaN with 0
-        nb_sample_weight = np.nan_to_num(nb_sample_weight, copy=False)
-        # Total weight
-        nb_total_weight = nb_sample_weight.sum()
-
-        # If all neighbors have 0 weight, just fill with nan or 0 (depending on the type)
-        if nb_total_weight <= 0:
-            prototype = self.__provider.getData(self.__neighbor_ids[0, 0])
-            prototype = np.repeat(prototype, self.__take_n // prototype.shape[0] + 1)
-            return np.zeros_like(prototype[:self.__take_n])
-
-        nb_sample_weight /= nb_total_weight
-
-        nb_samples = [self.__provider.getData(nid) for nid in self.__neighbor_ids[index]]
-        nb_samples = np.concatenate(nb_samples)
-        chosen = np.random.choice(nb_samples.shape[0], size=self.__take_n, p=nb_sample_weight)
-        return nb_samples[chosen]
-
-    def getSamples(self):
-        """
-        Get the sampling for the whole target catalog
-        """
-        if self.__samples is None:
-            samples = list()
-            for i in range(self.__neighbor_ids.shape[0]):
-                samples.append(self.generateSamples(i))
-            self.__samples = np.stack(samples)
-        return self.__samples
-
-    def fillColumns(self):
-        """
-        This provider does not generate any output
-        """
-        return []
-
-    def getSampleCount(self):
+    def get_n_samples(self):
         return self.__take_n
 
-    def getDtype(self, name):
-        return self.__provider.getDtype(name)
+    def get_column_definition(self) \
+            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
+        """
+        This provider does not generate any output
+        """
+        return []
+
+    def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
+        """
+        This provider does not generate any output, but hooks this call to generate the samples
+        """
+        logger.info('Sampling physical parameters')
+        n_neighbors = neighbor_info['NEIGHBOR_WEIGHTS'].shape[1]
+        # Now, for each object we need 'take_n' samples from a bag composed of
+        # 'samples_per_neighbor' * 'neighbor_no' measurements. All the samples contributed by a
+        # given neighbor have the same weight
+        # To avoid reading everything and just selecting a subset, we actually sample from
+        # (object-index, sample-index), and then we read those selected.
+        # To improve i/o performance, we read *all* selected samples for *all* objects. This allows
+        # the provider to do the reads from disk sequentially
+        selected_indexes = np.full((len(indexes), self.__take_n, 2), fill_value=-1, dtype=int)
+        bag = np.arange(0, self.__samples_per_neighbor * n_neighbors, dtype=int)
+        for i in range(len(indexes)):
+            neighbors = neighbor_info[i]
+            p = np.repeat(neighbors['NEIGHBOR_WEIGHTS'], repeats=self.__samples_per_neighbor)
+            total_weight = p.sum()
+            # If all neighbors have 0 weight, we can not pick any
+            if total_weight <= 0 or not np.isfinite(total_weight):
+                selected_indexes[i, :] = -1
+                continue
+            # Pick the sample indexes
+            p /= total_weight
+            selected = self.__rng.choice(bag, size=self.__take_n, replace=True, p=p)
+            np.divmod(selected, self.__samples_per_neighbor, selected_indexes[i, :, 0],
+                      selected_indexes[i, :, 1])
+            selected_indexes[i, :, 0] = neighbors['NEIGHBOR_INDEX'][selected_indexes[i, :, 0]]
+        # Defer to the provider to read the samples
+        self.__samples = self.__provider.get_data_for_index(selected_indexes.reshape(-1, 2))
+        self.__samples = self.__samples.reshape((len(indexes), self.__take_n))
+
+    def get_samples(self):
+        """
+        Get the sampling for the whole chunk
+        """
+        return self.__samples

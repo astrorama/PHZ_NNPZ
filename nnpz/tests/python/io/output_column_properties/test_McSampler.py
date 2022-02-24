@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2021 Euclid Science Ground Segment
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
 # the GNU Lesser General Public License as published by the Free Software Foundation;
@@ -24,15 +24,11 @@ from .fixtures import *
 
 
 def test_take_samples(reference_ids, contributions, mock_provider):
-    sampler = McSampler(
-        2, n_neighbors=3, take_n=200, mc_provider=mock_provider,
-        ref_ids=reference_ids
-    )
-    for ref_i, contrib in contributions:
-        sampler.addContribution(ref_i, contrib, None)
+    sampler = McSampler(take_n=200, mc_provider=mock_provider, ref_ids=reference_ids)
+    sampler.generate_output(np.arange(len(contributions)), contributions, None)
 
     # First object can not have any sample from 2, and the weight is higher for 1
-    samples = sampler.generateSamples(0)
+    samples = sampler.get_samples()[0]
     assert samples.shape == (200,)
     assert samples.dtype.names == ('P1', 'P2', 'I1')
     vals, counts = np.unique(samples['P1'], return_counts=True)
@@ -43,7 +39,7 @@ def test_take_samples(reference_ids, contributions, mock_provider):
     assert counts[0] + counts[1] == 200
 
     # Second object must have the most samples from 2, and more from 0 than from 1
-    samples = sampler.generateSamples(1)
+    samples = sampler.get_samples()[1]
     assert samples.shape == (200,)
     assert samples.dtype.names == ('P1', 'P2', 'I1')
     vals, counts = np.unique(samples['P1'], return_counts=True)
@@ -55,17 +51,12 @@ def test_take_samples(reference_ids, contributions, mock_provider):
 ###############################################################################
 
 def test_take_weight_0(reference_ids, contributions, mock_provider):
-    sampler = McSampler(
-        2, n_neighbors=3, take_n=200, mc_provider=mock_provider,
-        ref_ids=reference_ids
-    )
-    for ref_i, contrib in contributions:
-        if contrib.index == 0:
-            contrib.weight = 0
-        sampler.addContribution(ref_i, contrib, None)
+    sampler = McSampler(take_n=200, mc_provider=mock_provider, ref_ids=reference_ids)
+    contributions['NEIGHBOR_WEIGHTS'][0] = 0
+    sampler.generate_output(np.arange(len(contributions)), contributions, None)
 
     # All samples are 0 for the first source
-    samples = sampler.generateSamples(0)
+    samples = sampler.get_samples()[0]
     assert samples.shape == (200,)
     assert samples.dtype.names == ('P1', 'P2', 'I1')
     assert (samples['P1'] == 0).all()
@@ -73,7 +64,7 @@ def test_take_weight_0(reference_ids, contributions, mock_provider):
     assert (samples['I1'] == 0).all()
 
     # Second object must be the same as before
-    samples = sampler.generateSamples(1)
+    samples = sampler.get_samples()[1]
     assert samples.shape == (200,)
     assert samples.dtype.names == ('P1', 'P2', 'I1')
     vals, counts = np.unique(samples['P1'], return_counts=True)
@@ -85,17 +76,12 @@ def test_take_weight_0(reference_ids, contributions, mock_provider):
 ###############################################################################
 
 def test_take_weight_nans(reference_ids, contributions, mock_provider):
-    sampler = McSampler(
-        2, n_neighbors=3, take_n=200, mc_provider=mock_provider,
-        ref_ids=reference_ids
-    )
-    for ref_i, contrib in contributions:
-        if contrib.index == 0:
-            contrib.weight = np.nan
-        sampler.addContribution(ref_i, contrib, None)
+    sampler = McSampler(take_n=200, mc_provider=mock_provider, ref_ids=reference_ids)
+    contributions['NEIGHBOR_WEIGHTS'][0] = np.nan
+    sampler.generate_output(np.arange(len(contributions)), contributions, None)
 
     # All samples are 0 for the first source (should behave as weight 0)
-    samples = sampler.generateSamples(0)
+    samples = sampler.get_samples()[0]
     assert samples.shape == (200,)
     assert samples.dtype.names == ('P1', 'P2', 'I1')
     assert (samples['P1'] == 0).all()
@@ -103,13 +89,12 @@ def test_take_weight_nans(reference_ids, contributions, mock_provider):
     assert (samples['I1'] == 0).all()
 
     # Second object must be the same as before
-    samples = sampler.generateSamples(1)
+    samples = sampler.get_samples()[1]
     assert samples.shape == (200,)
     assert samples.dtype.names == ('P1', 'P2', 'I1')
     vals, counts = np.unique(samples['P1'], return_counts=True)
     assert counts[0] > counts[1]
     assert counts[2] > counts[1]
     assert counts.sum() == 200
-
 
 ###############################################################################
