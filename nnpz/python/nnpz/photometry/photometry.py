@@ -60,13 +60,13 @@ class Photometry:
             if not np.all(np.isfinite(values[:, filter_idx])):
                 raise ValueError(f'NaN or Inf values found on the photometry for {filter_name}')
 
-        self.ids = np.array(ids, copy=copy)
-        self.values = u.Quantity(values, copy=copy)
-        self.system = system
-        self.colorspace = colorspace
+        self.__ids = np.array(ids, copy=copy)
+        self.__values = u.Quantity(values, copy=copy)
+        self.__system = system
+        self.__colorspace = colorspace
         # Make sure we don't corrupt the data by mistake
-        self.ids.flags.writeable = False
-        self.values.flags.writeable = False
+        self.__ids.flags.writeable = False
+        self.__values.flags.writeable = False
 
     def subsystem(self, bands: List[str]) -> 'Photometry':
         """
@@ -95,6 +95,28 @@ class Photometry:
             return self.values[:, c]
         else:
             return self.values[:, c, 0]
+
+    @property
+    def ids(self) -> np.ndarray:
+        return self.__ids
+
+    @property
+    def values(self) -> u.Quantity:
+        return self.__values
+
+    @values.setter
+    def values(self, values: u.Quantity):
+        if values.shape != self.__values.shape:
+            raise ValueError('The shape of the new values must match that of the existing values')
+        self.__values = values
+
+    @property
+    def system(self) -> PhotometricSystem:
+        return self.__system
+
+    @property
+    def colorspace(self) -> ColorSpace:
+        return self.__colorspace
 
     @property
     def unit(self) -> u.Unit:
