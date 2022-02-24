@@ -20,6 +20,9 @@ from typing import Dict, Union
 
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
+import nnpz.config.neighbors.GalacticUnreddenerConfig
+# noinspection PyUnresolvedReferences
+# pylint: disable=unused-import
 import nnpz.config.neighbors.NeighborSelectorConfig
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
