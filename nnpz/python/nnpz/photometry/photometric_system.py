@@ -13,8 +13,7 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-from collections import OrderedDict
-from typing import Iterable, List, Union
+from typing import Iterable, List, OrderedDict, Union
 
 import numpy as np
 
