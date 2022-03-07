@@ -15,7 +15,7 @@
 #
 from typing import Any, Dict
 
-from Weights import WeightCalculator
+from _Nnpz import WeightCalculator
 from nnpz.config import ConfigManager
 
 

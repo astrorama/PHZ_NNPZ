@@ -21,6 +21,8 @@ elements_depends_on_subdirs(ElementsKernel)
 # Examples:
 #          find_package(CppUnit)
 #===============================================================================
+find_package(NumPy)
+find_package(pybind11 REQUIRED)
 
 #===============================================================================
 # Declare the library dependencies here
@@ -30,11 +32,8 @@ elements_depends_on_subdirs(ElementsKernel)
 #                     INCLUDE_DIRS Boost ElementsKernel
 #                     PUBLIC_HEADERS ElementsExamples)
 #===============================================================================
-find_package(Cython REQUIRED)
-find_package(NumPy)
-elements_add_cython_module(src/Cython/lib/Weights.pyx
-        INCLUDE_DIRS NumPy
-        NO_PUBLIC_HEADERS)
+elements_add_pybind11_module(_Nnpz src/lib/*.cpp
+        LINK_LIBRARIES ElementsKernel)
 
 #===============================================================================
 # Declare the executables here

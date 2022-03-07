@@ -54,5 +54,4 @@ class ComputeWeights:
         if nn_photo.dtype.byteorder == '>':
             nn_photo = nn_photo.newbyteorder().byteswap(inplace=True)
 
-        self.__weight_calculator(nn_photo.value, target.values.value,
-                                 output_weights=out_weights, output_flags=out_flags)
+        self.__weight_calculator(nn_photo.value, target.values.value, out_weights, out_flags)
