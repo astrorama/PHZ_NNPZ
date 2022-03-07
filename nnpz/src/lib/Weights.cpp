@@ -16,7 +16,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "Weights.h"
+#include "Nnpz/Weights.h"
 #include <ElementsKernel/Exception.h>
 #include <iostream>
 #include <map>

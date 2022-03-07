@@ -14,7 +14,8 @@
  * MA 02110-1301 USA
  */
 
-#include "Weights.h"
+#include "Nnpz/BruteForce.h"
+#include "Nnpz/Weights.h"
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
@@ -26,4 +27,7 @@ PYBIND11_MODULE(_Nnpz, m) {
   py::class_<WeightCalculator>(m, "WeightCalculator")
       .def(py::init<std::string const&, std::string const&>())
       .def("__call__", &WeightCalculator::operator());
+
+  m.def("chi2_bruteforce", &chi2_bruteforce);
+  m.def("euclidean_bruteforce", &euclidean_bruteforce);
 }

@@ -14,19 +14,24 @@
  * MA 02110-1301 USA
  */
 
-#ifndef PHZ_NNPZ_TYPES_H
-#define PHZ_NNPZ_TYPES_H
+#ifndef PHZ_NNPZ_WEIGHTS_H
+#define PHZ_NNPZ_WEIGHTS_H
 
-#include <pybind11/numpy.h>
+#include "Nnpz/Types.h"
+#include <string>
 
 namespace Nnpz {
-using weight_t    = float;
-using photo_t     = double;
-using flag_t      = uint32_t;
-using PhotoArray  = pybind11::array_t<photo_t>;
-using WeightArray = pybind11::array_t<weight_t>;
-using FlagArray   = pybind11::array_t<flag_t>;
-using WeightFunc  = std::function<void(PhotoArray const&, PhotoArray const&, WeightArray&)>;
+
+class WeightCalculator {
+public:
+  WeightCalculator(std::string const& primary, std::string const& secondary);
+
+  void operator()(PhotoArray const& neighbors, PhotoArray const& target, WeightArray& out_weights,
+                  FlagArray& out_flags) const;
+
+private:
+  WeightFunc m_primary, m_secondary;
+};
 }  // namespace Nnpz
 
-#endif  // PHZ_NNPZ_TYPES_H
+#endif  // PHZ_NNPZ_WEIGHTS_H

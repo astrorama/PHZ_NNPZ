@@ -33,7 +33,8 @@ find_package(pybind11 REQUIRED)
 #                     PUBLIC_HEADERS ElementsExamples)
 #===============================================================================
 elements_add_pybind11_module(_Nnpz src/lib/*.cpp
-        LINK_LIBRARIES ElementsKernel)
+        LINK_LIBRARIES ElementsKernel
+        INCLUDE_DIRS Nnpz)
 
 #===============================================================================
 # Declare the executables here
@@ -69,17 +70,17 @@ elements_install_aux_files()
 #                             ElementsExamples.PythonProgramExample)
 #===============================================================================
 elements_add_python_program(NnpzBuildPhotometry
-                            nnpz.program.BuildPhotometry)
+        nnpz.program.BuildPhotometry)
 elements_add_python_program(NnpzComputeNeighbors
-                            nnpz.program.ComputeNeighbors)
+        nnpz.program.ComputeNeighbors)
 elements_add_python_program(NnpzCorrectPhotometry
-                            nnpz.program.CorrectPhotometry)
+        nnpz.program.CorrectPhotometry)
 elements_add_python_program(NnpzComputeWeights
-                            nnpz.program.ComputeWeights)
+        nnpz.program.ComputeWeights)
 elements_add_python_program(NnpzGenerateOutput
-                            nnpz.program.GenerateOutput)
+        nnpz.program.GenerateOutput)
 elements_add_python_program(nnpz
-                            nnpz.program.Nnpz)
+        nnpz.program.Nnpz)
 
 #===============================================================================
 # Add the elements_install_conf_files macro

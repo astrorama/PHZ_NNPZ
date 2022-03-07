@@ -16,7 +16,7 @@
 
 from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.neighbor_selection.bruteforce import BruteForceSelector
-from nnpz.utils.distances import euclidean
+from nnpz.utils.distances import chi2
 
 from .fixtures import *
 
@@ -27,7 +27,7 @@ def test_BruteForceNotInitialized(target_values: Photometry):
     """
     Querying before initializing must throw
     """
-    bf_selector = BruteForceSelector(k=4, method=euclidean)
+    bf_selector = BruteForceSelector(k=4)
     with pytest.raises(UninitializedException):
         bf_selector.query(target_values)
 
@@ -38,7 +38,7 @@ def test_BruteForceInvalidDimensions(reference_values: Photometry, target_values
     """
     Querying with an invalid dimensionality must throw
     """
-    bf_selector = BruteForceSelector(k=4, method=euclidean)
+    bf_selector = BruteForceSelector(k=4)
     bf_selector.fit(reference_values, reference_values.system)
     with pytest.raises(InvalidDimensionsException):
         bf_selector.query(target_values.subsystem(['x', 'y']))
@@ -46,18 +46,17 @@ def test_BruteForceInvalidDimensions(reference_values: Photometry, target_values
 
 ###############################################################################
 
-def test_BruteForceSmallest(reference_values: Photometry, target_values: Photometry):
+def test_BruteForceClosest(reference_values: Photometry, target_values: Photometry):
     """
     Query only for the closest neighbor, which is the center
     """
-    bf_selector = BruteForceSelector(k=1, method=euclidean)
+    bf_selector = BruteForceSelector(k=4)
     bf_selector.fit(reference_values, reference_values.system)
 
     idx, scales = bf_selector.query(target_values)
-    # Only the center is a hit
-    distances = euclidean(reference_values.values[idx[0]], target_values.values[0])
+    distances = chi2(reference_values.values, target_values.values[0])
+    kth_dist = np.partition(distances, kth=3)[3]
     assert (len(idx) == len(scales))
     assert (len(idx) == 1)
-    assert idx[0] == (len(reference_values) - 1) / 2
-    np.testing.assert_array_less(distances.value, 0.1)
+    np.testing.assert_array_less(distances[idx.ravel()], kth_dist + 1e-8)
     np.testing.assert_allclose(scales, 1.)

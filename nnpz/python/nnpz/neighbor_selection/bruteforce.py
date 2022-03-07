@@ -13,14 +13,14 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-from typing import Callable, Tuple
+from typing import Tuple
 
 import numpy as np
+from _Nnpz import chi2_bruteforce, euclidean_bruteforce
 from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.neighbor_selection import SelectorInterface
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
-from nnpz.utils.distances import chi2
 
 
 class BruteForceSelector(SelectorInterface):
@@ -31,18 +31,19 @@ class BruteForceSelector(SelectorInterface):
     Args:
         k: int
             Number of neighbors
-        method: Callable
-            A function that computes the distances from all reference objects (first parameter),
-            to a target object (second parameter). A third parameter, out, must be accepted
-            to avoid allocating a new array. The method must return out, or a newly allocated
-            array if out was None.
+        method: string
+            Distance kernel to use
     """
 
-    def __init__(self, k: int,
-                 method: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray] = chi2):
+    def __init__(self, k: int, method: str = 'Chi2'):
         self.__k = k
         self.__reference = None
-        self.__method = method
+        if method.lower() == 'chi2':
+            self.__method = chi2_bruteforce
+        elif method.lower() == 'euclidean':
+            self.__method = euclidean_bruteforce
+        else:
+            raise ValueError(f'Unknown distance method {method}')
 
     def fit(self, train: Photometry, system: PhotometricSystem):
         """
@@ -62,11 +63,8 @@ class BruteForceSelector(SelectorInterface):
             raise InvalidDimensionsException()
         assert target.unit == self.__reference.unit
 
-        neighbors = np.zeros((len(target), self.__k), dtype=int)
+        neighbors = np.zeros((len(target), self.__k), dtype=np.int32)
         scales = np.ones_like(neighbors, dtype=np.float32)
 
-        distances = np.zeros(len(self.__reference), dtype=np.float32) * target.unit
-        for i, t in enumerate(target):
-            self.__method(self.__reference.values, t, out=distances)
-            neighbors[i, :] = np.argpartition(distances, kth=self.__k)[:self.__k]
+        self.__method(self.__reference, target.values.value, scales, neighbors, self.__k, False)
         return neighbors, scales
