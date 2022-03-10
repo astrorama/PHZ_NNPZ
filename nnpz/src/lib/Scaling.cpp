@@ -21,7 +21,7 @@
 #include "Nnpz/Distances.h"
 #include "Nnpz/Priors.h"
 #include "Nnpz/Types.h"
-#include <iostream>
+#include <sstream>
 
 using namespace Euclid::MathUtils;
 using Euclid::make_unique;
@@ -110,8 +110,19 @@ private:
 };
 
 std::shared_ptr<ScaleFunction> scaleFunctionFactory(std::string const& prior, ScaleFunctionParams const& params) {
-  if (prior == "uniform") {
+  std::istringstream stream(prior);
+  std::string        prior_type;
+  stream >> prior_type;
+  if (prior_type == "uniform") {
     return std::make_shared<ScaleCalculator<Chi2Distance, Uniform>>(params);
+  } else if (prior_type == "tophat") {
+    double min, max;
+    stream >> min >> max;
+    return std::make_shared<ScaleCalculator<Chi2Distance, Tophat>>(params, min, max);
+  } else if (prior_type == "delta") {
+    double d;
+    stream >> d;
+    return std::make_shared<ScaleCalculator<Chi2Distance, Delta>>(params, d);
   }
   throw Elements::Exception() << "Unknown prior " << prior;
 }
