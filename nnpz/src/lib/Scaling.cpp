@@ -118,10 +118,16 @@ std::shared_ptr<ScaleFunction> scaleFunctionFactory(std::string const& prior, Sc
   } else if (prior_type == "tophat") {
     double min, max;
     stream >> min >> max;
+    if (stream.fail()) {
+      throw Elements::Exception() << "Failed to parse the tophat parameters!";
+    }
     return std::make_shared<ScaleCalculator<Chi2Distance, Tophat>>(params, min, max);
   } else if (prior_type == "delta") {
     double d;
     stream >> d;
+    if (stream.fail()) {
+      throw Elements::Exception() << "Failed to parse the delta parameters!";
+    }
     return std::make_shared<ScaleCalculator<Chi2Distance, Delta>>(params, d);
   }
   throw Elements::Exception() << "Unknown prior " << prior;
