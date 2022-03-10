@@ -14,6 +14,8 @@ elements_subdir(nnpz)
 #         elements_depends_on_subdirs(ElementsKernel)
 #===============================================================================
 elements_depends_on_subdirs(ElementsKernel)
+elements_depends_on_subdirs(MathUtils)
+elements_depends_on_subdirs(XYDataset)
 
 #===============================================================================
 # Add the find_package macro (a pure CMake command) here to locate the
@@ -33,7 +35,7 @@ find_package(pybind11 REQUIRED)
 #                     PUBLIC_HEADERS ElementsExamples)
 #===============================================================================
 elements_add_pybind11_module(_Nnpz src/lib/*.cpp
-        LINK_LIBRARIES ElementsKernel
+        LINK_LIBRARIES ElementsKernel MathUtils XYDataset
         INCLUDE_DIRS Nnpz)
 
 #===============================================================================

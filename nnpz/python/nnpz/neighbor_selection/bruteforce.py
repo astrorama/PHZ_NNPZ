@@ -16,7 +16,7 @@
 from typing import Tuple
 
 import numpy as np
-from _Nnpz import chi2_bruteforce, euclidean_bruteforce
+from _Nnpz import chi2_bruteforce, euclidean_bruteforce, scaling_factory, ScaleFunctionParams
 from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.neighbor_selection import SelectorInterface
 from nnpz.photometry.photometric_system import PhotometricSystem
@@ -35,7 +35,7 @@ class BruteForceSelector(SelectorInterface):
             Distance kernel to use
     """
 
-    def __init__(self, k: int, method: str = 'Chi2'):
+    def __init__(self, k: int, method: str = 'Chi2', prior: str = None):
         self.__k = k
         self.__reference = None
         if method.lower() == 'chi2':
@@ -44,6 +44,9 @@ class BruteForceSelector(SelectorInterface):
             self.__method = euclidean_bruteforce
         else:
             raise ValueError(f'Unknown distance method {method}')
+
+        params = ScaleFunctionParams(20, 1e-8)
+        self.__scaling = scaling_factory(prior, params) if prior else None
 
     def fit(self, train: Photometry, system: PhotometricSystem):
         """
@@ -66,5 +69,6 @@ class BruteForceSelector(SelectorInterface):
         neighbors = np.zeros((len(target), self.__k), dtype=np.int32)
         scales = np.ones_like(neighbors, dtype=np.float32)
 
-        self.__method(self.__reference, target.values.value, scales, neighbors, self.__k, False)
+        self.__method(self.__reference, target.values.value, scales, neighbors, self.__k,
+                      self.__scaling)
         return neighbors, scales

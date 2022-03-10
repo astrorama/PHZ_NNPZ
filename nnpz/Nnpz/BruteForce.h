@@ -17,6 +17,7 @@
 #ifndef PHZ_NNPZ_BRUTEFORCE_H
 #define PHZ_NNPZ_BRUTEFORCE_H
 
+#include "Nnpz/Scaling.h"
 #include "Nnpz/Types.h"
 #include <ElementsKernel/Export.h>
 
@@ -33,14 +34,15 @@ namespace Nnpz {
  * of (ntarget x k) elements.
  */
 ELEMENTS_API void chi2_bruteforce(PhotoArray const& reference, PhotoArray const& all_targets, ScaleArray& all_scales,
-                                  IndexArray& all_closest, int k, bool scaling);
+                                  IndexArray& all_closest, int k, ScaleFunction* scaling);
 
 /**
  * Compute the euclidena distance between the target catalog and the reference sample.
  * @see chi2_bruteforce for a description of the memory layout
  */
 ELEMENTS_API void euclidean_bruteforce(PhotoArray const& reference, PhotoArray const& all_targets,
-                                       ScaleArray& all_scales, IndexArray& all_closest, int k, bool scaling);
+                                       ScaleArray& all_scales, IndexArray& all_closest, int k,
+                                       ScaleFunction* scaling);
 
 }  // namespace Nnpz
 

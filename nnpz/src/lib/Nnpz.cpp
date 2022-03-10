@@ -15,6 +15,7 @@
  */
 
 #include "Nnpz/BruteForce.h"
+#include "Nnpz/Scaling.h"
 #include "Nnpz/Weights.h"
 #include <pybind11/pybind11.h>
 
@@ -24,10 +25,19 @@ using namespace Nnpz;
 PYBIND11_MODULE(_Nnpz, m) {
   m.doc() = "Nnpz helper functions";
 
+  py::class_<ScaleFunction, std::shared_ptr<ScaleFunction>>(m, "ScaleFunction");
+
   py::class_<WeightCalculator>(m, "WeightCalculator")
       .def(py::init<std::string const&, std::string const&>())
       .def("__call__", &WeightCalculator::operator());
 
   m.def("chi2_bruteforce", &chi2_bruteforce);
   m.def("euclidean_bruteforce", &euclidean_bruteforce);
+
+  m.def("scaling_factory", &scaleFunctionFactory);
+
+  py::class_<ScaleFunctionParams>(m, "ScaleFunctionParams")
+      .def(py::init<std::size_t, double>())
+      .def_readwrite("maxiter", &ScaleFunctionParams::maxiter)
+      .def_readwrite("tolerance", &ScaleFunctionParams::tolerance);
 }
