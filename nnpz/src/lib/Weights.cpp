@@ -27,7 +27,6 @@ namespace py = pybind11;
 namespace Nnpz {
 
 constexpr float  kMinWeight              = std::numeric_limits<float>::min();
-constexpr flag_t ALTERNATIVE_WEIGHT_FLAG = 1;
 
 struct Likelihood {
   static weight_t weight(PhotoArray const& ref_obj, PhotoArray const& target_obj) {

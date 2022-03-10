@@ -27,21 +27,54 @@ namespace Nnpz {
  */
 class MaxHeap {
 public:
-  MaxHeap(unsigned k, float* distances, index_t* indexes, scale_t* scales)
+
+  /**
+   * Constructor
+   * @param k
+   *    Size of the heap
+   * @param distances
+   *    Memory area where to keep the distances
+   * @param indexes
+   *    Memory area where to keep the indexes
+   * @param scales
+   *    Memory area where to keep the scales
+   */
+  MaxHeap(index_t k, float* distances, index_t* indexes, scale_t* scales)
       : m_k(k), m_count(0), m_distances(distances), m_indexes(indexes), m_scales(scales){};
 
+  /**
+   * @return How many elements have been pushed into the heap
+   */
   unsigned count() const {
     return m_count;
   }
 
+  /**
+   * @return Size of the heap
+   */
   unsigned size() const {
     return m_k;
   }
 
+  /**
+   * @return The top of the heap: the maximum stored distance
+   * @warning If no elements are present, the value is undefined!
+   */
   float top() const {
     return m_distances[0];
   };
 
+  /**
+   * Add a new element to the heap
+   * @param idx
+   *    Element index (i.e. reference sample index)
+   * @param distance
+   *    Element distance, used to keep the heap
+   * @param scale
+   *    Element scaling factor
+   * @warning
+   *    There is no bound check! Make sure no elements are added passed the end of the heap.
+   */
   void add(index_t idx, float distance, scale_t scale) {
     index_t i      = m_count;
     m_distances[i] = distance;
@@ -58,6 +91,11 @@ public:
     }
   }
 
+  /**
+   * Remove the top of the heap
+   * @warning
+   *    There is no bound check! Make sure no elements are removed from an empty heap
+   */
   void pop() {
     --m_count;
     m_distances[0]     = m_distances[m_count];
@@ -91,6 +129,14 @@ private:
   scale_t* m_scales;
 };
 
+/**
+ * Insert an element into the heap *only if* its distance is closer than the furthest element
+ * of the heap, which is then removed.
+ * @param heap
+ * @param index
+ * @param distance
+ * @param scale
+ */
 inline void insert_if_best(MaxHeap& heap, index_t index, float distance, float scale) {
   if (heap.count() < heap.size()) {
     heap.add(index, distance, scale);

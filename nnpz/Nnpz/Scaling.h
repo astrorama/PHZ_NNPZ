@@ -22,12 +22,18 @@
 
 namespace Nnpz {
 
+/**
+ * Interface for computing a scale factor given a reference and a target objects
+ */
 class ScaleFunction {
 public:
   virtual ~ScaleFunction()                                          = default;
   virtual float operator()(photo_t const*, photo_t const*, ssize_t) = 0;
 };
 
+/**
+ * Scaling parameters
+ */
 struct ScaleFunctionParams {
   std::size_t maxiter;
   double      tolerance;
@@ -35,6 +41,12 @@ struct ScaleFunctionParams {
   ScaleFunctionParams(std::size_t _maxiter, double _tolerance) : maxiter(_maxiter), tolerance(_tolerance) {}
 };
 
+/**
+ * Create a ScaleFunction given the prior name and parameters
+ * @param prior
+ *  A string with the prior name and its parameters. i.e. "uniform", "tophat 0.1 10", "delta 1"
+ * @param params
+ */
 std::shared_ptr<ScaleFunction> scaleFunctionFactory(std::string const& prior, ScaleFunctionParams const& params);
 
 }  // namespace Nnpz

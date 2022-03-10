@@ -22,8 +22,18 @@
 
 namespace Nnpz {
 
+constexpr flag_t ALTERNATIVE_WEIGHT_FLAG = 1;
+
+/**
+ * Interface for the weight calculator
+ */
 class WeightCalculator {
 public:
+  /**
+   * @param primary Primary weighting method
+   * @param secondary Weighting method to be used if the primary weights are too small (under
+   * std::numeric_limits<float>::min())
+   */
   WeightCalculator(std::string const& primary, std::string const& secondary);
 
   void operator()(PhotoArray const& neighbors, PhotoArray const& target, WeightArray& out_weights,

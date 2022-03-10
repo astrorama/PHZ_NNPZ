@@ -22,14 +22,36 @@
 
 namespace Nnpz {
 
+/**
+ * Prior interface
+ */
 class Prior {
 public:
-  virtual ~Prior()                                             = default;
-  virtual std::pair<double, double> getValidRange() const      = 0;
-  virtual double                    operator()(double x) const = 0;
-  virtual double                    dx(double x) const         = 0;
+  virtual ~Prior() = default;
+
+  /**
+   * @return Minimum and maximum value acceptable for the prior. Values outside this range
+   *    should be clipped.
+   */
+  virtual std::pair<double, double> getValidRange() const = 0;
+
+  /**
+   * @param x
+   * @return The prior value for x
+   */
+  virtual double operator()(double x) const = 0;
+
+  /**
+   * @param x
+   * @return The derivative of the prior at x
+   */
+  virtual double dx(double x) const = 0;
 };
 
+/**
+ * Built-in priors behave almost identically: they are 1. within a range
+ * (even if the range is infinite, or infinitely small) and 0. outside.
+ */
 class GenericPrior : public Prior {
 public:
   ~GenericPrior() override = default;
@@ -38,10 +60,14 @@ public:
     return m_range;
   }
 
-  double operator()(double) const final {
-    return 1.;
+  double operator()(double x) const final {
+    return x >= m_range.first && x <= m_range.second;
   };
 
+  /**
+   * Just at min and max the derivative is infinite, but the caller should be
+   * clipping anyway.
+   */
   double dx(double) const final {
     return 0;
   }
@@ -54,18 +80,27 @@ protected:
   std::pair<double, double> m_range;
 };
 
+/**
+ * Uniform has an infinite range
+ */
 class Uniform final : public GenericPrior {
 public:
   Uniform() : GenericPrior() {}
   ~Uniform() override = default;
 };
 
+/**
+ * Tophat as a finite, configurable, range
+ */
 class Tophat final : public GenericPrior {
 public:
   Tophat(double min, double max) : GenericPrior(min, max) {}
   ~Tophat() override = default;
 };
 
+/**
+ * Delta has an infinitely small range
+ */
 class Delta final : public GenericPrior {
 public:
   explicit Delta(double d) : GenericPrior(d, d) {}

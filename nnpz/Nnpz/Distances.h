@@ -20,6 +20,10 @@
 #include "Types.h"
 
 namespace Nnpz {
+
+/**
+ * Implement the distance, distance derivative and scale guessing for the χ^2 distance
+ */
 struct Chi2Distance {
   static float distance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
     double acc = 0.;
@@ -80,6 +84,9 @@ struct Chi2Distance {
   }
 };
 
+/**
+ * Implement the distance, distance derivative and scale guessing for the Euclidean distance
+ */
 struct EuclideanDistance {
   static float distance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
     double acc = 0.;
