@@ -84,7 +84,7 @@ public:
 
   virtual ~ScaleCalculator() = default;
 
-  float operator()(photo_t const* ref_photo, photo_t const* target_photo, py::ssize_t nbands) override {
+  double operator()(photo_t const* ref_photo, photo_t const* target_photo, py::ssize_t nbands) override {
     if (m_secant_params.min == m_secant_params.max) {
       return m_secant_params.min;
     }

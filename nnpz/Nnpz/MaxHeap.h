@@ -27,7 +27,6 @@ namespace Nnpz {
  */
 class MaxHeap {
 public:
-
   /**
    * Constructor
    * @param k
@@ -100,6 +99,7 @@ public:
     --m_count;
     m_distances[0]     = m_distances[m_count];
     m_indexes[0]       = m_indexes[m_count];
+    m_scales[0]        = m_scales[m_count];
     m_indexes[m_count] = -1;
 
     index_t largest = 0, i = 0;

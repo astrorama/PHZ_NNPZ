@@ -25,7 +25,7 @@ namespace Nnpz {
  * Implement the distance, distance derivative and scale guessing for the χ^2 distance
  */
 struct Chi2Distance {
-  static float distance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
+  static double distance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
     double acc = 0.;
 
     for (ssize_t band_idx = 0; band_idx < nbands; ++band_idx) {
@@ -38,10 +38,10 @@ struct Chi2Distance {
       acc += nom / den;
     }
 
-    return static_cast<float>(acc);
+    return acc;
   }
 
-  static float guessScale(photo_t const* reference, photo_t const* target, ssize_t nbands) {
+  static double guessScale(photo_t const* reference, photo_t const* target, ssize_t nbands) {
     double nom = 0., den = 0.;
 
     for (ssize_t band_idx = 0; band_idx < nbands; ++band_idx) {
@@ -54,7 +54,7 @@ struct Chi2Distance {
       den += (ref_val * ref_val) / err_sqr;
     }
 
-    return static_cast<float>(nom / den);
+    return nom / den;
   }
 
   /**
@@ -63,7 +63,7 @@ struct Chi2Distance {
    *    \frac{\delta}{\delta a}\left[ \frac{(a f_{ref} - f_{target})^2}{(a e_{ref})^2 + e_{target}^2}\right] = \frac{2
    *(a f_{ref} - f_{target}) (e_{ref}^2 a f_{target} + f_{ref} e_{target}^2)}{(e_{ref}^2 a^2 + e_{target}^2)^2} \f]
    */
-  static float daDistance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
+  static double daDistance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
     double acc = 0.;
 
     for (ssize_t i = 0; i < nbands; ++i) {
@@ -77,10 +77,10 @@ struct Chi2Distance {
 
       double nom = 2 * (scale * ref_val - tar_val) * (ref_err_sq * scale * tar_val + ref_val * tar_err_sq);
       double den = ref_err_sq * scale * scale * tar_err_sq;
-      acc += nom / den;
+      acc += nom / (den * den);
     }
 
-    return static_cast<float>(acc);
+    return acc;
   }
 };
 
@@ -88,7 +88,7 @@ struct Chi2Distance {
  * Implement the distance, distance derivative and scale guessing for the Euclidean distance
  */
 struct EuclideanDistance {
-  static float distance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
+  static double distance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
     double acc = 0.;
 
     for (ssize_t band_idx = 0; band_idx < nbands; ++band_idx) {
@@ -98,10 +98,10 @@ struct EuclideanDistance {
       acc += d * d;
     }
 
-    return static_cast<float>(std::sqrt(acc));
+    return std::sqrt(acc);
   }
 
-  static float guessScale(photo_t const* reference, photo_t const* target, ssize_t nbands) {
+  static double guessScale(photo_t const* reference, photo_t const* target, ssize_t nbands) {
     double acc = 0.;
 
     for (ssize_t band_idx = 0; band_idx < nbands; ++band_idx) {
@@ -111,7 +111,7 @@ struct EuclideanDistance {
       acc += ref_val / tar_val;
     }
 
-    return static_cast<float>(acc / static_cast<double>(nbands));
+    return acc / static_cast<double>(nbands);
   }
 
   /**
@@ -120,7 +120,7 @@ struct EuclideanDistance {
    *f_{ref}^2\right) - \left( \sum_i^n f_{ref} \times f_{target} \right)}{\sqrt{\sum_i^n (a f_{ref} - f_{target})^2}}
    *\f]
    */
-  static float daDistance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
+  static double daDistance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
     double den = 0., nom_sum_sqr = 0., nom_sum_prod = 0.;
 
     for (ssize_t band_idx = 0; band_idx < nbands; ++band_idx) {
@@ -131,7 +131,7 @@ struct EuclideanDistance {
       den += (tar_val - scale * ref_val) * (tar_val - scale * ref_val);
     }
 
-    return static_cast<float>((scale * nom_sum_sqr + nom_sum_prod) / std::sqrt(den));
+    return (scale * nom_sum_sqr + nom_sum_prod) / std::sqrt(den);
   }
 };
 }  // namespace Nnpz
