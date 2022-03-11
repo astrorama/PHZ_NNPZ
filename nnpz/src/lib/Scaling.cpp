@@ -99,8 +99,8 @@ public:
       return m_secant_params.max;
     }
 
-    double x0 = guess - EPS, x1 = guess + EPS;
-    return secantMethod(ScaleWithPrior<TDistance, TPrior>(target, m_prior), x0, x1, m_secant_params).first;
+    double x0 = guess - EPS, x1 = guess;
+    return secantMethod(ScaleWithPrior<TDistance, TPrior>(target, m_prior), x0, x1, m_secant_params).root;
   }
 
 private:
