@@ -55,7 +55,7 @@ private:
 template <typename TDistance, typename TPrior>
 class ScaleWithPrior final : public Function {
 public:
-  ScaleWithPrior(DistanceDerivative<TDistance>& da_distance, TPrior& prior)
+  ScaleWithPrior(DistanceDerivative<TDistance> const& da_distance, TPrior const& prior)
       : m_da_distance(da_distance), m_prior(prior) {}
 
   double operator()(double scale) const override {
@@ -69,8 +69,8 @@ public:
   using Function::operator();
 
 private:
-  DistanceDerivative<TDistance>& m_da_distance;
-  TPrior&                        m_prior;
+  DistanceDerivative<TDistance> const& m_da_distance;
+  TPrior const&                        m_prior;
 };
 
 template <typename TDistance, typename TPrior>
@@ -84,7 +84,7 @@ public:
 
   virtual ~ScaleCalculator() = default;
 
-  double operator()(photo_t const* ref_photo, photo_t const* target_photo, py::ssize_t nbands) override {
+  double operator()(photo_t const* ref_photo, photo_t const* target_photo, py::ssize_t nbands) const override {
     if (m_secant_params.min == m_secant_params.max) {
       return m_secant_params.min;
     }
@@ -101,6 +101,10 @@ public:
 
     double x0 = guess - EPS, x1 = guess;
     return secantMethod(ScaleWithPrior<TDistance, TPrior>(target, m_prior), x0, x1, m_secant_params).root;
+  }
+
+  double call(PhotoArray const& reference, PhotoArray const& target) const override {
+    return (*this)(reference.data(0), target.data(0), reference.shape(0));
   }
 
 private:

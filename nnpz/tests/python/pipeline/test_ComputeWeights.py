@@ -14,7 +14,7 @@
 #  MA 02110-1301 USA
 #
 
-from Weights import WeightCalculator
+from _Nnpz import WeightCalculator
 from nnpz.pipeline.compute_weights import ComputeWeights
 
 from ..photometry.fixtures import *

@@ -28,11 +28,11 @@ using photo_t  = double;
 using scale_t  = float;
 using flag_t   = uint32_t;
 
-using IndexArray  = pybind11::array_t<index_t>;
-using PhotoArray  = pybind11::array_t<photo_t>;
-using WeightArray = pybind11::array_t<weight_t>;
-using FlagArray   = pybind11::array_t<flag_t>;
-using ScaleArray  = pybind11::array_t<scale_t>;
+using IndexArray  = pybind11::array_t<index_t, pybind11::array::c_style>;
+using PhotoArray  = pybind11::array_t<photo_t, pybind11::array::c_style>;
+using WeightArray = pybind11::array_t<weight_t, pybind11::array::c_style>;
+using FlagArray   = pybind11::array_t<flag_t, pybind11::array::c_style>;
+using ScaleArray  = pybind11::array_t<scale_t, pybind11::array::c_style>;
 
 using WeightFunc = std::function<void(PhotoArray const&, PhotoArray const&, WeightArray&)>;
 

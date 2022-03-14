@@ -25,7 +25,7 @@ using namespace Nnpz;
 PYBIND11_MODULE(_Nnpz, m) {
   m.doc() = "Nnpz helper functions";
 
-  py::class_<ScaleFunction, std::shared_ptr<ScaleFunction>>(m, "ScaleFunction");
+  py::class_<ScaleFunction, std::shared_ptr<ScaleFunction>>(m, "ScaleFunction").def("__call__", &ScaleFunction::call);
 
   py::class_<WeightCalculator>(m, "WeightCalculator")
       .def(py::init<std::string const&, std::string const&>())

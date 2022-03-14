@@ -47,14 +47,11 @@ def test_BruteForceInvalidDimensions(reference_values: Photometry, target_values
 ###############################################################################
 
 def test_BruteForceClosest(reference_values: Photometry, target_values: Photometry):
-    """
-    Query only for the closest neighbor, which is the center
-    """
     bf_selector = BruteForceSelector(k=4)
     bf_selector.fit(reference_values, reference_values.system)
 
     idx, scales = bf_selector.query(target_values)
-    distances = chi2(reference_values.values, target_values.values[0])
+    distances = chi2(reference_values.values, target_values.values[0]).value
     kth_dist = np.partition(distances, kth=3)[3]
     assert (len(idx) == len(scales))
     assert (len(idx) == 1)

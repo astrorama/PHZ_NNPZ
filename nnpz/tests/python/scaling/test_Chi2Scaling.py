@@ -16,12 +16,11 @@
 
 import numpy as np
 import pytest
-from nnpz.scaling import Chi2Scaling
+from _Nnpz import scaling_factory, ScaleFunctionParams
 from nnpz.utils.distances import chi2
 
 
 ###############################################################################
-
 
 @pytest.fixture
 def target_object():
@@ -36,6 +35,7 @@ def reference_scaling():
 
 
 ###############################################################################
+
 @pytest.fixture
 def exact_reference_objects(target_object, reference_scaling):
     reference = np.zeros((len(reference_scaling), 3, 2))
@@ -53,22 +53,24 @@ def test_simple_uniform_prior(target_object, exact_reference_objects, reference_
     the ScaledChi2Distance should return a distance of 0, and a recovered scale.
     We use a uniform prior (equivalent to looking in color-space).
     """
-    scaling_method = Chi2Scaling(lambda a: 1, a_min=1e-6, a_max=1e6)
-    computed_s = scaling_method(exact_reference_objects, target_object)
+    scaling_method = scaling_factory('uniform', ScaleFunctionParams(10, 1e-4))
+    computed_s = np.asarray(list(
+        map(lambda reference: scaling_method(reference, target_object), exact_reference_objects)))
     computed_d = chi2(computed_s[:, np.newaxis, np.newaxis] * exact_reference_objects,
                       target_object)
     np.testing.assert_allclose(computed_s, 1. / reference_scaling, rtol=1e-3)
     np.testing.assert_allclose(computed_d, 0, atol=1e-6)
 
+    ###############################################################################
 
-###############################################################################
 
 def test_simple_delta_prior(target_object, exact_reference_objects):
     """
     In this case the prior is a delta function at one (equivalent to looking in flux space)
     """
-    scaling_method = Chi2Scaling(lambda a: 1, a_min=1, a_max=1)
-    computed_s = scaling_method(exact_reference_objects, target_object)
+    scaling_method = scaling_factory('delta 1', ScaleFunctionParams(10, 1e-4))
+    computed_s = np.asarray(list(
+        map(lambda reference: scaling_method(reference, target_object), exact_reference_objects)))
     computed_d = chi2(computed_s[:, np.newaxis, np.newaxis] * exact_reference_objects,
                       target_object)
     np.testing.assert_allclose(computed_s, 1.)

@@ -19,49 +19,41 @@
 #include "Nnpz/Weights.h"
 #include "Nnpz/Distances.h"
 #include <ElementsKernel/Exception.h>
-#include <iostream>
 #include <map>
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 namespace Nnpz {
 
-constexpr float  kMinWeight              = std::numeric_limits<float>::min();
+constexpr float kMinWeight = std::numeric_limits<float>::min();
 
 struct Likelihood {
-  static weight_t weight(PhotoArray const& ref_obj, PhotoArray const& target_obj) {
-    auto        u_ref    = ref_obj.unchecked<2>();
-    auto        u_target = target_obj.unchecked<2>();
-    py::ssize_t nbands   = target_obj.shape(0);
-
-    double chi2 = 0.;
-    for (py::ssize_t bi = 0; bi < nbands; ++bi) {
-      double diff = u_ref(bi, 0) - u_target(bi, 0);
-      double nom  = diff * diff;
-      double den  = (u_ref(bi, 1) * u_ref(bi, 1)) + (u_target(bi, 1) * u_target(bi, 1));
-      chi2 += nom / den;
-    }
+  static weight_t weight(photo_t const* ref_obj, photo_t const* target_obj, py::ssize_t nbands) {
+    double chi2 = Chi2Distance::distance(1., ref_obj, target_obj, nbands);
     return static_cast<weight_t>(std::exp(-0.5f * chi2));
   }
 };
 
 struct InverseChi2 {
-  static weight_t weight(PhotoArray const& ref_obj, PhotoArray const& target_obj) {
-    return 1.f / Chi2Distance::distance(1., ref_obj.data(0), target_obj.data(0), ref_obj.size());
+  static weight_t weight(photo_t const* ref_obj, photo_t const* target_obj, py::ssize_t nbands) {
+    return 1.f / Chi2Distance::distance(1., ref_obj, target_obj, nbands);
   }
 };
 
 struct InverseEuclidean {
-  static weight_t weight(PhotoArray const& ref_obj, PhotoArray const& target_obj) {
-    return 1.f / EuclideanDistance::distance(1., ref_obj.data(0), target_obj.data(0), ref_obj.size());
+  static weight_t weight(photo_t const* ref_obj, photo_t const* target_obj, py::ssize_t nbands) {
+    return 1.f / EuclideanDistance::distance(1., ref_obj, target_obj, nbands);
   }
 };
 
 template <typename WeightFunctor>
 static void computeWeights(PhotoArray const& ref_objs, PhotoArray const& target_obj, WeightArray& out_weight) {
-  auto w = out_weight.mutable_unchecked<1>();
+  auto w      = out_weight.mutable_unchecked<1>();
+  auto r      = ref_objs.unchecked<3>();
+  auto t      = target_obj.unchecked<2>();
+  auto nbands = target_obj.shape(0);
   for (py::ssize_t ni = 0; ni < ref_objs.shape(0); ++ni) {
-    w(ni) = WeightFunctor::weight(PhotoArray(ref_objs[py::make_tuple(ni)]), target_obj);
+    w(ni) = WeightFunctor::weight(r.data(ni, 0, 0), t.data(0, 0), nbands);
   }
 }
 

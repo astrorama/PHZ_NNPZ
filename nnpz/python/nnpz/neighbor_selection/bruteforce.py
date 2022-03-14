@@ -35,7 +35,7 @@ class BruteForceSelector(SelectorInterface):
             Distance kernel to use
     """
 
-    def __init__(self, k: int, method: str = 'Chi2', prior: str = None):
+    def __init__(self, k: int, method: str = 'Chi2', scale_prior: str = None):
         self.__k = k
         self.__reference = None
         if method.lower() == 'chi2':
@@ -46,7 +46,7 @@ class BruteForceSelector(SelectorInterface):
             raise ValueError(f'Unknown distance method {method}')
 
         params = ScaleFunctionParams(20, 1e-8)
-        self.__scaling = scaling_factory(prior, params) if prior else None
+        self.__scaling = scaling_factory(scale_prior, params) if scale_prior else None
 
     def fit(self, train: Photometry, system: PhotometricSystem):
         """
