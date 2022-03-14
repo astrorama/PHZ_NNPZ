@@ -33,16 +33,17 @@ namespace Nnpz {
  * all_scales and all_closest are expected to be a row-major matrix
  * of (ntarget x k) elements.
  */
-ELEMENTS_API void chi2_bruteforce(PhotoArray const& reference, PhotoArray const& all_targets, ScaleArray& all_scales,
-                                  IndexArray& all_closest, int k, ScaleFunction* scaling);
+ELEMENTS_API void chi2_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
+                                  NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k,
+                                  ScaleFunction* scaling, int (*cancel_callback)(void));
 
 /**
  * Compute the euclidena distance between the target catalog and the reference sample.
  * @see chi2_bruteforce for a description of the memory layout
  */
-ELEMENTS_API void euclidean_bruteforce(PhotoArray const& reference, PhotoArray const& all_targets,
-                                       ScaleArray& all_scales, IndexArray& all_closest, int k,
-                                       ScaleFunction* scaling);
+ELEMENTS_API void euclidean_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
+                                       NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k,
+                                       ScaleFunction* scaling, int (*cancel_callback)(void));
 
 }  // namespace Nnpz
 

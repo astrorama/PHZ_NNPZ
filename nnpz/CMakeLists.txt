@@ -34,9 +34,11 @@ find_package(pybind11 REQUIRED)
 #                     INCLUDE_DIRS Boost ElementsKernel
 #                     PUBLIC_HEADERS ElementsExamples)
 #===============================================================================
-elements_add_pybind11_module(_Nnpz src/lib/*.cpp
-        LINK_LIBRARIES ElementsKernel MathUtils XYDataset
-        INCLUDE_DIRS Nnpz)
+elements_add_library(Nnpz src/lib/*.cpp
+        LINK_LIBRARIES ElementsKernel MathUtils NdArray XYDataset
+        PUBLIC_HEADERS Nnpz)
+elements_add_pybind11_module(_Nnpz src/_Nnpz.cpp
+        LINK_LIBRARIES Nnpz)
 
 #===============================================================================
 # Declare the executables here

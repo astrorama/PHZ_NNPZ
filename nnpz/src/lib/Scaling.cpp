@@ -25,20 +25,19 @@
 
 using namespace Euclid::MathUtils;
 using Euclid::make_unique;
-namespace py = pybind11;
 
 namespace Nnpz {
 
 template <typename TDistance>
 class DistanceDerivative : public Function {
 public:
-  DistanceDerivative(photo_t const* reference, photo_t const* target, py::ssize_t nbands)
-      : m_reference(reference), m_target(target), m_nbands(nbands){};
+  DistanceDerivative(NdArray<photo_t> const& reference, NdArray<photo_t> const& target)
+      : m_reference(reference), m_target(target){};
 
   virtual ~DistanceDerivative() = default;
 
   double operator()(double scale) const override {
-    return TDistance::daDistance(scale, m_reference, m_target, m_nbands);
+    return TDistance::daDistance(scale, m_reference, m_target);
   }
 
   using Function::operator();
@@ -48,8 +47,7 @@ public:
   }
 
 private:
-  photo_t const *m_reference, *m_target;
-  py::ssize_t    m_nbands;
+  NdArray<photo_t> const &m_reference, &m_target;
 };
 
 template <typename TDistance, typename TPrior>
@@ -84,13 +82,13 @@ public:
 
   virtual ~ScaleCalculator() = default;
 
-  double operator()(photo_t const* ref_photo, photo_t const* target_photo, py::ssize_t nbands) const override {
+  double operator()(NdArray<photo_t> const& ref_photo, NdArray<photo_t> const& target_photo) const override {
     if (m_secant_params.min == m_secant_params.max) {
       return m_secant_params.min;
     }
 
-    DistanceDerivative<TDistance> target(ref_photo, target_photo, nbands);
-    auto                          guess = TDistance::guessScale(ref_photo, target_photo, nbands);
+    DistanceDerivative<TDistance> target(ref_photo, target_photo);
+    auto                          guess = TDistance::guessScale(ref_photo, target_photo);
 
     if (guess <= m_secant_params.min) {
       return m_secant_params.min;
@@ -101,10 +99,6 @@ public:
 
     double x0 = guess - EPS, x1 = guess;
     return secantMethod(ScaleWithPrior<TDistance, TPrior>(target, m_prior), x0, x1, m_secant_params).root;
-  }
-
-  double call(PhotoArray const& reference, PhotoArray const& target) const override {
-    return (*this)(reference.data(0), target.data(0), reference.shape(0));
   }
 
 private:

@@ -27,9 +27,8 @@ namespace Nnpz {
  */
 class ScaleFunction {
 public:
-  virtual ~ScaleFunction()                                                 = default;
-  virtual double operator()(photo_t const*, photo_t const*, ssize_t) const = 0;
-  virtual double call(PhotoArray const&, PhotoArray const&) const          = 0;
+  virtual ~ScaleFunction()                                                          = default;
+  virtual double operator()(NdArray<photo_t> const&, NdArray<photo_t> const&) const = 0;
 };
 
 /**

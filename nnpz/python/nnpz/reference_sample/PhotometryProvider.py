@@ -79,7 +79,7 @@ class PhotometryProvider:
         in a numpy array.
         """
 
-        data = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
+        data = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float64)
         ebv_corr = np.zeros((len(phot_table), len(filter_list)), dtype=np.float32)
         shift_corr = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
         for i, name in enumerate(filter_list):

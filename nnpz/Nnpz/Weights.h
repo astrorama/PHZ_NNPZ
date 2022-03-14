@@ -36,8 +36,8 @@ public:
    */
   WeightCalculator(std::string const& primary, std::string const& secondary);
 
-  void operator()(PhotoArray const& neighbors, PhotoArray const& target, WeightArray& out_weights,
-                  FlagArray& out_flags) const;
+  void operator()(NdArray<photo_t> const& neighbors, NdArray<photo_t> const& target, NdArray<weight_t>& out_weights,
+                  NdArray<flag_t>& out_flags) const;
 
 private:
   WeightFunc m_primary, m_secondary;

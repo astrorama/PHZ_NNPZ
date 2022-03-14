@@ -66,9 +66,9 @@ class BruteForceSelector(SelectorInterface):
             raise InvalidDimensionsException()
         assert target.unit == self.__reference.unit
 
-        neighbors = np.zeros((len(target), self.__k), dtype=np.int32)
+        neighbors = np.zeros((len(target), self.__k), dtype=np.uint32)
         scales = np.ones_like(neighbors, dtype=np.float32)
 
-        self.__method(self.__reference, target.values.value, scales, neighbors, self.__k,
+        self.__method(self.__reference.values, target.values.value, scales, neighbors, self.__k,
                       self.__scaling)
         return neighbors, scales

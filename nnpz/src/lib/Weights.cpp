@@ -19,41 +19,38 @@
 #include "Nnpz/Weights.h"
 #include "Nnpz/Distances.h"
 #include <ElementsKernel/Exception.h>
+#include <limits>
 #include <map>
-#include <pybind11/pybind11.h>
 
-namespace py = pybind11;
 namespace Nnpz {
 
 constexpr float kMinWeight = std::numeric_limits<float>::min();
 
 struct Likelihood {
-  static weight_t weight(photo_t const* ref_obj, photo_t const* target_obj, py::ssize_t nbands) {
-    double chi2 = Chi2Distance::distance(1., ref_obj, target_obj, nbands);
+  static weight_t weight(NdArray<photo_t> const& ref_obj, NdArray<photo_t> const& target_obj) {
+    double chi2 = Chi2Distance::distance(1., ref_obj, target_obj);
     return static_cast<weight_t>(std::exp(-0.5f * chi2));
   }
 };
 
 struct InverseChi2 {
-  static weight_t weight(photo_t const* ref_obj, photo_t const* target_obj, py::ssize_t nbands) {
-    return 1.f / Chi2Distance::distance(1., ref_obj, target_obj, nbands);
+  static weight_t weight(NdArray<photo_t> const& ref_obj, NdArray<photo_t> const& target_obj) {
+    return 1.f / Chi2Distance::distance(1., ref_obj, target_obj);
   }
 };
 
 struct InverseEuclidean {
-  static weight_t weight(photo_t const* ref_obj, photo_t const* target_obj, py::ssize_t nbands) {
-    return 1.f / EuclideanDistance::distance(1., ref_obj, target_obj, nbands);
+  static weight_t weight(NdArray<photo_t> const& ref_obj, NdArray<photo_t> const& target_obj) {
+    return 1.f / EuclideanDistance::distance(1., ref_obj, target_obj);
   }
 };
 
 template <typename WeightFunctor>
-static void computeWeights(PhotoArray const& ref_objs, PhotoArray const& target_obj, WeightArray& out_weight) {
-  auto w      = out_weight.mutable_unchecked<1>();
-  auto r      = ref_objs.unchecked<3>();
-  auto t      = target_obj.unchecked<2>();
-  auto nbands = target_obj.shape(0);
-  for (py::ssize_t ni = 0; ni < ref_objs.shape(0); ++ni) {
-    w(ni) = WeightFunctor::weight(r.data(ni, 0, 0), t.data(0, 0), nbands);
+static void computeWeights(NdArray<photo_t> const& ref_objs, NdArray<photo_t> const& target_obj,
+                           NdArray<weight_t>& out_weight) {
+  size_t k = ref_objs.shape(0);
+  for (size_t ni = 0; ni < k; ++ni) {
+    out_weight.at(ni) = WeightFunctor::weight(ref_objs.slice(ni), target_obj);
   }
 }
 
@@ -74,17 +71,17 @@ WeightCalculator::WeightCalculator(std::string const& primary, std::string const
   m_secondary = i->second;
 }
 
-template <typename T1, typename T2, int F1, int F2>
-static void checkShapeEqual(py::array_t<T1, F1> const& a1, py::array_t<T2, F2> const& a2, int axis1, int axis2,
-                            const std::string& v1, const std::string& v2) {
+template <typename T1, typename T2>
+static void checkShapeEqual(NdArray<T1> const& a1, NdArray<T2> const& a2, int axis1, int axis2, const std::string& v1,
+                            const std::string& v2) {
   if (a1.shape(axis1) != a2.shape(axis2)) {
     throw Elements::Exception() << "Axis " << axis1 << " of " << v1 << " does not match the axis " << axis2 << " of "
                                 << v2;
   }
 }
 
-void WeightCalculator::operator()(PhotoArray const& neighbors, PhotoArray const& target, WeightArray& out_weights,
-                                  FlagArray& out_flags) const {
+void WeightCalculator::operator()(NdArray<photo_t> const& neighbors, NdArray<photo_t> const& target,
+                                  NdArray<weight_t>& out_weights, NdArray<flag_t>& out_flags) const {
   checkShapeEqual(neighbors, target, 0, 0, "neighbors", "target");
   checkShapeEqual(neighbors, target, 2, 1, "neighbors", "target");
   checkShapeEqual(neighbors, out_weights, 0, 0, "neighbors", "weights");
@@ -101,25 +98,19 @@ void WeightCalculator::operator()(PhotoArray const& neighbors, PhotoArray const&
     throw Elements::Exception() << "The neighbor weights must be contiguous per target object";
   }
 
-  auto        u_out_flags   = out_flags.mutable_unchecked<1>();
-  auto        u_out_weights = out_weights.mutable_unchecked<2>();
-  py::ssize_t k             = out_weights.shape(1);
+  size_t out_size = out_weights.shape(0);
 
-  py::ssize_t out_size = out_weights.shape(0);
-  for (py::ssize_t i = 0; i < out_size; ++i) {
-    weight_t* weight_ptr = u_out_weights.mutable_data(i, 0);
+  for (size_t i = 0; i < out_size; ++i) {
 
-    auto idx = py::make_tuple(i);
-
-    PhotoArray  nn_row(neighbors[idx]);
-    PhotoArray  target_row(target[idx]);
-    WeightArray weight_row(out_weights[idx]);
+    auto nn_row     = neighbors.slice(i);
+    auto target_row = target.slice(i);
+    auto weight_row = out_weights.slice(i);
 
     m_primary(nn_row, target_row, weight_row);
 
-    if (std::all_of(weight_ptr, weight_ptr + k, [](weight_t w) { return w < kMinWeight; })) {
+    if (std::all_of(weight_row.begin(), weight_row.end(), [](weight_t w) { return w < kMinWeight; })) {
       m_secondary(nn_row, target_row, weight_row);
-      u_out_flags(i) |= ALTERNATIVE_WEIGHT_FLAG;
+      out_flags.at(i) |= ALTERNATIVE_WEIGHT_FLAG;
     }
   }
 }

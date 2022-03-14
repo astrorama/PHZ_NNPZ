@@ -19,13 +19,24 @@
 #include "Nnpz/MaxHeap.h"
 #include <ElementsKernel/Exception.h>
 
-namespace py = pybind11;
-
 namespace Nnpz {
 
 template <typename DistanceFunctor>
-static void _bruteforce(PhotoArray const& reference, PhotoArray const& all_targets, ScaleArray& all_scales,
-                        IndexArray& all_closest, int k, ScaleFunction* scaling) {
+static void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
+                        NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k, ScaleFunction* scaling,
+                        int (*cancel_callback)(void)) {
+  size_t const ntargets = all_targets.shape(0);
+  size_t const nrefs    = reference.shape(0);
+
+  if (ntargets != all_scales.shape(0)) {
+    throw Elements::Exception() << "The first axis for the scale array does not match the number of targets: "
+                                << all_scales.shape(0) << " vs " << ntargets;
+  }
+  if (ntargets != all_closest.shape(0)) {
+    throw Elements::Exception() << "The first axis for the index array does not match the number of targets: "
+                                << all_scales.shape(0) << " vs " << ntargets;
+  }
+
   if (reference.shape(1) != all_targets.shape(1)) {
     throw Elements::Exception("The number of bands for the reference and target sets do not match");
   }
@@ -36,43 +47,43 @@ static void _bruteforce(PhotoArray const& reference, PhotoArray const& all_targe
     throw Elements::Exception("The target set is expected to have (value, error) on the third axis");
   }
 
-  auto u_reference = reference.unchecked<3>();
-  auto u_targets   = all_targets.unchecked<3>();
-  auto u_scales    = all_scales.mutable_unchecked<2>();
-  auto u_closest   = all_closest.mutable_unchecked<2>();
-
-  py::ssize_t const ntargets = all_targets.shape(0);
-  py::ssize_t const nrefs    = reference.shape(0);
-  py::ssize_t const nbands   = reference.shape(1);
+  if (all_closest.strides(1) != sizeof(index_t)) {
+    throw Elements::Exception() << "The last axis of the neighbor indexes must be contiguous";
+  }
+  if (all_scales.strides(1) != sizeof(scale_t)) {
+    throw Elements::Exception() << "The last axis of the scales must be contiguous";
+  }
 
   std::vector<float> distances_buffer(all_closest.shape(1));
 
-  for (py::ssize_t ti = 0; ti < ntargets && PyErr_CheckSignals() == 0; ++ti) {
-    MaxHeap heap(k, &distances_buffer[0], u_closest.mutable_data(ti, 0), u_scales.mutable_data(ti, 0));
+  for (size_t ti = 0; ti < ntargets && !cancel_callback(); ++ti) {
+    MaxHeap heap(k, &distances_buffer[0], &all_closest.at(ti, 0), &all_scales.at(ti, 0));
 
-    photo_t const* target_photo_ptr = u_targets.data(ti, 0, 0);
+    auto target_photo = all_targets.slice(ti);
 
     for (index_t ri = 0; ri < nrefs; ++ri) {
-      photo_t const* ref_photo_ptr = u_reference.data(ri, 0, 0);
+      auto ref_photo = reference.slice(ri);
 
-      float scale = 1.;
+      scale_t scale = 1.;
       if (scaling) {
-        scale = (*scaling)(ref_photo_ptr, target_photo_ptr, nbands);
+        scale = static_cast<scale_t>((*scaling)(ref_photo, target_photo));
       }
-      float dist = DistanceFunctor::distance(scale, ref_photo_ptr, target_photo_ptr, nbands);
+      float dist = DistanceFunctor::distance(scale, ref_photo, target_photo);
       insert_if_best(heap, ri, dist, scale);
     }
   }
 }
 
-void chi2_bruteforce(PhotoArray const& reference, PhotoArray const& all_targets, ScaleArray& all_scales,
-                     IndexArray& all_closest, int k, ScaleFunction* scaling) {
-  _bruteforce<Chi2Distance>(reference, all_targets, all_scales, all_closest, k, scaling);
+void chi2_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
+                     NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k, ScaleFunction* scaling,
+                     int (*cancel_callback)(void)) {
+  _bruteforce<Chi2Distance>(reference, all_targets, all_scales, all_closest, k, scaling, cancel_callback);
 }
 
-void euclidean_bruteforce(PhotoArray const& reference, PhotoArray const& all_targets, ScaleArray& all_scales,
-                          IndexArray& all_closest, int k, ScaleFunction* scaling) {
-  _bruteforce<EuclideanDistance>(reference, all_targets, all_scales, all_closest, k, scaling);
+void euclidean_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
+                          NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k, ScaleFunction* scaling,
+                          int (*cancel_callback)(void)) {
+  _bruteforce<EuclideanDistance>(reference, all_targets, all_scales, all_closest, k, scaling, cancel_callback);
 }
 
 }  // namespace Nnpz

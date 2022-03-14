@@ -18,6 +18,7 @@
 #define PHZ_NNPZ_DISTANCES_H
 
 #include "Types.h"
+#include <cmath>
 
 namespace Nnpz {
 
@@ -25,14 +26,15 @@ namespace Nnpz {
  * Implement the distance, distance derivative and scale guessing for the χ^2 distance
  */
 struct Chi2Distance {
-  static double distance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
-    double acc = 0.;
+  static double distance(scale_t scale, NdArray<photo_t> const& reference, NdArray<photo_t> const& target) {
+    double acc    = 0.;
+    size_t nbands = reference.shape(0);
 
-    for (ssize_t band_idx = 0; band_idx < nbands; ++band_idx) {
-      double ref_val = scale * reference[band_idx * 2];
-      double ref_err = scale * reference[band_idx * 2 + 1];
-      double tar_val = target[band_idx * 2];
-      double tar_err = target[band_idx * 2 + 1];
+    for (size_t band_idx = 0; band_idx < nbands; ++band_idx) {
+      double ref_val = scale * reference.at(band_idx, 0);
+      double ref_err = scale * reference.at(band_idx, 1);
+      double tar_val = target.at(band_idx, 0);
+      double tar_err = target.at(band_idx, 1);
       double nom     = (ref_val - tar_val) * (ref_val - tar_val);
       double den     = ref_err * ref_err + tar_err * tar_err;
       acc += nom / den;
@@ -41,13 +43,14 @@ struct Chi2Distance {
     return acc;
   }
 
-  static double guessScale(photo_t const* reference, photo_t const* target, ssize_t nbands) {
+  static double guessScale(NdArray<photo_t> const& reference, NdArray<photo_t> const& target) {
     double nom = 0., den = 0.;
+    size_t nbands = reference.shape(0);
 
-    for (ssize_t band_idx = 0; band_idx < nbands; ++band_idx) {
-      photo_t ref_val = reference[band_idx * 2];
-      photo_t tar_val = target[band_idx * 2];
-      photo_t tar_err = target[band_idx * 2 + 1];
+    for (size_t band_idx = 0; band_idx < nbands; ++band_idx) {
+      photo_t ref_val = reference.at(band_idx, 0);
+      photo_t tar_val = target.at(band_idx, 0);
+      photo_t tar_err = target.at(band_idx, 1);
       photo_t err_sqr = (tar_err * tar_err);
 
       nom += (ref_val * tar_val) / err_sqr;
@@ -63,14 +66,15 @@ struct Chi2Distance {
    *    \frac{\delta}{\delta a}\left[ \frac{(a f_{ref} - f_{target})^2}{(a e_{ref})^2 + e_{target}^2}\right] = \frac{2
    *(a f_{ref} - f_{target}) (e_{ref}^2 a f_{target} + f_{ref} e_{target}^2)}{(e_{ref}^2 a^2 + e_{target}^2)^2} \f]
    */
-  static double daDistance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
-    double acc = 0.;
+  static double daDistance(scale_t scale, NdArray<photo_t> const& reference, NdArray<photo_t> const& target) {
+    double acc    = 0.;
+    size_t nbands = reference.shape(0);
 
-    for (ssize_t i = 0; i < nbands; ++i) {
-      photo_t ref_val = reference[i * 2];
-      photo_t ref_err = reference[i * 2 + 1];
-      photo_t tar_val = target[i * 2];
-      photo_t tar_err = target[i * 2 + 1];
+    for (size_t i = 0; i < nbands; ++i) {
+      photo_t ref_val = reference.at(i, 0);
+      photo_t ref_err = reference.at(i, 1);
+      photo_t tar_val = target.at(i, 0);
+      photo_t tar_err = target.at(i, 1);
 
       auto ref_err_sq = ref_err * ref_err;
       auto tar_err_sq = tar_err * tar_err;
@@ -88,12 +92,13 @@ struct Chi2Distance {
  * Implement the distance, distance derivative and scale guessing for the Euclidean distance
  */
 struct EuclideanDistance {
-  static double distance(scale_t scale, photo_t const* reference, photo_t const* target, ssize_t nbands) {
-    double acc = 0.;
+  static double distance(scale_t scale, NdArray<photo_t> const& reference, NdArray<photo_t> const& target) {
+    double acc    = 0.;
+    size_t nbands = reference.shape(0);
 
-    for (ssize_t band_idx = 0; band_idx < nbands; ++band_idx) {
-      double ref_val = scale * reference[band_idx * 2];
-      double tar_val = target[band_idx * 2];
+    for (size_t band_idx = 0; band_idx < nbands; ++band_idx) {
+      double ref_val = scale * reference.at(band_idx, 0);
+      double tar_val = target.at(band_idx, 0);
       double d       = ref_val - tar_val;
       acc += d * d;
     }

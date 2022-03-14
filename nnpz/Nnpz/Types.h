@@ -17,24 +17,22 @@
 #ifndef PHZ_NNPZ_TYPES_H
 #define PHZ_NNPZ_TYPES_H
 
+#include "NdArray/NdArray.h"
 #include <cstdint>
+#include <functional>
 #include <pybind11/numpy.h>
 
 namespace Nnpz {
 
-using index_t  = int32_t;
+using index_t  = uint32_t;
 using weight_t = float;
 using photo_t  = double;
 using scale_t  = float;
 using flag_t   = uint32_t;
+template <typename T>
+using NdArray = Euclid::NdArray::NdArray<T>;
 
-using IndexArray  = pybind11::array_t<index_t, pybind11::array::c_style>;
-using PhotoArray  = pybind11::array_t<photo_t, pybind11::array::c_style>;
-using WeightArray = pybind11::array_t<weight_t, pybind11::array::c_style>;
-using FlagArray   = pybind11::array_t<flag_t, pybind11::array::c_style>;
-using ScaleArray  = pybind11::array_t<scale_t, pybind11::array::c_style>;
-
-using WeightFunc = std::function<void(PhotoArray const&, PhotoArray const&, WeightArray&)>;
+using WeightFunc = std::function<void(NdArray<photo_t> const&, NdArray<photo_t> const&, NdArray<weight_t>&)>;
 
 }  // namespace Nnpz
 
