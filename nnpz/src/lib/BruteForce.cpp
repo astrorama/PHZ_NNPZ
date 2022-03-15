@@ -60,16 +60,16 @@ static void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> cons
     MaxHeap heap(k, &distances_buffer[0], &all_closest.at(ti, 0), &all_scales.at(ti, 0));
 
     auto target_photo = all_targets.slice(ti);
+    auto ref_photo = reference.slice(0);
 
     for (index_t ri = 0; ri < nrefs; ++ri) {
-      auto ref_photo = reference.slice(ri);
-
       scale_t scale = 1.;
       if (scaling) {
         scale = static_cast<scale_t>((*scaling)(ref_photo, target_photo));
       }
       float dist = DistanceFunctor::distance(scale, ref_photo, target_photo);
       insert_if_best(heap, ri, dist, scale);
+      ref_photo.next_slice();
     }
   }
 }

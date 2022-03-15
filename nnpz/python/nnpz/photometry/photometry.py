@@ -73,7 +73,7 @@ class Photometry:
         Extract a Photometry object with a subset of the bands
         """
         cols = [self.system.bands.index(b) for b in bands]
-        return Photometry(ids=self.ids, values=self.values[:, cols],
+        return Photometry(ids=self.ids, values=self.values.take(cols, axis=1),
                           system=self.system[bands], colorspace=self.colorspace)
 
     def get_fluxes(self, bands: Union[List[str], str], return_error=False) -> u.Quantity:
