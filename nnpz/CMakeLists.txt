@@ -15,7 +15,7 @@ elements_subdir(nnpz)
 #===============================================================================
 elements_depends_on_subdirs(ElementsKernel)
 elements_depends_on_subdirs(MathUtils)
-elements_depends_on_subdirs(XYDataset)
+elements_depends_on_subdirs(NdArray)
 
 #===============================================================================
 # Add the find_package macro (a pure CMake command) here to locate the
@@ -23,7 +23,7 @@ elements_depends_on_subdirs(XYDataset)
 # Examples:
 #          find_package(CppUnit)
 #===============================================================================
-find_package(NumPy)
+find_package(PythonLibs ${PYTHON_EXPLICIT_VERSION} REQUIRED)
 find_package(pybind11 REQUIRED)
 
 #===============================================================================
