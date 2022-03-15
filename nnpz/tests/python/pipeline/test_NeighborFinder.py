@@ -63,10 +63,9 @@ def test_findNeighborsEBV(reference_photometry: Photometry, target_photometry: P
             """
             assert len(photo) == len(target_photometry)
             assert len(photo) == len(ebv)
-            new_photo = photo.copy()
-            new_photo = np.flip(new_photo, axis=0)
-            return new_photo
+            return np.flip(photo, axis=0).copy()
 
+    print(target_photometry.values.strides)
     finder = NeighborFinder(
         dict(
             reference_photometry=reference_photometry,

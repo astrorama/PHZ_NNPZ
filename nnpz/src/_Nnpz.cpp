@@ -55,6 +55,9 @@ const NdArray<T> bufferToNdArray(py::buffer_info const& buffer, const std::strin
     throw std::runtime_error("Expecting " + std::to_string(axes) + " axes for the " + repr + " buffer, got " +
                              std::to_string(buffer.ndim));
   }
+  if (std::any_of(buffer.strides.begin(), buffer.strides.end(), [](ssize_t i) { return i < 0; })) {
+    throw std::runtime_error("Negative strides are not supported");
+  }
   std::vector<size_t> shape(buffer.shape.begin(), buffer.shape.end());
   std::vector<size_t> strides(buffer.strides.begin(), buffer.strides.end());
   return {std::move(shape), std::move(strides), BufferContainer<T>(buffer)};
