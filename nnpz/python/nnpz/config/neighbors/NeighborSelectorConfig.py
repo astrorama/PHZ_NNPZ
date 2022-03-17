@@ -68,7 +68,12 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
                 balanced=args.get('balanced_kdtree', True)
             )
         else:
-            self.__selector = BruteForceSelector(self.__neighbors_no, scale_prior=scale_prior)
+            self.__selector = BruteForceSelector(
+                self.__neighbors_no,
+                scale_prior=scale_prior,
+                scale_maxiter=args.get('scale_max_iter', 20),
+                scale_rtol=args.get('scale_rtol', 1e-8)
+            )
 
     def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if self.__selector is None:
