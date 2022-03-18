@@ -34,6 +34,44 @@ using NdArray = Euclid::NdArray::NdArray<T>;
 
 using WeightFunc = std::function<void(NdArray<photo_t> const&, NdArray<photo_t> const&, NdArray<weight_t>&)>;
 
+struct PhotoPtrIterator {
+  struct PhotoAdapter {
+    explicit PhotoAdapter(photo_t const* ptr) : m_ptr(ptr) {}
+
+    photo_t getFlux() const {
+      return *m_ptr;
+    }
+
+    photo_t getError() const {
+      return *(m_ptr + 1);
+    }
+
+    photo_t const* m_ptr;
+  };
+
+  explicit PhotoPtrIterator(photo_t const* ptr) : m_adapter(ptr) {}
+
+  PhotoPtrIterator& operator++() {
+    m_adapter.m_ptr += 2;
+    return *this;
+  }
+
+  PhotoPtrIterator operator+(size_t n) const {
+    return PhotoPtrIterator(m_adapter.m_ptr + n * 2);
+  }
+
+  bool operator!=(const PhotoPtrIterator& other) const {
+    return m_adapter.m_ptr != other.m_adapter.m_ptr;
+  }
+
+  PhotoAdapter const* operator->() const {
+    return &m_adapter;
+  }
+
+private:
+  PhotoAdapter m_adapter;
+};
+
 }  // namespace Nnpz
 
 #endif  // PHZ_NNPZ_TYPES_H

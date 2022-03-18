@@ -16,9 +16,9 @@
 
 #include "Nnpz/Scaling.h"
 #include "AlexandriaKernel/memory_tools.h"
+#include "MathUtils/distances/Distances.h"
 #include "MathUtils/function/Function.h"
 #include "MathUtils/root/SecantMethod.h"
-#include "Nnpz/Distances.h"
 #include "Nnpz/Priors.h"
 #include "Nnpz/Types.h"
 #include <sstream>
@@ -31,13 +31,13 @@ namespace Nnpz {
 template <typename TDistance>
 class DistanceDerivative : public Function {
 public:
-  DistanceDerivative(NdArray<photo_t> const& reference, NdArray<photo_t> const& target)
-      : m_reference(reference), m_target(target){};
+  DistanceDerivative(PhotoPtrIterator ref_begin, PhotoPtrIterator ref_end, PhotoPtrIterator target_begin)
+      : m_ref_begin(ref_begin), m_ref_end(ref_end), m_target_begin(target_begin) {}
 
   virtual ~DistanceDerivative() = default;
 
   double operator()(double scale) const override {
-    return TDistance::daDistance(scale, m_reference, m_target);
+    return TDistance::daDistance(scale, m_ref_begin, m_ref_end, m_target_begin);
   }
 
   using Function::operator();
@@ -47,7 +47,7 @@ public:
   }
 
 private:
-  NdArray<photo_t> const &m_reference, &m_target;
+  PhotoPtrIterator const m_ref_begin, m_ref_end, m_target_begin;
 };
 
 template <typename TDistance, typename TPrior>
@@ -87,8 +87,9 @@ public:
       return m_secant_params.min;
     }
 
-    DistanceDerivative<TDistance> target(ref_photo, target_photo);
-    auto                          guess = TDistance::guessScale(ref_photo, target_photo);
+    PhotoPtrIterator ref_begin(&ref_photo.at(0, 0)), ref_end = ref_begin + ref_photo.shape(0);
+    PhotoPtrIterator target_begin(&target_photo.at(0, 0));
+    auto             guess = TDistance::guessScale(ref_begin, ref_end, target_begin);
 
     if (guess <= m_secant_params.min) {
       return m_secant_params.min;
@@ -97,8 +98,9 @@ public:
       return m_secant_params.max;
     }
 
-    double x0 = guess - EPS, x1 = guess;
-    return secantMethod(ScaleWithPrior<TDistance, TPrior>(target, m_prior), x0, x1, m_secant_params).root;
+    DistanceDerivative<TDistance> target_func(ref_begin, ref_end, target_begin);
+    double                        x0 = guess - EPS, x1 = guess;
+    return secantMethod(ScaleWithPrior<TDistance, TPrior>(target_func, m_prior), x0, x1, m_secant_params).root;
   }
 
 private:

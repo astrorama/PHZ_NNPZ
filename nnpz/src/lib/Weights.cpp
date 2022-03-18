@@ -17,40 +17,27 @@
  */
 
 #include "Nnpz/Weights.h"
-#include "Nnpz/Distances.h"
+#include "MathUtils/distances/Weights.h"
 #include <ElementsKernel/Exception.h>
 #include <limits>
 #include <map>
+
+using namespace Euclid::MathUtils;
 
 namespace Nnpz {
 
 constexpr float kMinWeight = std::numeric_limits<float>::min();
 
-struct Likelihood {
-  static weight_t weight(NdArray<photo_t> const& ref_obj, NdArray<photo_t> const& target_obj) {
-    double chi2 = Chi2Distance::distance(1., ref_obj, target_obj);
-    return static_cast<weight_t>(std::exp(-0.5f * chi2));
-  }
-};
-
-struct InverseChi2 {
-  static weight_t weight(NdArray<photo_t> const& ref_obj, NdArray<photo_t> const& target_obj) {
-    return 1.f / Chi2Distance::distance(1., ref_obj, target_obj);
-  }
-};
-
-struct InverseEuclidean {
-  static weight_t weight(NdArray<photo_t> const& ref_obj, NdArray<photo_t> const& target_obj) {
-    return 1.f / EuclideanDistance::distance(1., ref_obj, target_obj);
-  }
-};
-
 template <typename WeightFunctor>
 static void computeWeights(NdArray<photo_t> const& ref_objs, NdArray<photo_t> const& target_obj,
                            NdArray<weight_t>& out_weight) {
-  size_t k = ref_objs.shape(0);
+  size_t const k      = ref_objs.shape(0);
+  size_t const nbands = ref_objs.shape(1);
+
+  PhotoPtrIterator target_begin(&target_obj.at(0, 0));
   for (size_t ni = 0; ni < k; ++ni) {
-    out_weight.at(ni) = WeightFunctor::weight(ref_objs.slice(ni), target_obj);
+    PhotoPtrIterator ref_begin(&ref_objs.at(ni, 0, 0)), ref_end = ref_begin + nbands;
+    out_weight.at(ni) = WeightFunctor::weight(1.f, ref_begin, ref_end, target_begin);
   }
 }
 

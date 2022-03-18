@@ -15,9 +15,11 @@
  */
 
 #include "Nnpz/BruteForce.h"
-#include "Nnpz/Distances.h"
+#include "MathUtils/distances/Distances.h"
 #include "Nnpz/MaxHeap.h"
 #include <ElementsKernel/Exception.h>
+
+using namespace Euclid::MathUtils;
 
 namespace Nnpz {
 
@@ -55,19 +57,23 @@ static void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> cons
   }
 
   std::vector<float> distances_buffer(all_closest.shape(1));
+  size_t const       nbands = reference.shape(1);
 
   for (size_t ti = 0; ti < ntargets && !cancel_callback(); ++ti) {
     MaxHeap heap(k, &distances_buffer[0], &all_closest.at(ti, 0), &all_scales.at(ti, 0));
 
     auto target_photo = all_targets.slice(ti);
-    auto ref_photo = reference.slice(0);
+    auto ref_photo    = reference.slice(0);
 
     for (index_t ri = 0; ri < nrefs; ++ri) {
       scale_t scale = 1.;
       if (scaling) {
         scale = static_cast<scale_t>((*scaling)(ref_photo, target_photo));
       }
-      float dist = DistanceFunctor::distance(scale, ref_photo, target_photo);
+      auto  ref_begin    = PhotoPtrIterator(&ref_photo.at(0, 0));
+      auto  ref_end      = ref_begin + nbands;
+      auto  target_begin = PhotoPtrIterator(&target_photo.at(0, 0));
+      float dist         = DistanceFunctor::distance(scale, ref_begin, ref_end, target_begin);
       insert_if_best(heap, ri, dist, scale);
       ref_photo.next_slice();
     }
