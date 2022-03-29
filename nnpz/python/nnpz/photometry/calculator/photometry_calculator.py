@@ -21,7 +21,7 @@ Author: Nikolaos Apostolakos
 
 from __future__ import division, print_function
 
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, Union, Tuple
 
 import numpy as np
 
@@ -97,7 +97,7 @@ class PhotometryCalculator:
         # Post-process the intensity
         return self.__pre_post_processor.post_process(intensity, filter_name)
 
-    def compute(self, sed: np.ndarray) -> Union[np.ndarray, tuple[np.ndarray, np.ndarray]]:
+    def compute(self, sed: np.ndarray) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Computes the photometry for the given SED.
 
