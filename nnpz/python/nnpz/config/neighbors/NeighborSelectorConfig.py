@@ -22,11 +22,9 @@ from typing import Any, Dict
 
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
-from nnpz.config.neighbors.Scaling import Scaling
 from nnpz.neighbor_selection.bruteforce import BruteForceSelector
 from nnpz.neighbor_selection.combined import CombinedSelector
 from nnpz.neighbor_selection.kdtree import KDTreeSelector
-from nnpz.neighbor_selection.scaledbruteforce import ScaledBruteForceSelector
 
 logger = Logging.getLogger('Configuration')
 
@@ -38,7 +36,6 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
 
     def __init__(self):
         self.__selector = None
-        self.__scaling = False
         self.__neighbors_no = None
         self.__ref_bands = None
 
@@ -48,18 +45,17 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         self._exists_parameter('reference_sample_phot_filters', args)
 
         neighbor_method = args['neighbor_method']
-
-        scaler = ConfigManager.get_handler(Scaling).parse_args(args)['scaler']
+        scale_prior = args.get('scale_prior', None)
 
         self.__neighbors_no = args['neighbors_no']
         self.__ref_bands = args['reference_sample_phot_filters']
 
         if neighbor_method not in ['KDTree', 'Combined', 'BruteForce']:
             raise ValueError('Invalid neighbor_method %s' % neighbor_method)
-        if scaler is not None and neighbor_method != 'BruteForce':
+        if scale_prior is not None and neighbor_method != 'BruteForce':
             raise ValueError('Scaling is only supported with BruteForce')
 
-        logger.info('Using %s%s', neighbor_method, ' with scaling' if scaler else '')
+        logger.info('Using %s%s', neighbor_method, ' with scaling' if scale_prior else '')
 
         if neighbor_method == 'KDTree':
             self.__selector = KDTreeSelector(
@@ -71,10 +67,13 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
                 self.__neighbors_no, args['batch_size'],
                 balanced=args.get('balanced_kdtree', True)
             )
-        elif scaler:
-            self.__selector = ScaledBruteForceSelector(self.__neighbors_no, scaler)
         else:
-            self.__selector = BruteForceSelector(self.__neighbors_no)
+            self.__selector = BruteForceSelector(
+                self.__neighbors_no,
+                scale_prior=scale_prior,
+                scale_maxiter=args.get('scale_max_iter', 20),
+                scale_rtol=args.get('scale_rtol', 1e-8)
+            )
 
     def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
         if self.__selector is None:

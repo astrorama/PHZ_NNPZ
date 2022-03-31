@@ -58,7 +58,7 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
         if ref_type != 'F_nu_uJy':
             raise ValueError(f'Only F_nu_uJy accepted as reference photometry type, got {ref_type}')
         logger.info('Reference sample photometry type: %s', ref_type)
-        ref_data = ref_phot_prov.get_data(ref_filters)
+        ref_data = ref_phot_prov.get_data()
 
         filter_trans = OrderedDict()
         for f_name in ref_filters:

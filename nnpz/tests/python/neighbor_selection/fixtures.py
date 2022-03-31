@@ -49,6 +49,6 @@ def target_values(system: PhotometricSystem) -> Photometry:
     Makes it easier to reason about the distances
     """
     photo = np.zeros((1, 3, 2))
-    photo[:, :, 1] = 0.00001  # Set the error to something so chi2 works
+    photo[:, :, 1] = 0.01  # Set the error to something so chi2 works
     return Photometry(np.array([0]), values=photo * u.uJy,
                       system=system, colorspace=RestFrame)

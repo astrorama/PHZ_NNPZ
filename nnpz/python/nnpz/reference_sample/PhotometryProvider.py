@@ -79,7 +79,7 @@ class PhotometryProvider:
         in a numpy array.
         """
 
-        data = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
+        data = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float64)
         ebv_corr = np.zeros((len(phot_table), len(filter_list)), dtype=np.float32)
         shift_corr = np.zeros((len(phot_table), len(filter_list), 2), dtype=np.float32)
         for i, name in enumerate(filter_list):
@@ -187,14 +187,9 @@ class PhotometryProvider:
         """
         return self.__ids
 
-    def get_data(self, filter_list: List[str] = None) -> np.ndarray:
+    def get_data(self) -> np.ndarray:
         """
         Returns an array with the photometry data for the given bands.
-
-        Args:
-            filter_list: The filter names to get the data for. If no filter is
-            given, the result is returned for the full filter list, in the same
-            order as returned by the getFilterList() method.
 
         Returns:
             A three-dimensional numpy array of single precision floats where the
@@ -212,21 +207,7 @@ class PhotometryProvider:
         order of the second axis of the result is the same as the passed filter
         names.
         """
-
-        # Affected index
-        try:
-            if filter_list is None or len(filter_list) == 0:
-                # numpy will avoid a copy if the index is a slice, while it will *always*
-                # copy if it is a list
-                filter_idx = slice(len(self.__filter_list))
-            else:
-                filter_idx = np.array(list(map(self.__filter_list.index, filter_list)))
-        except ValueError as e:
-            missing = str(e).split()[0]
-            raise KeyError('File does not contain photometry for {}'.format(missing))
-
-        # Return a view rather than a copy
-        return self.__phot_data[:, filter_idx, :]
+        return self.__phot_data
 
     def get_ebv_correction_factors(self, filter_list: List[str] = None) -> np.ndarray:
         """

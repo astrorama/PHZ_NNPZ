@@ -14,6 +14,8 @@ elements_subdir(nnpz)
 #         elements_depends_on_subdirs(ElementsKernel)
 #===============================================================================
 elements_depends_on_subdirs(ElementsKernel)
+elements_depends_on_subdirs(MathUtils)
+elements_depends_on_subdirs(NdArray)
 
 #===============================================================================
 # Add the find_package macro (a pure CMake command) here to locate the
@@ -21,6 +23,8 @@ elements_depends_on_subdirs(ElementsKernel)
 # Examples:
 #          find_package(CppUnit)
 #===============================================================================
+find_package(PythonLibs ${PYTHON_EXPLICIT_VERSION} REQUIRED)
+find_package(pybind11 REQUIRED)
 
 #===============================================================================
 # Declare the library dependencies here
@@ -30,11 +34,11 @@ elements_depends_on_subdirs(ElementsKernel)
 #                     INCLUDE_DIRS Boost ElementsKernel
 #                     PUBLIC_HEADERS ElementsExamples)
 #===============================================================================
-find_package(Cython REQUIRED)
-find_package(NumPy)
-elements_add_cython_module(src/Cython/lib/Weights.pyx
-        INCLUDE_DIRS NumPy
-        NO_PUBLIC_HEADERS)
+elements_add_library(Nnpz src/lib/*.cpp
+        LINK_LIBRARIES ElementsKernel MathUtils NdArray XYDataset
+        PUBLIC_HEADERS Nnpz)
+elements_add_pybind11_module(_Nnpz src/_Nnpz.cpp
+        LINK_LIBRARIES Nnpz)
 
 #===============================================================================
 # Declare the executables here
@@ -70,17 +74,17 @@ elements_install_aux_files()
 #                             ElementsExamples.PythonProgramExample)
 #===============================================================================
 elements_add_python_program(NnpzBuildPhotometry
-                            nnpz.program.BuildPhotometry)
+        nnpz.program.BuildPhotometry)
 elements_add_python_program(NnpzComputeNeighbors
-                            nnpz.program.ComputeNeighbors)
+        nnpz.program.ComputeNeighbors)
 elements_add_python_program(NnpzCorrectPhotometry
-                            nnpz.program.CorrectPhotometry)
+        nnpz.program.CorrectPhotometry)
 elements_add_python_program(NnpzComputeWeights
-                            nnpz.program.ComputeWeights)
+        nnpz.program.ComputeWeights)
 elements_add_python_program(NnpzGenerateOutput
-                            nnpz.program.GenerateOutput)
+        nnpz.program.GenerateOutput)
 elements_add_python_program(nnpz
-                            nnpz.program.Nnpz)
+        nnpz.program.Nnpz)
 
 #===============================================================================
 # Add the elements_install_conf_files macro

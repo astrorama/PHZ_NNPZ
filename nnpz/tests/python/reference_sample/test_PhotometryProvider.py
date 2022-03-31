@@ -184,24 +184,6 @@ def test_getIds(photometry_file_fixture: str, photometry_ids_fixure: np.ndarray)
 
 ###############################################################################
 
-def test_getData_wrongFilter(photometry_file_fixture: str):
-    """
-    Test the getData() with a filter name that is not in the file
-    """
-
-    # Given
-    wrong_name = 'wrong_name'
-
-    # When
-    provider = PhotometryProvider(photometry_file_fixture)
-
-    # Then
-    with pytest.raises(KeyError):
-        provider.get_data(wrong_name)
-
-
-###############################################################################
-
 def test_getData_noFilterList(photometry_file_fixture: str, photometry_data_fixture: np.ndarray):
     """
     Test that getData() returns all filters when called without argument
@@ -216,24 +198,5 @@ def test_getData_noFilterList(photometry_file_fixture: str, photometry_data_fixt
     np.testing.assert_array_equal(data[:, 0, :], photometry_data_fixture[filters[0]])
     np.testing.assert_array_equal(data[:, 1, :], photometry_data_fixture[filters[1]])
     np.testing.assert_array_equal(data[:, 2, :], photometry_data_fixture[filters[2]])
-
-
-###############################################################################
-
-def test_getData_withArgs(photometry_file_fixture: str, photometry_data_fixture: np.ndarray,
-                          filters_fixture):
-    """
-    Test the getData() call for only some filters
-    """
-
-    # Given
-    provider = PhotometryProvider(photometry_file_fixture)
-
-    # When
-    data = provider.get_data(['vis', 'Y'])
-
-    # Then
-    np.testing.assert_array_equal(data[:, 0, :], photometry_data_fixture['vis'])
-    np.testing.assert_array_equal(data[:, 1, :], photometry_data_fixture['Y'])
 
 ###############################################################################

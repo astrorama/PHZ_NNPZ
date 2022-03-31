@@ -15,7 +15,6 @@
 #
 from nnpz.neighbor_selection.bruteforce import BruteForceSelector
 from nnpz.pipeline.neighbor_finder import NeighborFinder
-from nnpz.utils.distances import euclidean
 
 from ..photometry.fixtures import *
 
@@ -27,7 +26,7 @@ def test_findNeighborsNoEBV(reference_photometry: Photometry, target_photometry:
         dict(
             reference_photometry=reference_photometry,
             source_independent_ebv=None,
-            neighbor_selector=BruteForceSelector(2, method=euclidean),
+            neighbor_selector=BruteForceSelector(2, method='euclidean'),
             neighbor_no=2,
             target_system=target_photometry.system
         ))
@@ -47,9 +46,9 @@ def test_findNeighborsNoEBV(reference_photometry: Photometry, target_photometry:
     assert nn_idx[4] == {3, 4}
 
     assert nn_idx[0] == {0, 1}
-    np.testing.assert_array_equal(out['NEIGHBOR_PHOTOMETRY'][0, 0],
+    np.testing.assert_array_equal(out['NEIGHBOR_PHOTOMETRY'][0, out['NEIGHBOR_INDEX'][0, 0]],
                                   reference_photometry.values[0].value)
-    np.testing.assert_array_equal(out['NEIGHBOR_PHOTOMETRY'][0, 1],
+    np.testing.assert_array_equal(out['NEIGHBOR_PHOTOMETRY'][0, out['NEIGHBOR_INDEX'][0, 1]],
                                   reference_photometry.values[1].value)
 
 
@@ -64,15 +63,14 @@ def test_findNeighborsEBV(reference_photometry: Photometry, target_photometry: P
             """
             assert len(photo) == len(target_photometry)
             assert len(photo) == len(ebv)
-            new_photo = photo.copy()
-            new_photo = np.flip(new_photo, axis=0)
-            return new_photo
+            return np.flip(photo, axis=0).copy()
 
+    print(target_photometry.values.strides)
     finder = NeighborFinder(
         dict(
             reference_photometry=reference_photometry,
             source_independent_ebv=MockEBV(),
-            neighbor_selector=BruteForceSelector(2, method=euclidean),
+            neighbor_selector=BruteForceSelector(2, method='euclidean'),
             neighbor_no=2,
             target_system=target_photometry.system
         ))
