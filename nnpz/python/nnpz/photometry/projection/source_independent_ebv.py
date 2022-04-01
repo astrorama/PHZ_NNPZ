@@ -57,7 +57,7 @@ class SourceIndependentGalacticEBV:
             the second the sed flux value
 
         ebv_0: Reference E(B-V)_0 for which the K_X are computed.
-            Default value =0.02
+            Default value = 0.02
     """
 
     __fp = ListFileFilterProvider(getAuxiliaryPath('GalacticExtinctionCurves.list'))

@@ -89,10 +89,11 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
                            bands: List[str], rows: np.ndarray) -> ColorSpace:
         catalog_ebv = args.get('target_catalog_gal_ebv', None)
         filter_shifts = args.get('target_catalog_filters_shifts', None)
+        dust_map_sed_bpc = args.get('dust_map_sed_bpc', 1.018)
 
         factors = {}
         if catalog_ebv:
-            factors['ebv'] = table.read_column(catalog_ebv, rows=rows)
+            factors['ebv'] = table.read_column(catalog_ebv, rows=rows) * dust_map_sed_bpc
 
         if filter_shifts:
             dtype = [(b, float) for b in bands if b in filter_shifts]
