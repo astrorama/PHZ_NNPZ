@@ -34,8 +34,6 @@ def correct_ebv(ref_photo: u.uJy, corr_coef: np.ndarray, ebv: np.ndarray, out: u
             If specified, store the computation here.
     Returns:
         out if it was None, otherwise a newly allocated array.
-    See Also:
-        nnpz.photometry.calculator.photometry_with_corrections_calculator
     """
     if out is None:
         out = np.copy(ref_photo)
