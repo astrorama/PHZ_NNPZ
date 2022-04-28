@@ -37,8 +37,6 @@ def correct_filter_variation(ref_photo: u.uJy, corr_coef: np.ndarray, shift: np.
 
     Returns:
         out if it was None, otherwise a newly allocated array.
-    See Also:
-        nnpz.photometry.calculator.photometry_with_corrections_calculator
     """
     if out is None:
         out = np.copy(ref_photo)

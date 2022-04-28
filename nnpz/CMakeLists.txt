@@ -73,8 +73,6 @@ elements_install_aux_files()
 # elements_add_python_program(PythonProgramExample
 #                             ElementsExamples.PythonProgramExample)
 #===============================================================================
-elements_add_python_program(NnpzBuildPhotometry
-        nnpz.program.BuildPhotometry)
 elements_add_python_program(NnpzComputeNeighbors
         nnpz.program.ComputeNeighbors)
 elements_add_python_program(NnpzCorrectPhotometry
