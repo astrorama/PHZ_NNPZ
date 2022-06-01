@@ -54,7 +54,7 @@ class Flags(OutputHandler.OutputColumnProviderInterface):
 
     def _separate_columns(self, flags: np.ndarray, output: np.ndarray):
         for flag, name in zip(NnpzFlag.FLAGS, NnpzFlag.FLAG_NAMES):
-            self.__output_area[name] = flags ^ flag
+            output[name] = flags ^ flag
 
     def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
         if self.__separate_columns:
