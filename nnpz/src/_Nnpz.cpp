@@ -25,16 +25,20 @@ using namespace Nnpz;
 template <typename T>
 class BufferContainer {
 public:
-  explicit BufferContainer(py::buffer_info const& info) : m_ptr(static_cast<T*>(info.ptr)), m_size(info.size) {}
+  explicit BufferContainer(py::buffer_info const& info): m_buffer_info(info) {}
   BufferContainer(const BufferContainer&) = default;
   BufferContainer(BufferContainer&&)      = default;
 
   T* data() const {
-    return m_ptr;
+    return static_cast<T*>(m_buffer_info.ptr);
   }
 
   std::size_t size() const {
-    return m_size;
+    return m_buffer_info.size;
+  }
+
+  std::size_t nbytes() const {
+    return m_buffer_info.shape[0] * m_buffer_info.strides[0];
   }
 
   void resize(std::size_t) {
@@ -42,8 +46,7 @@ public:
   }
 
 private:
-  T*          m_ptr;
-  std::size_t m_size;
+  py::buffer_info const& m_buffer_info;
 };
 
 template <typename T>
