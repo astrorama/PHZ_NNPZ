@@ -29,12 +29,12 @@ using Euclid::make_unique;
 namespace Nnpz {
 
 template <typename TDistance>
-class DistanceDerivative : public Function {
+class DistanceDerivative final : public Function {
 public:
   DistanceDerivative(PhotoPtrIterator ref_begin, PhotoPtrIterator ref_end, PhotoPtrIterator target_begin)
       : m_ref_begin(ref_begin), m_ref_end(ref_end), m_target_begin(target_begin) {}
 
-  virtual ~DistanceDerivative() = default;
+  ~DistanceDerivative() override = default;
 
   double operator()(double scale) const override {
     return TDistance::daDistance(scale, m_ref_begin, m_ref_end, m_target_begin);
@@ -47,7 +47,9 @@ public:
   }
 
 private:
-  PhotoPtrIterator const m_ref_begin, m_ref_end, m_target_begin;
+  PhotoPtrIterator const m_ref_begin;
+  PhotoPtrIterator const m_ref_end;
+  PhotoPtrIterator       m_target_begin;
 };
 
 template <typename TDistance, typename TPrior>
@@ -75,19 +77,20 @@ template <typename TDistance, typename TPrior>
 class ScaleCalculator final : public ScaleFunction {
 public:
   template <typename... Args>
-  ScaleCalculator(ScaleFunctionParams const& params, Args... args)
+  ScaleCalculator(ScaleFunctionParams const& params, Args&&... args)
       : m_prior(std::forward<Args>(args)...), m_secant_params{params.maxiter, params.tolerance, 1, 1} {
     std::tie(m_secant_params.min, m_secant_params.max) = m_prior.getValidRange();
   }
 
-  virtual ~ScaleCalculator() = default;
+  ~ScaleCalculator() override = default;
 
   double operator()(NdArray<photo_t> const& ref_photo, NdArray<photo_t> const& target_photo) const override {
     if (m_secant_params.min == m_secant_params.max) {
       return m_secant_params.min;
     }
 
-    PhotoPtrIterator ref_begin(&ref_photo.at(0, 0)), ref_end = ref_begin + ref_photo.shape(0);
+    PhotoPtrIterator ref_begin(&ref_photo.at(0, 0));
+    PhotoPtrIterator ref_end(ref_begin + ref_photo.shape(0));
     PhotoPtrIterator target_begin(&target_photo.at(0, 0));
     auto             guess = TDistance::guessScale(ref_begin, ref_end, target_begin);
 
@@ -99,7 +102,8 @@ public:
     }
 
     DistanceDerivative<TDistance> target_func(ref_begin, ref_end, target_begin);
-    double                        x0 = guess - EPS, x1 = guess;
+    double                        x0 = guess - EPS;
+    double                        x1 = guess;
     return secantMethod(ScaleWithPrior<TDistance, TPrior>(target_func, m_prior), x0, x1, m_secant_params).root;
   }
 
@@ -116,7 +120,8 @@ std::shared_ptr<ScaleFunction> scaleFunctionFactory(std::string const& prior, Sc
   if (prior_type == "uniform") {
     return std::make_shared<ScaleCalculator<Chi2Distance, Uniform>>(params);
   } else if (prior_type == "tophat") {
-    double min, max;
+    double min;
+    double max;
     stream >> min >> max;
     if (stream.fail()) {
       throw Elements::Exception() << "Failed to parse the tophat parameters!";

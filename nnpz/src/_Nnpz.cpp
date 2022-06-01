@@ -25,9 +25,9 @@ using namespace Nnpz;
 template <typename T>
 class BufferContainer {
 public:
-  explicit BufferContainer(py::buffer_info const& info): m_buffer_info(info) {}
-  BufferContainer(const BufferContainer&) = default;
-  BufferContainer(BufferContainer&&)      = default;
+  explicit BufferContainer(py::buffer_info const& info) : m_buffer_info(info) {}
+  BufferContainer(const BufferContainer&)     = default;
+  BufferContainer(BufferContainer&&) noexcept = default;
 
   T* data() const {
     return static_cast<T*>(m_buffer_info.ptr);
@@ -50,16 +50,16 @@ private:
 };
 
 template <typename T>
-const NdArray<T> bufferToNdArray(py::buffer_info const& buffer, const std::string& repr, unsigned axes) {
+NdArray<T> bufferToNdArray(py::buffer_info const& buffer, const std::string& repr, unsigned axes) {
   if (buffer.format != py::format_descriptor<T>::format()) {
-    throw std::runtime_error("Expecting " + py::format_descriptor<T>::format() + " for the " + repr + " buffer");
+    throw std::invalid_argument("Expecting " + py::format_descriptor<T>::format() + " for the " + repr + " buffer");
   }
   if (buffer.ndim != axes) {
-    throw std::runtime_error("Expecting " + std::to_string(axes) + " axes for the " + repr + " buffer, got " +
-                             std::to_string(buffer.ndim));
+    throw std::invalid_argument("Expecting " + std::to_string(axes) + " axes for the " + repr + " buffer, got " +
+                                std::to_string(buffer.ndim));
   }
   if (std::any_of(buffer.strides.begin(), buffer.strides.end(), [](ssize_t i) { return i < 0; })) {
-    throw std::runtime_error("Negative strides are not supported");
+    throw std::domain_error("Negative strides are not supported");
   }
   std::vector<size_t> shape(buffer.shape.begin(), buffer.shape.end());
   std::vector<size_t> strides(buffer.strides.begin(), buffer.strides.end());

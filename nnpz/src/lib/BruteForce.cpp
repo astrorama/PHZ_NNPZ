@@ -70,10 +70,10 @@ static void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> cons
       if (scaling) {
         scale = static_cast<scale_t>((*scaling)(ref_photo, target_photo));
       }
-      auto  ref_begin    = PhotoPtrIterator(&ref_photo.at(0, 0));
-      auto  ref_end      = ref_begin + nbands;
-      auto  target_begin = PhotoPtrIterator(&target_photo.at(0, 0));
-      float dist         = DistanceFunctor::distance(scale, ref_begin, ref_end, target_begin);
+      auto ref_begin    = PhotoPtrIterator(&ref_photo.at(0, 0));
+      auto ref_end      = ref_begin + nbands;
+      auto target_begin = PhotoPtrIterator(&target_photo.at(0, 0));
+      auto dist         = static_cast<float>(DistanceFunctor::distance(scale, ref_begin, ref_end, target_begin));
       insert_if_best(heap, ri, dist, scale);
       ref_photo.next_slice();
     }

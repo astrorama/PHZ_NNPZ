@@ -36,14 +36,16 @@ static void computeWeights(NdArray<photo_t> const& ref_objs, NdArray<photo_t> co
 
   PhotoPtrIterator target_begin(&target_obj.at(0, 0));
   for (size_t ni = 0; ni < k; ++ni) {
-    PhotoPtrIterator ref_begin(&ref_objs.at(ni, 0, 0)), ref_end = ref_begin + nbands;
-    out_weight.at(ni) = WeightFunctor::weight(1.f, ref_begin, ref_end, target_begin);
+    PhotoPtrIterator ref_begin(&ref_objs.at(ni, 0, 0));
+    PhotoPtrIterator ref_end(ref_begin + nbands);
+    out_weight.at(ni) = static_cast<weight_t>(WeightFunctor::weight(1.f, ref_begin, ref_end, target_begin));
   }
 }
 
-static std::map<std::string, WeightFunc> kWeightFunctions{{"Euclidean", computeWeights<InverseEuclidean>},
-                                                          {"Chi2", computeWeights<InverseChi2>},
-                                                          {"Likelihood", computeWeights<Likelihood>}};
+static const std::map<std::string, WeightFunc, std::less<>> kWeightFunctions{
+    {"Euclidean", computeWeights<InverseEuclidean>},
+    {"Chi2", computeWeights<InverseChi2>},
+    {"Likelihood", computeWeights<Likelihood>}};
 
 WeightCalculator::WeightCalculator(std::string const& primary, std::string const& secondary) {
   auto i = kWeightFunctions.find(primary);
