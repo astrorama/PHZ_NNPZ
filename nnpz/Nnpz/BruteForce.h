@@ -35,7 +35,7 @@ namespace Nnpz {
  */
 ELEMENTS_API void chi2_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
                                   NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k,
-                                  ScaleFunction* scaling, int (*cancel_callback)(void));
+                                  ScaleFunction const* scaling, int (*cancel_callback)(void));
 
 /**
  * Compute the euclidena distance between the target catalog and the reference sample.
@@ -43,7 +43,7 @@ ELEMENTS_API void chi2_bruteforce(NdArray<photo_t> const& reference, NdArray<pho
  */
 ELEMENTS_API void euclidean_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
                                        NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k,
-                                       ScaleFunction* scaling, int (*cancel_callback)(void));
+                                       ScaleFunction const* scaling, int (*cancel_callback)(void));
 
 }  // namespace Nnpz
 

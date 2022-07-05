@@ -15,18 +15,18 @@
  */
 
 #include "Nnpz/BruteForce.h"
-#include "MathUtils/distances/Distances.h"
 #include "Nnpz/MaxHeap.h"
 #include <ElementsKernel/Exception.h>
+#include <MathUtils/distances/Distances.h>
 
 using namespace Euclid::MathUtils;
 
 namespace Nnpz {
 
+namespace {
 template <typename DistanceFunctor>
-static void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
-                        NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k, ScaleFunction* scaling,
-                        int (*cancel_callback)(void)) {
+void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets, NdArray<scale_t>& all_scales,
+                 NdArray<index_t>& all_closest, int k, ScaleFunction const* scaling, int (*cancel_callback)(void)) {
   size_t const ntargets = all_targets.shape(0);
   size_t const nrefs    = reference.shape(0);
 
@@ -79,16 +79,17 @@ static void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> cons
     }
   }
 }
+}  // namespace
 
 void chi2_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
-                     NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k, ScaleFunction* scaling,
+                     NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k, ScaleFunction const* scaling,
                      int (*cancel_callback)(void)) {
   _bruteforce<Chi2Distance>(reference, all_targets, all_scales, all_closest, k, scaling, cancel_callback);
 }
 
 void euclidean_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
-                          NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k, ScaleFunction* scaling,
-                          int (*cancel_callback)(void)) {
+                          NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k,
+                          ScaleFunction const* scaling, int (*cancel_callback)(void)) {
   _bruteforce<EuclideanDistance>(reference, all_targets, all_scales, all_closest, k, scaling, cancel_callback);
 }
 

@@ -41,7 +41,7 @@ public:
     return m_buffer_info.shape[0] * m_buffer_info.strides[0];
   }
 
-  void resize(std::size_t) {
+  void resize(std::size_t) const {
     throw std::runtime_error("Buffer wrapper can not be resized");
   }
 
@@ -76,10 +76,11 @@ double scale_function_wrapper(ScaleFunction const& scale_func, py::buffer const&
   return scale_func(ref_ndarray, target_ndarray);
 }
 
+namespace {
 template <void Bruteforce(NdArray<photo_t> const&, NdArray<photo_t> const&, NdArray<scale_t>&, NdArray<index_t>&, int,
-                          ScaleFunction*, int (*)(void))>
-static void _bruteforce_wrapper(py::buffer const& reference, py::buffer const& all_targets, py::buffer& all_scales,
-                                py::buffer& all_closest, int k, ScaleFunction* scaling) {
+                          ScaleFunction const*, int (*)(void))>
+void _bruteforce_wrapper(py::buffer const& reference, py::buffer const& all_targets, py::buffer const& all_scales,
+                         py::buffer const& all_closest, int k, ScaleFunction const* scaling) {
   py::buffer_info ref_info     = reference.request();
   py::buffer_info target_info  = all_targets.request();
   py::buffer_info scale_info   = all_scales.request(true);
@@ -93,8 +94,8 @@ static void _bruteforce_wrapper(py::buffer const& reference, py::buffer const& a
   Bruteforce(ref_ndarray, target_ndarray, scales_ndarray, closest_ndarray, k, scaling, &PyErr_CheckSignals);
 }
 
-static void weight_function_wrapper(WeightCalculator const& calculator, py::buffer const& neighbors,
-                                    py::buffer const& target, py::buffer& out_weights, py::buffer& out_flags) {
+void weight_function_wrapper(WeightCalculator const& calculator, py::buffer const& neighbors, py::buffer const& target,
+                             py::buffer const& out_weights, py::buffer const& out_flags) {
   py::buffer_info neighbor_info = neighbors.request();
   py::buffer_info target_info   = target.request();
   py::buffer_info weight_info   = out_weights.request(true);
@@ -107,6 +108,7 @@ static void weight_function_wrapper(WeightCalculator const& calculator, py::buff
 
   calculator(neighbor_ndarray, target_ndarray, weight_ndarray, flag_ndarray);
 }
+}  // namespace
 
 PYBIND11_MODULE(_Nnpz, m) {
   m.doc() = "Nnpz helper functions";

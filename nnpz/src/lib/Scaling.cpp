@@ -15,12 +15,12 @@
  */
 
 #include "Nnpz/Scaling.h"
-#include "AlexandriaKernel/memory_tools.h"
-#include "MathUtils/distances/Distances.h"
-#include "MathUtils/function/Function.h"
-#include "MathUtils/root/SecantMethod.h"
 #include "Nnpz/Priors.h"
 #include "Nnpz/Types.h"
+#include <AlexandriaKernel/memory_tools.h>
+#include <MathUtils/distances/Distances.h>
+#include <MathUtils/function/Function.h>
+#include <MathUtils/root/SecantMethod.h>
 #include <sstream>
 
 using namespace Euclid::MathUtils;

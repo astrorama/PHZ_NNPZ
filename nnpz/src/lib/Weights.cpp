@@ -17,8 +17,8 @@
  */
 
 #include "Nnpz/Weights.h"
-#include "MathUtils/distances/Weights.h"
 #include <ElementsKernel/Exception.h>
+#include <MathUtils/distances/Weights.h>
 #include <limits>
 #include <map>
 
@@ -27,10 +27,10 @@ using namespace Euclid::MathUtils;
 namespace Nnpz {
 
 constexpr float kMinWeight = std::numeric_limits<float>::min();
-
+namespace {
 template <typename WeightFunctor>
-static void computeWeights(NdArray<photo_t> const& ref_objs, NdArray<photo_t> const& target_obj,
-                           NdArray<weight_t>& out_weight) {
+void computeWeights(NdArray<photo_t> const& ref_objs, NdArray<photo_t> const& target_obj,
+                    NdArray<weight_t>& out_weight) {
   size_t const k      = ref_objs.shape(0);
   size_t const nbands = ref_objs.shape(1);
 
@@ -42,10 +42,20 @@ static void computeWeights(NdArray<photo_t> const& ref_objs, NdArray<photo_t> co
   }
 }
 
-static const std::map<std::string, WeightFunc, std::less<>> kWeightFunctions{
-    {"Euclidean", computeWeights<InverseEuclidean>},
-    {"Chi2", computeWeights<InverseChi2>},
-    {"Likelihood", computeWeights<Likelihood>}};
+template <typename T1, typename T2>
+void checkShapeEqual(NdArray<T1> const& a1, NdArray<T2> const& a2, int axis1, int axis2, const std::string& v1,
+                     const std::string& v2) {
+  if (a1.shape(axis1) != a2.shape(axis2)) {
+    throw Elements::Exception() << "Axis " << axis1 << " of " << v1 << " does not match the axis " << axis2 << " of "
+                                << v2;
+  }
+}
+
+const std::map<std::string, WeightFunc, std::less<>> kWeightFunctions{{"Euclidean", computeWeights<InverseEuclidean>},
+                                                                      {"Chi2", computeWeights<InverseChi2>},
+                                                                      {"Likelihood", computeWeights<Likelihood>}};
+
+}  // namespace
 
 WeightCalculator::WeightCalculator(std::string const& primary, std::string const& secondary) {
   auto i = kWeightFunctions.find(primary);
@@ -58,15 +68,6 @@ WeightCalculator::WeightCalculator(std::string const& primary, std::string const
     throw Elements::Exception("Secondary weight function") << secondary << " unknown";
   }
   m_secondary = i->second;
-}
-
-template <typename T1, typename T2>
-static void checkShapeEqual(NdArray<T1> const& a1, NdArray<T2> const& a2, int axis1, int axis2, const std::string& v1,
-                            const std::string& v2) {
-  if (a1.shape(axis1) != a2.shape(axis2)) {
-    throw Elements::Exception() << "Axis " << axis1 << " of " << v1 << " does not match the axis " << axis2 << " of "
-                                << v2;
-  }
 }
 
 void WeightCalculator::operator()(NdArray<photo_t> const& neighbors, NdArray<photo_t> const& target,
