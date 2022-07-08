@@ -1,0 +1,40 @@
+.. Useful substitutions
+
+.. |br| raw:: html
+
+   <br />
+
+.. Some useful unicode substitutions
+
+.. |AA| unicode:: U+00C5
+.. |mu| unicode:: U+00B5
+.. |sigma| unicode:: U+03C3
+.. |alpha| unicode:: U+03B1
+.. |beta| unicode:: U+03B2
+.. |lambda| unicode:: U+03BB
+
+.. List of abbreviations
+
+.. |NNPZ| replace:: :abbr:`NNPZ (Nearest Neighbor P(Z))`
+.. |CLI| replace:: :abbr:`CLI (Command Line Interface)`
+.. |IGM| replace:: :abbr:`IGM (Intergalactic Medium)`
+.. |SED| replace:: :abbr:`SED (Spectral Energy Distribution)`
+.. |PDZ| replace:: :abbr:`PDZ (Probability Density Function of the Redshift (Z))`
+.. |PP| replace:: :abbr:`PP (Physical Parameters)`
+.. |HDU| replace:: :abbr:`HDU (Header Data Unit)`
+.. |FITS| replace:: :abbr:`FITS (Flexible Image Transport System)`
+.. |IDE| replace:: :abbr:`IDE (Integrated Development Environment)`
+
+
+.. URLs
+
+.. |Phosphoros| replace:: Phosphoros_
+
+.. |elements-version| replace:: 6.0.1
+
+.. |latest-archive| raw:: html
+
+    <a href="https://gitlab.euclid-sgs.uk/PF-PHZ/PHZ_NNPZ/-/archive/{release}/PHZ_NNPZ-{release}.tar.gz">{release}</a>
+
+
+.. _Phosphoros: https://phosphoros.readthedocs.io/en/latest/
