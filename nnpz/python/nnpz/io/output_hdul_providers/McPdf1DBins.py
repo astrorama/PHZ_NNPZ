@@ -13,6 +13,7 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
+import astropy.units as u
 import fitsio
 import numpy as np
 from nnpz.io import OutputHandler
@@ -28,14 +29,18 @@ class McPdf1DBins(OutputHandler.OutputExtensionProviderInterface):
             The parameter to generate the 1D PDF for
         binning:
             A one dimensional numpy array with the histogram binning
+        unit:
+            The unit for the parameter
     """
 
-    def __init__(self, param_name: str, binning: np.ndarray):
+    def __init__(self, param_name: str, binning: np.ndarray, unit: u.Unit):
         self.__param_name = param_name
         # Take the bin center
         self.__binning = (binning[:-1] + binning[1:]) / 2.
+        self.__unit = [str(unit)] if unit else None
 
     def add_extensions(self, fits: fitsio.FITS):
         extname = 'BINS_MC_PDF_1D_{}'.format(self.__param_name.upper())
-        fits.create_table_hdu({'BINS_PDF': self.__binning}, extname=extname)
+        fits.create_table_hdu([self.__binning], names=['BINS_PDF'], units=self.__unit,
+                              extname=extname)
         fits[extname].write_column('BINS_PDF', self.__binning)

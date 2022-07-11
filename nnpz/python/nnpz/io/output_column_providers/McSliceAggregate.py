@@ -30,7 +30,7 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
     """
 
     def __init__(self, sampler: McSampler, target_param: str, slice_param: str,
-                 suffix: str, aggregator: Callable, binning: np.ndarray):
+                 suffix: str, aggregator: Callable, binning: np.ndarray, unit: u.Unit):
         self.__sampler = sampler
         self.__target_param = target_param
         self.__slice_param = slice_param
@@ -40,10 +40,11 @@ class McSliceAggregate(OutputHandler.OutputColumnProviderInterface):
         self.__column = 'MC_SLICE_AGGREGATE_{}_{}_{}'.format(
             self.__target_param.upper(), self.__slice_param.upper(), self.__suffix
         )
+        self.__unit = unit if unit else u.dimensionless_unscaled
 
     def get_column_definition(self):
         return [
-            (self.__column, np.float32, u.dimensionless_unscaled, len(self.__binning) - 1)
+            (self.__column, np.float32, self.__unit, len(self.__binning) - 1)
         ]
 
     def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray,

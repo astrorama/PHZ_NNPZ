@@ -3,6 +3,7 @@ from typing import List, Union
 import astropy.units as u
 import numpy as np
 import pytest
+from astropy.table import Table
 from nnpz.io import OutputHandler
 from nnpz.io.output_column_providers.McSampler import McSampler
 from nnpz.photometry.colorspace import RestFrame
@@ -51,18 +52,21 @@ class MockOutputHandler:
 
     def initialize(self, nrows: int):
         dtype = []
+        units = []
         for prov in self.__providers:
             self.__provider_columns[prov] = []
             prov_def = prov.get_column_definition()
             for d in prov_def:
                 if len(d) == 4:
-                    n, t, _, s = d
+                    n, t, unit, s = d
                     dtype.append((n, t, s))
+                    units.append(unit)
                 else:
-                    n, t, _ = d
+                    n, t, unit = d
                     dtype.append((n, t))
+                    units.append(unit)
                 self.__provider_columns[prov].append(n)
-        self.__output = np.zeros(nrows, dtype=dtype)
+        self.__output = Table(np.zeros(nrows, dtype=dtype), units=units)
 
     def write_output_for(self, indexes: Union[np.ndarray, slice], neighbor_info: np.ndarray):
         for p in self.__providers:

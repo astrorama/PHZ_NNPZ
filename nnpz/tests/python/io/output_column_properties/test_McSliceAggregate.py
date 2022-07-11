@@ -14,7 +14,6 @@
 # MA 02110-1301 USA
 #
 
-# noinspection PyUnresolvedReferences
 from nnpz.io.output_column_providers.McSliceAggregate import McSliceAggregate
 
 from .fixtures import *
@@ -24,7 +23,8 @@ def test_slice(sampler: McSampler, mock_output_handler: MockOutputHandler,
                contributions: np.ndarray, mock_provider: MockProvider):
     slicer = McSliceAggregate(
         sampler, target_param='P1', slice_param='I1', suffix='AVG',
-        aggregator=np.mean, binning=np.arange(0, 6, dtype=np.float32) - 0.5
+        aggregator=np.mean, binning=np.arange(0, 6, dtype=np.float32) - 0.5,
+        unit=u.fortnight
     )
     mock_output_handler.add_column_provider(sampler)
     mock_output_handler.add_column_provider(slicer)
@@ -40,6 +40,7 @@ def test_slice(sampler: McSampler, mock_output_handler: MockOutputHandler,
     assert 'MC_SLICE_AGGREGATE_P1_I1_AVG' in columns.dtype.fields
     column = columns['MC_SLICE_AGGREGATE_P1_I1_AVG']
     assert column.shape == (2, 5)
+    assert u.Unit(column.unit) == u.fortnight
 
     # First object can not have any sample from 2
     np.testing.assert_array_equal(column[0, 2], -99.)

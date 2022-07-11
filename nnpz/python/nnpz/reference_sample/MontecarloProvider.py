@@ -1,5 +1,22 @@
-from typing import Iterable
+#
+# Copyright (C) 2012-2022 Euclid Science Ground Segment
+#
+# This library is free software; you can redistribute it and/or modify it under the terms of
+# the GNU Lesser General Public License as published by the Free Software Foundation;
+# either version 3.0 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License along with this library;
+# if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301 USA
+#
 
+from typing import Iterable, Optional
+
+import astropy.units as u
 import numpy as np
 from nnpz.exceptions import UninitializedException
 from nnpz.reference_sample import MontecarloDataProvider
@@ -59,6 +76,17 @@ class MontecarloProvider(BaseProvider):
             return self._current_data_provider.read(0)[parameter].dtype
         else:
             return self._current_data_provider.read(0).dtype
+
+    def get_unit(self, parameter: str) -> Optional[u.Unit]:
+        """
+        Returns:
+            The unit of the given parameter
+        """
+        if not self._data_files:
+            raise UninitializedException('MontecarloProvider not initialized')
+        if not self._current_data_provider:
+            self._swap_provider(next(iter(self._data_files)))
+        return self._current_data_provider.get_unit(parameter)
 
     def get_n_samples(self) -> int:
         """

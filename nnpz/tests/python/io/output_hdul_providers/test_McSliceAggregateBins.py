@@ -22,7 +22,7 @@ from .fixtures import *
 def test_McSliceAggregateBins(fits_fixture: FITS):
     bins = np.exp(np.arange(1, 10))
     agg_bin = McSliceAggregateBins(target_param='dependent', slice_param='independent',
-                                   suffix='foo', slice_binning=bins)
+                                   suffix='foo', slice_binning=bins, unit=u.Unit('solMass'))
     agg_bin.add_extensions(fits_fixture)
     assert 'BINS_MC_SLICE_AGGREGATE_DEPENDENT_INDEPENDENT_FOO' in fits_fixture
     hdu = fits_fixture['BINS_MC_SLICE_AGGREGATE_DEPENDENT_INDEPENDENT_FOO']

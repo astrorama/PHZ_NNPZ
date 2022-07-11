@@ -22,9 +22,10 @@ from .fixtures import *
 
 def test_McCounterBins(fits_fixture: FITS):
     bins = np.arange(0, 10, dtype=int)
-    counter = McCounterBins(param_name='param', binning=bins)
+    counter = McCounterBins(param_name='param', binning=bins, unit=u.watt)
     counter.add_extensions(fits_fixture)
     assert 'BINS_MC_COUNT_PARAM' in fits_fixture
     hdu = fits_fixture['BINS_MC_COUNT_PARAM']
     assert isinstance(hdu, fitsio.hdu.TableHDU)
     np.testing.assert_array_equal(hdu['BINS'][:], bins)
+    assert u.Unit(hdu.read_header().get('TUNIT1')) == u.watt

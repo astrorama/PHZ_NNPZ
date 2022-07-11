@@ -77,13 +77,15 @@ class McPdfConfig(ConfigManager.ConfigHandler):
 
         for provider_name, parameters in mc_1d_pdf.items():
             sampler = self.__samplers[provider_name]
+            provider = sampler.get_provider()
             for param, binning in parameters:
                 # Histogram values
                 self.__output.add_column_provider(McPdf1D(
                     sampler, param_name=param, binning=binning
                 ))
                 # Histogram binning
-                self.__output.add_extension_table_provider(McPdf1DBins(param, binning))
+                self.__output.add_extension_table_provider(
+                    McPdf1DBins(param, binning, unit=provider.get_unit(param)))
 
     def __add_mc_2d_pdf(self, args: Dict[str, Any]):
         mc_2d_pdf = args.get('mc_2d_pdf', None)
@@ -92,6 +94,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
 
         for provider_name, parameters in mc_2d_pdf.items():
             sampler = self.__samplers[provider_name]
+            provider = sampler.get_provider()
             for param1, param2, binning1, binning2 in parameters:
                 # Histogram values
                 self.__output.add_column_provider(McPdf2D(
@@ -100,7 +103,8 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                 ))
                 # Histogram binning
                 self.__output.add_extension_table_provider(
-                    McPdf2DBins((param1, param2), (binning1, binning2))
+                    McPdf2DBins((param1, param2), (binning1, binning2),
+                                units=[provider.get_unit(param1), provider.get_unit(param2)])
                 )
 
     def __add_samples(self, args: Dict[str, Any]):
@@ -120,15 +124,17 @@ class McPdfConfig(ConfigManager.ConfigHandler):
 
         for provider_name, parameters in mc_counters.items():
             sampler = self.__samplers[provider_name]
+            provider = sampler.get_provider()
             for parameter, bins in parameters:
-                pdtype = sampler.get_provider().get_dtype(parameter)
+                pdtype = provider.get_dtype(parameter)
                 if not np.issubdtype(pdtype, np.int) and not np.issubdtype(pdtype, np.bool):
                     raise Exception('Can only count integer types, got {}'.format(pdtype))
                 if not np.issubdtype(bins.dtype, np.int) and not np.issubdtype(bins.dtype, np.bool):
                     raise Exception('The binning must be integers, got {}'.format(bins.dtype))
                 bins = np.sort(bins)
                 self.__output.add_column_provider(McCounter(sampler, parameter, bins))
-                self.__output.add_extension_table_provider(McCounterBins(parameter, bins))
+                self.__output.add_extension_table_provider(
+                    McCounterBins(parameter, bins, unit=provider.get_unit(parameter)))
 
     def __add_slicers(self, args: Dict[str, Any]):
         mc_slicers = args.get('mc_slice_aggregate', None)
@@ -137,14 +143,16 @@ class McPdfConfig(ConfigManager.ConfigHandler):
 
         for provider_name, slice_cfgs in mc_slicers.items():
             sampler = self.__samplers[provider_name]
+            provider = sampler.get_provider()
             for slice_cfg in slice_cfgs:
                 target, sliced, binning, aggs = slice_cfg
                 for suffix, agg in aggs.items():
                     self.__output.add_column_provider(McSliceAggregate(
-                        sampler, target, sliced, suffix, agg, binning
+                        sampler, target, sliced, suffix, agg, binning,
+                        unit=provider.get_unit(target)
                     ))
                     self.__output.add_extension_table_provider(McSliceAggregateBins(
-                        target, sliced, suffix, binning
+                        target, sliced, suffix, binning, unit=provider.get_unit(sliced)
                     ))
 
     def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:

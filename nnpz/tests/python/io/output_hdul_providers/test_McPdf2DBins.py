@@ -22,7 +22,8 @@ from .fixtures import *
 def test_McPdf2DBins(fits_fixture: FITS):
     bins_x = np.linspace(0, 1, 10)
     bins_y = np.linspace(0, 100, 10)
-    pdfbins = McPdf2DBins(param_names=('param_x', 'param_y'), binning=(bins_x, bins_y))
+    pdfbins = McPdf2DBins(param_names=('param_x', 'param_y'), binning=(bins_x, bins_y),
+                          units=(u.kg, u.second))
     pdfbins.add_extensions(fits_fixture)
     assert 'BINS_MC_PDF_2D_PARAM_X_PARAM_Y' in fits_fixture
     hdu = fits_fixture['BINS_MC_PDF_2D_PARAM_X_PARAM_Y']
@@ -31,3 +32,5 @@ def test_McPdf2DBins(fits_fixture: FITS):
     expected = np.meshgrid((bins_x[1:] + bins_x[:-1]) / 2, (bins_y[1:] + bins_y[:-1]) / 2)
     np.testing.assert_almost_equal(hdu['PARAM_X'][:], expected[0].T.ravel())
     np.testing.assert_almost_equal(hdu['PARAM_Y'][:], expected[1].T.ravel())
+    assert u.Unit(hdu.read_header().get('TUNIT1')) == u.kg
+    assert u.Unit(hdu.read_header().get('TUNIT2')) == u.second
