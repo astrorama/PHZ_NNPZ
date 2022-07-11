@@ -16,11 +16,13 @@
 
 import os
 import pathlib
-from typing import Union
+import re
+from typing import Optional, Union
 
+import astropy.units as u
 import numpy as np
-from nnpz.exceptions import CorruptedFileException, UninitializedException, \
-    InvalidDimensionsException
+from nnpz.exceptions import CorruptedFileException, InvalidDimensionsException, \
+    UninitializedException
 
 
 class MontecarloDataProvider:
@@ -29,15 +31,29 @@ class MontecarloDataProvider:
     Used for Intermediate Bands and Physical parameters.
     """
 
+    COLNAME_REGEX = re.compile('(\\w+)(\\s(\\(\\w+\\)))?')
+
     def __init__(self, filename: Union[str, pathlib.Path]):
         """
         Creates a new instance for handling the given file.
         """
         self.__filename = filename
+        self.__data: np.ndarray = None
+        if not os.path.exists(filename):
+            return
         try:
-            self.__data = np.load(filename, mmap_mode='r') if os.path.exists(filename) else None
+            self.__data = np.load(filename, mmap_mode='r')
         except ValueError:
             raise CorruptedFileException()
+        colnames = list(self.__data.dtype.names)
+        self.__units = dict()
+        for i, col in enumerate(colnames):
+            match = self.COLNAME_REGEX.match(col)
+            colnames[i] = match.group(1)
+            unit_str = match.group(2)
+            if unit_str:
+                self.__units[colnames[i]] = u.Unit(unit_str)
+        self.__data.dtype.names = colnames
 
     def __enter__(self):
         return self
@@ -65,6 +81,12 @@ class MontecarloDataProvider:
         Return the size on disk
         """
         return os.path.getsize(self.__filename) if os.path.exists(self.__filename) else 0
+
+    def get_unit(self, parameter: str = None) -> Optional[u.Unit]:
+        """
+        Return the unit for the given parameter
+        """
+        return self.__units.get(parameter, None)
 
     def read(self, pos: int) -> np.ndarray:
         """

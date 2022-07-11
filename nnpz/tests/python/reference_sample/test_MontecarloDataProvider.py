@@ -14,7 +14,7 @@
 # MA 02110-1301 USA
 #
 
-
+import astropy.units as u
 from nnpz.exceptions import *
 from nnpz.reference_sample.MontecarloDataProvider import MontecarloDataProvider
 
@@ -54,6 +54,11 @@ def test_readMc_success(mc_data_files_fixture, mc_data_fixture):
 
         # Then
         assert found_data.shape == (100,)
+
+    assert provider.get_unit('A') is None
+    assert provider.get_unit('B') is None
+    assert provider.get_unit('C') == u.lyr
+    assert provider.get_unit('D') == u.solMass
 
 
 ###############################################################################

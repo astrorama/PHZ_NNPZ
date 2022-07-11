@@ -325,8 +325,9 @@ def test_getMcData_withData(reference_sample_dir_fixture, mc_data_fixture, provi
     # Then
     for i in range(len(id_list)):
         assert data[i].shape == expected_data[i].shape
-        for c in data[i].dtype.names:
-            np.testing.assert_allclose(data[i][c], expected_data[i][c])
+        for c in expected_data[i].dtype.names:
+            # In case there are units
+            np.testing.assert_allclose(data[i][c.split()[0]], expected_data[i][c])
 
 
 ###############################################################################

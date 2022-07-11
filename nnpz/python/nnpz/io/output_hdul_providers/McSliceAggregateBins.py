@@ -14,6 +14,7 @@
 # MA 02110-1301 USA
 #
 
+import astropy.units as u
 import fitsio
 import numpy as np
 from nnpz.io import OutputHandler
@@ -27,16 +28,18 @@ class McSliceAggregateBins(OutputHandler.OutputExtensionProviderInterface):
         McSliceAggregate
     """
 
-    def __init__(self, target_param: str, slice_param: str, suffix: str, slice_binning: np.ndarray):
+    def __init__(self, target_param: str, slice_param: str, suffix: str, slice_binning: np.ndarray,
+                 unit: u.Unit):
         self.__target_param = target_param
         self.__slice_param = slice_param
         self.__suffix = suffix
         self.__slice_binning = slice_binning
+        self.__unit = [str(unit)] if unit else None
 
     def add_extensions(self, fits: fitsio.FITS):
         target_col = self.__target_param.upper()
         slice_col = self.__slice_param.upper()
         extname = 'BINS_MC_SLICE_AGGREGATE_{}_{}_{}'.format(target_col, slice_col, self.__suffix)
         val = self.__slice_binning.ravel()
-        fits.create_table_hdu({slice_col: val}, extname=extname)
+        fits.create_table_hdu([val], names=[slice_col], units=self.__unit, extname=extname)
         fits[extname].write_column(slice_col, val)

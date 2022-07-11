@@ -21,10 +21,11 @@ from .fixtures import *
 
 def test_McPdf1DBins(fits_fixture: FITS):
     bins = 10 ** np.linspace(-1, 10, 11)
-    pdf1bins = McPdf1DBins('param', bins)
+    pdf1bins = McPdf1DBins('param', bins, unit=u.mol)
     pdf1bins.add_extensions(fits_fixture)
     assert 'BINS_MC_PDF_1D_PARAM' in fits_fixture
     hdu = fits_fixture['BINS_MC_PDF_1D_PARAM']
     assert isinstance(hdu, fitsio.hdu.TableHDU)
     # Note that the output is the bin mid-point, so the shape correspond to the histogram values
     np.testing.assert_almost_equal(hdu['BINS_PDF'][:], (bins[1:] + bins[:-1]) / 2)
+    assert u.Unit(hdu.read_header().get('TUNIT1')) == u.mol

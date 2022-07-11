@@ -15,6 +15,7 @@
 #
 from typing import Tuple
 
+import astropy.units as u
 import fitsio
 import numpy as np
 from nnpz.io import OutputHandler
@@ -30,6 +31,8 @@ class McPdf2DBins(OutputHandler.OutputExtensionProviderInterface):
             The two parameters to generate the 2D PDF for
         binning:
             A one dimensional numpy array with the histogram binning
+        units:
+            The units for the two parameters
 
     Notes:
         The output must have one entry per histogram value. i.e. the first
@@ -38,12 +41,14 @@ class McPdf2DBins(OutputHandler.OutputExtensionProviderInterface):
         X, Y coordinates of this grid.
     """
 
-    def __init__(self, param_names: Tuple[str, str], binning: Tuple[np.ndarray, np.ndarray]):
+    def __init__(self, param_names: Tuple[str, str], binning: Tuple[np.ndarray, np.ndarray],
+                 units: Tuple[u.Unit, u.Unit]):
         self.__param_names = param_names
         # Take the bin center
         bin1 = (binning[0][:-1] + binning[0][1:]) / 2.
         bin2 = (binning[1][:-1] + binning[1][1:]) / 2.
         self.__binning = np.meshgrid(bin1, bin2)
+        self.__units = list(map(lambda unit: str(unit) if unit else '', units))
 
     def add_extensions(self, fits: fitsio.FITS):
         col1 = self.__param_names[0].upper()
@@ -51,5 +56,5 @@ class McPdf2DBins(OutputHandler.OutputExtensionProviderInterface):
         extname = 'BINS_MC_PDF_2D_{}_{}'.format(col1, col2)
         val1 = self.__binning[0].T.ravel()
         val2 = self.__binning[1].T.ravel()
-        fits.create_table_hdu({col1: val1, col2: val2}, extname=extname)
+        fits.create_table_hdu([val1, val2], names=[col1, col2], units=self.__units, extname=extname)
         fits[extname].write([val1, val2], columns=[col1, col2])

@@ -62,14 +62,14 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         self.__samples_per_neighbor = self.__provider.get_n_samples()
         self.__rng = np.random.default_rng()
 
-    def get_provider(self):
+    def get_provider(self) -> MontecarloProvider:
         return self.__provider
 
-    def get_n_samples(self):
+    def get_n_samples(self) -> int:
         return self.__take_n
 
     def get_column_definition(self) \
-            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
+        -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         """
         This provider does not generate any output
         """
