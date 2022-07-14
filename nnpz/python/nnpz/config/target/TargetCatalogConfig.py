@@ -68,8 +68,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         values = table.read_columns(val_cols, rows=rows)
         errors = table.read_columns(err_cols, rows=rows)
         dtype = values.dtype[0]
-        values = values.view(dtype=dtype).reshape(len(values), -1)
-        errors = errors.view(dtype=dtype).reshape(values.shape)
+        values = values.view(dtype=dtype).reshape(len(values), -1).astype(np.float64)
+        errors = errors.view(dtype=dtype).reshape(values.shape).astype(np.float64)
 
         ids = table.read_column(id_column, rows=rows)
         values = u.Quantity(np.stack([values, errors], axis=-1), unit, copy=False)
