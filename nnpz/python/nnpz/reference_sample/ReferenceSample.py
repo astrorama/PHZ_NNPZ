@@ -71,7 +71,7 @@ class ReferenceSample:
             An instance of the ReferenceSample class representing the new sample
         """
         logger.debug('Creating reference sample directory %s...', path)
-        os.makedirs(path)
+        os.makedirs(path, exist_ok=True)
 
         if providers is None:
             providers = ReferenceSample.DEFAULT_PROVIDERS

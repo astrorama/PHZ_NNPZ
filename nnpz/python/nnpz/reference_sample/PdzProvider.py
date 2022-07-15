@@ -116,7 +116,7 @@ class PdzProvider(BaseProvider):
         if existing_zs is None:
             self._current_data_provider.set_redshift_bins(binning)
         elif not np.array_equal(binning, existing_zs):
-            raise InvalidAxisException('Given wavelengths are different than existing ones')
+            raise InvalidAxisException('Given pdz bins are different than existing ones')
 
         return self._last_data_index, self._current_data_provider
 
