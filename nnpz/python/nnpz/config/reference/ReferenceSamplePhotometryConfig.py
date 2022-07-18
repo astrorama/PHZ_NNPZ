@@ -53,12 +53,13 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
         ref_phot_prov = PhotometryProvider(file)
         ref_filters = ref_phot_prov.get_filter_list()
 
-        logger.info('Reference sample photometric bands: %s', ref_filters)
+        logger.info('Reference sample %d photometric bands: %s', len(ref_filters), ref_filters)
+
         ref_type = ref_phot_prov.get_type()
         if ref_type != 'F_nu_uJy':
             raise ValueError(f'Only F_nu_uJy accepted as reference photometry type, got {ref_type}')
         logger.info('Reference sample photometry type: %s', ref_type)
-        ref_data = ref_phot_prov.get_data()
+        ref_data = ref_phot_prov.get_data(ref_filters)
 
         filter_trans = OrderedDict()
         for f_name in ref_filters:
@@ -77,7 +78,7 @@ class ReferenceSamplePhotometryConfig(ConfigManager.ConfigHandler):
             'reference_photometry': self.__ref_photo,
             'reference_ebv_correction': self.__ebv_corr,
             'reference_filter_variation_correction': self.__filter_corr,
-            'reference_system': self.__ref_photo.system
+            'reference_system': self.__ref_photo.system,
         }
 
 

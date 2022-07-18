@@ -15,11 +15,14 @@
 #
 from typing import Any, Dict
 
+from ElementsKernel.Logging import getLogger
 from nnpz.config import ConfigManager
 from nnpz.config.output import OutputHandlerConfig
 from nnpz.config.reference import ReferenceConfig
 from nnpz.config.target import TargetCatalogConfig
 from nnpz.io.output_column_providers.UniformPhotometry import UniformPhotometry
+
+logger = getLogger(__name__)
 
 
 class UniformPhotometryConfig(ConfigManager.ConfigHandler):
@@ -45,6 +48,16 @@ class UniformPhotometryConfig(ConfigManager.ConfigHandler):
 
         target_phot = target_config['target_photometry']
         ref_phot = ref_config['reference_photometry']
+
+        # Drop output not possible to compute if a subset if filtered out
+        filtered_corrected_phot = {}
+        for target_cols, (a, b, target_a, target_b) in corrected_phot.items():
+            if a in ref_phot.system.bands and b in target_phot.system.bands:
+                filtered_corrected_phot[target_cols] = (a, b, target_a, target_b)
+            else:
+                logger.info('Drop corrected photometry for pair %s - %s', a, b)
+
+        corrected_phot = filtered_corrected_phot
 
         # Build the list of tuples
         output_config['output_handler'].add_column_provider(
