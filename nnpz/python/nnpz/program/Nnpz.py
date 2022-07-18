@@ -120,4 +120,4 @@ def mainMethod(args):
     end = datetime.utcnow()
     duration = end - start
     logger.info('Finished in %s (%.2f sources / second)', duration,
-                chunks[-1].stop if chunks else 0 / duration.total_seconds())
+                (chunks[-1].stop if chunks else 0) / duration.total_seconds())
