@@ -73,6 +73,7 @@ def mainMethod(args):
 
     # 4. Output
     output_handler: OutputHandler = conf_manager.get('output_handler')
+    output_handler.initialize()
 
     # Dtype for work area
     neighbor_columns = [
@@ -119,4 +120,4 @@ def mainMethod(args):
     end = datetime.utcnow()
     duration = end - start
     logger.info('Finished in %s (%.2f sources / second)', duration,
-                chunks[-1].stop / duration.total_seconds())
+                chunks[-1].stop if chunks else 0 / duration.total_seconds())

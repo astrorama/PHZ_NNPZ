@@ -75,6 +75,7 @@ def mainMethod(args):
 
     # Prepare the output
     output: OutputHandler = conf_manager.get('output_handler')
+    output.initialize()
 
     # Process in chunks
     start = datetime.utcnow()
@@ -88,6 +89,6 @@ def mainMethod(args):
     end = datetime.utcnow()
     duration = end - start
     logger.info('Finished in %s (%.2f sources / second)', duration,
-                chunks[-1].stop / duration.total_seconds())
+                chunks[-1].stop if chunks else 0 / duration.total_seconds())
 
     return 0
