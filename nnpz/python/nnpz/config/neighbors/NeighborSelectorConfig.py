@@ -59,13 +59,14 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
 
         if neighbor_method == 'KDTree':
             self.__selector = KDTreeSelector(
-                self.__neighbors_no, balanced=args.get('balanced_kdtree', True)
+                self.__neighbors_no,
+                leafsize=args.get('leafsize', 64)
             )
         elif neighbor_method == 'Combined':
             self._exists_parameter('batch_size', args)
             self.__selector = CombinedSelector(
                 self.__neighbors_no, args['batch_size'],
-                balanced=args.get('balanced_kdtree', True)
+                leafsize=args.get('leafsize', 64)
             )
         else:
             self.__selector = BruteForceSelector(

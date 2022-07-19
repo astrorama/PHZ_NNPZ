@@ -13,7 +13,6 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-import threading
 from typing import Callable, Tuple
 
 import numpy as np
@@ -21,9 +20,8 @@ from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.neighbor_selection import SelectorInterface
 from nnpz.photometry.photometric_system import PhotometricSystem
 from nnpz.photometry.photometry import Photometry
-from scipy import spatial
+from sklearn.neighbors import KDTree
 
-from .kdtree import _warn_long_execution
 from ..utils.distances import chi2
 
 
@@ -38,8 +36,8 @@ class CombinedSelector(SelectorInterface):
         batch: int
             Number of reference objects to look for in Euclidean distance for reducing the
             bruteforce search space
-        balanced: bool
-            Train a balanced KDTree. See scipy cKDTree implementation.
+        leafsize: int
+            Number of points at which to switch to brute-force
         bruteforce: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
             A function that computes the distances from all reference objects (first parameter),
             to a target object (second parameter). A third parameter, out, must be accepted
@@ -47,11 +45,11 @@ class CombinedSelector(SelectorInterface):
             array if out was None
     """
 
-    def __init__(self, k: int, batch: int, balanced: bool = True,
+    def __init__(self, k: int, batch: int, leafsize: int = 16,
                  bruteforce: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray] = chi2):
         self.__k = k
         self.__batch = batch
-        self.__balanced = balanced
+        self.__leafsize = leafsize
         self.__reference_photo = None
         self.__kdtree = None
         self.__system = None
@@ -63,15 +61,11 @@ class CombinedSelector(SelectorInterface):
         See Also:
             SelectorInterface.fit
         """
-        timer = threading.Timer(120, _warn_long_execution)
-        timer.start()
         # False positive of pylint
         # pylint: disable=no-member
         self.__reference_photo = train.get_fluxes(system.bands, return_error=True)
         self.__unit = train.unit
-        self.__kdtree = spatial.cKDTree(self.__reference_photo[:, :, 0],
-                                        balanced_tree=self.__balanced)
-        timer.cancel()
+        self.__kdtree = KDTree(self.__reference_photo[:, :, 0], leaf_size=self.__leafsize)
         self.__system = system
 
     def query(self, target: Photometry) -> Tuple[np.ndarray, np.ndarray]:
