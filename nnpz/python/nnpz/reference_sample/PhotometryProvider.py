@@ -73,7 +73,7 @@ class PhotometryProvider:
 
     @staticmethod
     def __read_photometry_data(phot_table: Table, filter_list: List[str]) \
-            -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Reads from the given table the photometry values for the given filters
         in a numpy array.
@@ -133,8 +133,7 @@ class PhotometryProvider:
 
         # Read the photometry values
         self.__phot_data, self.__ebv_corr_data, self.__shift_corr_data = self.__read_photometry_data(
-            phot_table,
-            self.__filter_list)
+            phot_table, self.__filter_list)
         self.__phot_data.flags.writeable = False
         self.__ebv_corr_data.flags.writeable = False
         self.__shift_corr_data.flags.writeable = False
@@ -187,7 +186,7 @@ class PhotometryProvider:
         """
         return self.__ids
 
-    def get_data(self) -> np.ndarray:
+    def get_data(self, filter_list: List[str] = None) -> np.ndarray:
         """
         Returns an array with the photometry data for the given bands.
 
@@ -207,7 +206,19 @@ class PhotometryProvider:
         order of the second axis of the result is the same as the passed filter
         names.
         """
-        return self.__phot_data
+        try:
+            if filter_list is None or len(filter_list) == 0:
+                # numpy will avoid a copy if the index is a slice, while it will *always*
+                # copy if it is a list
+                filter_idx = slice(len(self.__filter_list))
+            else:
+                filter_idx = np.array(list(map(self.__filter_list.index, filter_list)))
+        except ValueError as e:
+            missing = str(e).split()[0]
+            raise KeyError('File does not contain photometry for {}'.format(missing))
+
+            # Return a view rather than a copy
+        return self.__phot_data[:, filter_idx]
 
     def get_ebv_correction_factors(self, filter_list: List[str] = None) -> np.ndarray:
         """

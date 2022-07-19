@@ -127,24 +127,6 @@ def test_getFilterTransmission_wrongName(photometry_file_fixture: str):
 
 ###############################################################################
 
-def test_getFilterTransmission_missingData(photometry_file_fixture: str):
-    """
-    Test the getFilterTransmission with filter for which the FITS has no data
-    """
-
-    # Given
-    filter = 'vis'
-
-    # When
-    provider = PhotometryProvider(photometry_file_fixture)
-
-    # Then
-    with pytest.raises(MissingDataException):
-        provider.get_filter_transmission(filter)
-
-
-###############################################################################
-
 def test_getFilterTransmission_success(photometry_file_fixture: str,
                                        filters_fixture: Dict[str, np.ndarray]):
     """

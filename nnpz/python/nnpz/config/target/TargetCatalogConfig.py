@@ -19,6 +19,8 @@ Created on: 28/02/18
 Author: Nikolaos Apostolakos
 """
 
+import fnmatch
+from itertools import chain
 from typing import Any, Dict, List, Tuple
 
 import fitsio
@@ -67,12 +69,16 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
 
         values = table.read_columns(val_cols, rows=rows)
         errors = table.read_columns(err_cols, rows=rows)
-        dtype = values.dtype[0]
-        values = values.view(dtype=dtype).reshape(len(values), -1).astype(np.float64)
-        errors = errors.view(dtype=dtype).reshape(values.shape).astype(np.float64)
+
+        # Unfortunately, read_columns will give the input following the FITS order, not
+        # the order we asked for. Since we need values to be aligned, we need to re-order
+        stacked = np.empty((len(values), len(filters), 2), dtype=np.float64)
+        for i, (val_name, err_name) in enumerate(filters):
+            stacked[:, i, 0] = values[val_name]
+            stacked[:, i, 1] = errors[err_name]
 
         ids = table.read_column(id_column, rows=rows)
-        values = u.Quantity(np.stack([values, errors], axis=-1), unit, copy=False)
+        values = u.Quantity(stacked, unit, copy=False)
 
         # Note that we read in whatever unit the catalog is in, and then pass to uJy
         # so we don't need to do it each time the data is accessed
@@ -104,8 +110,8 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         return ColorSpace(**factors)
 
     def __create_data(self, args: Dict[str, Any]):
-        ref_photometry = ConfigManager.get_handler(ReferenceConfig).parse_args(args)[
-            'reference_photometry']
+        ref_config = ConfigManager.get_handler(ReferenceConfig).parse_args(args)
+        ref_photometry = ref_config['reference_photometry']
 
         self._exists_parameter('target_catalog', args)
         self._exists_parameter('target_catalog_filters', args)
@@ -118,6 +124,14 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         ref_filters = args['reference_sample_phot_filters']
         if len(target_filters) != len(ref_filters):
             raise ValueError('Number of target columns does not match the reference bands')
+
+        if 'enable_filters' in args:
+            masks = args['enable_filters'].split(';')
+            selected_filters = list(chain(*map(lambda m: fnmatch.filter(ref_filters, m), masks)))
+            target_filters = [target_filters[i] for i in map(ref_filters.index, selected_filters)]
+            ref_filters = selected_filters
+            logger.info('Restricting run to %s', target_filters)
+            logger.info('\t%s', ref_filters)
 
         logger.info('Target catalog photometric columns: %s', target_filters)
         logger.info('Reading target catalog: %s', target_cat)
@@ -136,13 +150,12 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__id_column = (self.__id_column, ids.dtype)
 
         target_system = ref_photometry.system[ref_filters]
-
         target_colorspace = self.__setup_colorspace(self.__table_hdu, args, target_system.bands,
                                                     rows=input_rows)
         self.__target_photo = Photometry(ids, values, system=target_system,
                                          colorspace=target_colorspace)
 
-        chunk_size = args.get('input_chunk_size', min(1000, len(self.__target_photo)))
+        chunk_size = args.get('input_chunk_size', max(1, min(1000, len(self.__target_photo))))
         nchunks, remainder = divmod(len(ids), chunk_size)
         self.__chunks = [slice(chunk * chunk_size, chunk * chunk_size + chunk_size) for chunk in
                          range(nchunks)]

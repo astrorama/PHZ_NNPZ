@@ -123,7 +123,7 @@ class OutputHandler:
             headers.update(header_provider.get_headers())
         return headers
 
-    def __initialize(self):
+    def initialize(self):
         """
         Setup output area
         """
@@ -152,7 +152,7 @@ class OutputHandler:
         Write the output for the given input
         """
         if self.__hdu is None:
-            self.__initialize()
+            self.initialize()
         if isinstance(indexes, slice):
             indexes = np.arange(indexes.start, indexes.stop, step=indexes.step)
         output = np.zeros(len(neighbor_info), dtype=self.__dtype)

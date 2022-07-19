@@ -48,22 +48,6 @@ def providers_with_mc():
 
 ###############################################################################
 
-def test_createNew_dirExists(temp_dir_fixture):
-    """
-    Tests that if the directory exists an exception is raised
-    """
-
-    # Given
-    dir_name = os.path.join(temp_dir_fixture, 'ref_sample')
-    os.makedirs(dir_name)
-
-    # Then
-    with pytest.raises(OSError):
-        ReferenceSample.create(dir_name)
-
-
-###############################################################################
-
 def test_createNew_success(temp_dir_fixture):
     """
     Tests that all the files of the reference sample are constructed correctly

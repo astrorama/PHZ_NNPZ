@@ -237,7 +237,7 @@ def reference_sample_dir_fixture(temp_dir_fixture,
 @pytest.fixture()
 def photometry_ids_fixure():
     """Returns the IDs for the photometry file"""
-    return range(1, 100)
+    return np.asarray([1, 3, 12, 7, 34, 56])
 
 
 ##############################################################################
@@ -287,8 +287,6 @@ def photometry_file_fixture(temp_dir_fixture: str, photometry_ids_fixure: np.nda
     hdus.append(fits.BinTableHDU(t))
 
     for name, data in filters_fixture.items():
-        if name == 'vis':
-            continue
         t = Table()
         t.meta['EXTNAME'] = name
         t['Wavelength'] = Column(data[:, 0])

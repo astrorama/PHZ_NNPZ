@@ -37,7 +37,7 @@ class CombinedSelector(SelectorInterface):
             Number of neighbors
         batch: int
             Number of reference objects to look for in Euclidean distance for reducing the
-            bruteforce search space 
+            bruteforce search space
         balanced: bool
             Train a balanced KDTree. See scipy cKDTree implementation.
         bruteforce: Callable[[np.ndarray, np.ndarray, np.ndarray], np.ndarray]
@@ -55,6 +55,7 @@ class CombinedSelector(SelectorInterface):
         self.__reference_photo = None
         self.__kdtree = None
         self.__system = None
+        self.__unit = None
         self.__bruteforce_method = bruteforce
 
     def fit(self, train: Photometry, system: PhotometricSystem):
@@ -66,8 +67,9 @@ class CombinedSelector(SelectorInterface):
         timer.start()
         # False positive of pylint
         # pylint: disable=no-member
-        self.__reference_photo = train
-        self.__kdtree = spatial.cKDTree(train.get_fluxes(system.bands),
+        self.__reference_photo = train.get_fluxes(system.bands, return_error=True)
+        self.__unit = train.unit
+        self.__kdtree = spatial.cKDTree(self.__reference_photo[:, :, 0],
                                         balanced_tree=self.__balanced)
         timer.cancel()
         self.__system = system
@@ -81,16 +83,16 @@ class CombinedSelector(SelectorInterface):
             raise UninitializedException()
         if target.system != self.__system:
             raise InvalidDimensionsException()
-        assert target.unit == self.__reference_photo.unit
+        assert target.unit == self.__unit
 
         _, candidates = self.__kdtree.query(target.values[:, :, 0], k=self.__batch)
         neighbors = np.zeros((len(target), self.__k), dtype=np.int32)
         distances = np.zeros(self.__batch, dtype=np.float32) * target.unit
+        photo_workarea = np.empty((self.__batch, self.__reference_photo.shape[1], 2),
+                                  dtype=np.float32) * self.__unit
         for i, t in enumerate(target):
-            candidate_photo = self.__reference_photo[candidates[i]]
-            self.__bruteforce_method(
-                candidate_photo.get_fluxes(self.__system.bands, return_error=True), t,
-                out=distances)
+            photo_workarea[:] = self.__reference_photo[candidates[i]]
+            self.__bruteforce_method(photo_workarea, t, out=distances)
             final_neighbors = np.argsort(distances)[:self.__k]
             neighbors[i, :] = candidates[i, final_neighbors]
         scales = np.ones_like(neighbors, dtype=np.float32)
