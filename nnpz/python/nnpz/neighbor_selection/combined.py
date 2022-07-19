@@ -87,7 +87,7 @@ class CombinedSelector(SelectorInterface):
         for i, t in enumerate(target):
             photo_workarea[:] = self.__reference_photo[candidates[i]]
             self.__bruteforce_method(photo_workarea, t, out=distances)
-            final_neighbors = np.argsort(distances)[:self.__k]
+            final_neighbors = np.argpartition(distances, kth=self.__k)[:self.__k]
             neighbors[i, :] = candidates[i, final_neighbors]
         scales = np.ones_like(neighbors, dtype=np.float32)
         return neighbors, scales
