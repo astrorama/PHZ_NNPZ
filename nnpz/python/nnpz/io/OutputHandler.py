@@ -40,7 +40,7 @@ class OutputHandler:
 
         @abc.abstractmethod
         def get_column_definition(self) \
-                -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
+            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
             """
             Returns:
                 List of triplets (name, dtype, shape) that define the output that the
@@ -161,5 +161,7 @@ class OutputHandler:
         self.__hdu.append(output)
 
     def write_additional_hduls(self):
+        self.__hdu = None
         for hdu_provider in self.__hdu_providers:
             hdu_provider.add_extensions(self.__output_fits)
+        self.__output_fits.reopen()
