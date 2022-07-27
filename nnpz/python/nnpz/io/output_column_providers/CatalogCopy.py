@@ -27,6 +27,15 @@ from fitsio.hdu.table import _tdim2shape
 from nnpz.io import OutputHandler
 
 
+def _unit(unit_str: str) -> u.Unit:
+    if not unit_str:
+        return None
+    try:
+        return u.Unit(unit_str)
+    except ValueError:
+        return u.def_unit(unit_str)
+
+
 class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
     """
     Copy a list of columns from the target catalog to the output
@@ -48,8 +57,7 @@ class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
             dim_str = header.get(f'TDIM{i}')
             if col_name in self.__columns:
                 col_idx = self.__columns.index(col_name)
-                if unit_str:
-                    units[col_idx] = u.Unit(unit_str)
+                units[col_idx] = _unit(unit_str)
                 if dim_str:
                     shapes[col_idx] = _tdim2shape(dim_str, name=col_name)
             i += 1
@@ -66,7 +74,7 @@ class CatalogCopy(OutputHandler.OutputColumnProviderInterface):
         self.__catalog = catalog
 
     def get_column_definition(self) \
-            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
+        -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         defs = []
         for col, dtype, unit, shape in zip(self.__columns, self.__dtype, self.__units,
                                            self.__shapes):
