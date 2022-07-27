@@ -18,7 +18,7 @@
 Created on: 01/03/18
 Author: Nikolaos Apostolakos
 """
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import astropy.units as u
 import fitsio.hdu
@@ -27,9 +27,9 @@ from fitsio.hdu.table import _tdim2shape
 from nnpz.io import OutputHandler
 
 
-def _unit(unit_str: str) -> u.Unit:
+def _unit(unit_str: str) -> Union[u.Unit, str]:
     if not unit_str:
-        return None
+        return ''
     try:
         return u.Unit(unit_str)
     except ValueError:
