@@ -77,10 +77,10 @@ double scale_function_wrapper(ScaleFunction const& scale_func, py::buffer const&
 }
 
 namespace {
-template <void Bruteforce(NdArray<photo_t> const&, NdArray<photo_t> const&, NdArray<scale_t>&, NdArray<index_t>&, int,
-                          ScaleFunction const*, int (*)(void))>
+template <void Bruteforce(NdArray<photo_t> const&, NdArray<photo_t> const&, NdArray<scale_t>&, NdArray<index_t>&,
+                          size_t, ScaleFunction const*, int (*)(void))>
 void _bruteforce_wrapper(py::buffer const& reference, py::buffer const& all_targets, py::buffer const& all_scales,
-                         py::buffer const& all_closest, int k, ScaleFunction const* scaling) {
+                         py::buffer const& all_closest, size_t k, ScaleFunction const* scaling) {
   py::buffer_info ref_info     = reference.request();
   py::buffer_info target_info  = all_targets.request();
   py::buffer_info scale_info   = all_scales.request(true);

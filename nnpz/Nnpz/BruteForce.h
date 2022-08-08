@@ -34,7 +34,7 @@ namespace Nnpz {
  * of (ntarget x k) elements.
  */
 ELEMENTS_API void chi2_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
-                                  NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k,
+                                  NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, size_t k,
                                   ScaleFunction const* scaling, int (*cancel_callback)(void));
 
 /**
@@ -42,7 +42,7 @@ ELEMENTS_API void chi2_bruteforce(NdArray<photo_t> const& reference, NdArray<pho
  * @see chi2_bruteforce for a description of the memory layout
  */
 ELEMENTS_API void euclidean_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
-                                       NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k,
+                                       NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, size_t k,
                                        ScaleFunction const* scaling, int (*cancel_callback)(void));
 
 }  // namespace Nnpz
