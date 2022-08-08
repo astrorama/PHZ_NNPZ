@@ -15,7 +15,6 @@
  */
 
 #include "Nnpz/BruteForce.h"
-#include "Nnpz/MaxHeap.h"
 #include <ElementsKernel/Exception.h>
 #include <MathUtils/distances/Distances.h>
 
@@ -24,9 +23,30 @@ using namespace Euclid::MathUtils;
 namespace Nnpz {
 
 namespace {
+struct NeighborTriplet {
+  index_t index    = 0;
+  float   distance = 0;
+  scale_t scale    = 1;
+
+  bool operator<(const NeighborTriplet& other) const {
+    return distance < other.distance;
+  }
+};
+
+void insert_if_best(size_t k, std::vector<NeighborTriplet>& heap, const NeighborTriplet& neighbor) {
+  if (heap.size() < k) {
+    heap.emplace_back(neighbor);
+    std::push_heap(heap.begin(), heap.end());
+  } else if (neighbor < heap.front()) {
+    std::pop_heap(heap.begin(), heap.end());
+    heap.back() = neighbor;
+    std::push_heap(heap.begin(), heap.end());
+  }
+}
+
 template <typename DistanceFunctor>
 void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets, NdArray<scale_t>& all_scales,
-                 NdArray<index_t>& all_closest, int k, ScaleFunction const* scaling, int (*cancel_callback)(void)) {
+                 NdArray<index_t>& all_closest, size_t k, ScaleFunction const* scaling, int (*cancel_callback)(void)) {
   size_t const ntargets = all_targets.shape(0);
   size_t const nrefs    = reference.shape(0);
 
@@ -56,14 +76,15 @@ void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_
     throw Elements::Exception() << "The last axis of the scales must be contiguous";
   }
 
-  std::vector<float> distances_buffer(all_closest.shape(1));
-  size_t const       nbands = reference.shape(1);
+  std::vector<NeighborTriplet> heap;
+  size_t const                 nbands = reference.shape(1);
+  heap.reserve(all_closest.shape(1));
 
   for (size_t ti = 0; ti < ntargets && !cancel_callback(); ++ti) {
-    MaxHeap heap(k, &distances_buffer[0], &all_closest.at(ti, 0), &all_scales.at(ti, 0));
-
     auto target_photo = all_targets.slice(ti);
     auto ref_photo    = reference.slice(0);
+
+    heap.clear();
 
     for (index_t ri = 0; ri < nrefs; ++ri) {
       scale_t scale = 1.;
@@ -74,21 +95,23 @@ void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_
       auto ref_end      = ref_begin + nbands;
       auto target_begin = PhotoPtrIterator(&target_photo.at(0, 0));
       auto dist         = static_cast<float>(DistanceFunctor::distance(scale, ref_begin, ref_end, target_begin));
-      insert_if_best(heap, ri, dist, scale);
+      insert_if_best(k, heap, {ri, dist, scale});
       ref_photo.next_slice();
     }
+    std::transform(heap.begin(), heap.end(), &all_closest.at(ti, 0), [](const NeighborTriplet& t) { return t.index; });
+    std::transform(heap.begin(), heap.end(), &all_scales.at(ti, 0), [](const NeighborTriplet& t) { return t.scale; });
   }
 }
 }  // namespace
 
 void chi2_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
-                     NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k, ScaleFunction const* scaling,
-                     int (*cancel_callback)(void)) {
+                     NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, size_t k,
+                     ScaleFunction const* scaling, int (*cancel_callback)(void)) {
   _bruteforce<Chi2Distance>(reference, all_targets, all_scales, all_closest, k, scaling, cancel_callback);
 }
 
 void euclidean_bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_targets,
-                          NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, int k,
+                          NdArray<scale_t>& all_scales, NdArray<index_t>& all_closest, size_t k,
                           ScaleFunction const* scaling, int (*cancel_callback)(void)) {
   _bruteforce<EuclideanDistance>(reference, all_targets, all_scales, all_closest, k, scaling, cancel_callback);
 }
