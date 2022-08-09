@@ -16,7 +16,7 @@
 
 import numpy as np
 import pytest
-from _Nnpz import scaling_factory, ScaleFunctionParams
+from _Nnpz import ScaleFunctionParams, scaling_factory
 from nnpz.utils.distances import chi2
 
 
