@@ -28,6 +28,16 @@ from nnpz.neighbor_selection.kdtree import KDTreeSelector
 
 logger = Logging.getLogger('Configuration')
 
+try:
+    import cupy as cp
+    from nnpz.neighbor_selection.gpu_bruteforce import GPUBruteForceSelector
+
+    gpu_available = cp.cuda.runtime.getDeviceCount() > 0
+except ImportError:
+    cp = None
+    gpu_available = False
+    GPUBruteForceSelector = None
+
 
 class NeighborSelectorConfig(ConfigManager.ConfigHandler):
     """
@@ -49,6 +59,7 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
 
         self.__neighbors_no = args['neighbors_no']
         self.__ref_bands = args['reference_sample_phot_filters']
+        force_cpu = args.get('force_cpu', True)
 
         if neighbor_method not in ['KDTree', 'Combined', 'BruteForce']:
             raise ValueError('Invalid neighbor_method %s' % neighbor_method)
@@ -68,6 +79,11 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
                 self.__neighbors_no, args['batch_size'],
                 leafsize=args.get('leafsize', 64)
             )
+        elif gpu_available and not force_cpu:
+            logger.info('GPU available! Using GPU bruteforce.')
+            self.__selector = GPUBruteForceSelector(self.__neighbors_no,
+                                                    threads=args.get('gpu_threads', 128),
+                                                    scaling=True if scale_prior else False)
         else:
             self.__selector = BruteForceSelector(
                 self.__neighbors_no,

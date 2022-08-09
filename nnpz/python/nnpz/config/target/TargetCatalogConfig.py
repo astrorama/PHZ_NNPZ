@@ -155,7 +155,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__target_photo = Photometry(ids, values, system=target_system,
                                          colorspace=target_colorspace)
 
-        chunk_size = args.get('input_chunk_size', max(1, min(1000, len(self.__target_photo))))
+        chunk_size = args.get('input_chunk_size', max(1, min(5120, len(self.__target_photo))))
         nchunks, remainder = divmod(len(ids), chunk_size)
         self.__chunks = [slice(chunk * chunk_size, chunk * chunk_size + chunk_size) for chunk in
                          range(nchunks)]
