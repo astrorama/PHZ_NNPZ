@@ -56,8 +56,14 @@ class PdzOutputConfig(ConfigManager.ConfigHandler):
 
         ref_sample = ref_options['reference_sample']
 
+        kernel = args.get('pdz_kernel', None)
+        kernel_bandwidth = args.get('pdz_kernel_bandwidth', 'auto')
+
         output = ConfigManager.get_handler(OutputHandlerConfig).parse_args(args)['output_handler']
-        output.add_column_provider(ocp.CoaddedPdz(ref_sample))
+        output.add_column_provider(
+            ocp.CoaddedPdz(ref_sample, kernel=kernel, bandwidth=kernel_bandwidth,
+                           store_kernel=args.get('pdz_kernel_store', False))
+        )
 
         pdz_quantiles = args.get('pdz_quantiles', [])
         pdz_mc_samples = args.get('pdz_mc_samples', 0)

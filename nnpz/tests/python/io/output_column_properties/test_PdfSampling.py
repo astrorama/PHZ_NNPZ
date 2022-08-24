@@ -21,7 +21,7 @@ from .fixtures import *
 
 def test_PdfSampling(reference_sample: MockReferenceSample, mock_output_handler: MockOutputHandler,
                      neighbor_info: np.ndarray):
-    coadded_pdf = CoaddedPdz(reference_sample)
+    coadded_pdf = CoaddedPdz(reference_sample, kernel=None, bandwidth=0)
     pdf_sampling = PdfSampling(reference_sample, quantiles=[0.25, 0.75], mc_samples=1000)
     mock_output_handler.add_column_provider(coadded_pdf)
     mock_output_handler.add_column_provider(pdf_sampling)
