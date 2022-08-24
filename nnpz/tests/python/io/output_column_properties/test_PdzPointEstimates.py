@@ -22,7 +22,7 @@ from .fixtures import *
 def test_PdzPointEstimates(reference_sample: MockReferenceSample,
                            mock_output_handler: MockOutputHandler,
                            neighbor_info: np.ndarray):
-    coadded_pdf = CoaddedPdz(reference_sample)
+    coadded_pdf = CoaddedPdz(reference_sample, kernel=None, bandwidth=0)
     pdz_point = PdzPointEstimates(reference_sample, ['median', 'mean', 'mode'])
     mock_output_handler.add_column_provider(coadded_pdf)
     mock_output_handler.add_column_provider(pdz_point)

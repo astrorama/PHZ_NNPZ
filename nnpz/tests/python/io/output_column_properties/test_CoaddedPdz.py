@@ -21,7 +21,7 @@ from .fixtures import *
 ###############################################################################
 
 def test_CoaddedPdz(reference_sample: MockReferenceSample, neighbor_info: np.ndarray):
-    coadded = CoaddedPdz(reference_sample)
+    coadded = CoaddedPdz(reference_sample, kernel=None, bandwidth=0)
     col_defs = coadded.get_column_definition()
     assert len(col_defs) == 1
     assert col_defs[0][0] == 'REDSHIFT_PDF'
@@ -33,4 +33,36 @@ def test_CoaddedPdz(reference_sample: MockReferenceSample, neighbor_info: np.nda
     # Always the first one if the most weighted, and the first one increments
     np.testing.assert_array_equal(output['REDSHIFT_PDF'].argmax(axis=1), np.arange(50))
 
+
 ###############################################################################
+
+def avg_and_std(pdz_bins, weights):
+    avg = np.average(pdz_bins, weights=weights)
+    std = np.sqrt(np.sum(weights * (pdz_bins - avg) ** 2) / np.sum(weights))
+    return avg, std
+
+
+def test_CoaddedPdzSmooth(reference_sample: MockReferenceSample):
+    neighbor_info = np.zeros(3,
+                             dtype=[('NEIGHBOR_INDEX', int, 30), ('NEIGHBOR_WEIGHTS', float, 30)])
+    neighbor_info['NEIGHBOR_WEIGHTS'] = 0.
+    neighbor_info['NEIGHBOR_INDEX'] = (1 + np.arange(30)[np.newaxis])
+    neighbor_info['NEIGHBOR_WEIGHTS'][0][6] = 1.
+    neighbor_info['NEIGHBOR_WEIGHTS'][1][20] = 1.
+    neighbor_info['NEIGHBOR_WEIGHTS'][2][10] = 1.
+
+    coadded = CoaddedPdz(reference_sample, kernel='gaussian', bandwidth=1.5)
+    col_defs = coadded.get_column_definition()
+    output = np.zeros(len(neighbor_info), dtype=[(col_defs[0][0], col_defs[0][1], col_defs[0][3])])
+    coadded.generate_output(np.arange(len(neighbor_info)), neighbor_info, output)
+
+    pdz_bins = reference_sample.get_provider('pdz').get_redshift_bins()
+
+    avg0, std0 = avg_and_std(pdz_bins, output['REDSHIFT_PDF'][0])
+    np.testing.assert_allclose([avg0, std0], [6., 1.5], rtol=1e-4)
+
+    avg1, std1 = avg_and_std(pdz_bins, output['REDSHIFT_PDF'][1])
+    np.testing.assert_allclose([avg1, std1], [20., 1.5], rtol=1e-4)
+
+    avg2, std2 = avg_and_std(pdz_bins, output['REDSHIFT_PDF'][2])
+    np.testing.assert_allclose([avg2, std2], [10., 1.5], rtol=1e-4)
