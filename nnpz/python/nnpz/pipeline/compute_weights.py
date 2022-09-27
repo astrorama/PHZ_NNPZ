@@ -28,24 +28,27 @@ import nnpz.config.target
 import numpy as np
 from nnpz.config import ConfigManager
 from nnpz.photometry.photometry import Photometry
+from nnpz.reference_sample import IndexProvider
 
 
 class ComputeWeights:
     """
     Compute the weights for the selected neighbors for a set of target objects.
     (May or may not follow the photometry correction).
+    Weights based on distance are corrected with the absolute weight coming from the reference
+    sample.
     """
 
     def __init__(self, conf_manager: Union[ConfigManager, Dict]):
         target_system = conf_manager.get('target_system')
         ref_system = conf_manager.get('reference_system')
+        self.__index: IndexProvider = conf_manager.get('reference_sample').index
         self.__ref_filter_indexes = ref_system.get_band_indexes(target_system.bands)
         self.__weight_calculator = conf_manager.get('weight_calculator')
 
     @u.quantity_input
-    def __call__(self, target: Photometry, neighbor_photo: u.uJy,
-                 neighbor_scales: np.ndarray,
-                 out_weights: np.ndarray, out_flags: np.ndarray):
+    def __call__(self, target: Photometry, neighbor_index: np.ndarray, neighbor_photo: u.uJy,
+                 neighbor_scales: np.ndarray, out_weights: np.ndarray, out_flags: np.ndarray):
         # This makes a copy
         nn_photo = neighbor_photo.take(self.__ref_filter_indexes, axis=2)
         nn_photo *= neighbor_scales[..., np.newaxis, np.newaxis]
@@ -55,3 +58,6 @@ class ComputeWeights:
             nn_photo = nn_photo.newbyteorder().byteswap(inplace=True)
 
         self.__weight_calculator(nn_photo.value, target.values.value, out_weights, out_flags)
+
+        # Correct the weights with the reference absolute weights
+        out_weights *= self.__index.get_weight_for_index(neighbor_index)

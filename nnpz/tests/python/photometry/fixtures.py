@@ -192,7 +192,7 @@ def target_photometry(reference_photometry: Photometry) -> Photometry:
     photo = np.zeros((n_targets, len(reference_photometry.system), 2), dtype=np.float64)
     for i in range(photo.shape[1]):
         photo[:, i, 0] = np.arange(1, 6, dtype=np.float64) * (
-                    i + 1) / 10. + np.random.standard_normal(5) / 100
+            i + 1) / 10. + [0.00698369, -0.01193469, 0.00892959, 0.00556434, 0.00172525]
 
     return Photometry(
         np.arange(1, n_targets + 1),

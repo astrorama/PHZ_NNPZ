@@ -206,6 +206,13 @@ class ReferenceSample:
     def get_data(self, name: str, obj_id: int):
         return self.__providers[name].get_data(obj_id)
 
+    @property
+    def index(self) -> IndexProvider:
+        """
+        Get the index
+        """
+        return self.__index
+
     def get_provider(self, name: str):
         return self.__providers[name]
 

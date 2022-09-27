@@ -108,8 +108,9 @@ def mainMethod(args):
                   out=chunk_ref_photo)
 
         logger.info('Weighting sources')
-        weighter(chunk_photometry, chunk_ref_photo, workarea['NEIGHBOR_SCALING'],
-                 out_weights=workarea['NEIGHBOR_WEIGHTS'], out_flags=workarea['FLAGS'])
+        weighter(chunk_photometry, workarea['NEIGHBOR_INDEX'], chunk_ref_photo,
+                 workarea['NEIGHBOR_SCALING'], out_weights=workarea['NEIGHBOR_WEIGHTS'],
+                 out_flags=workarea['FLAGS'])
 
         logger.info('Generating output')
         output_handler.write_output_for(chunk, workarea)

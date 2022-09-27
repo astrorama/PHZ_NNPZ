@@ -92,7 +92,8 @@ def mainMethod(args):
         out_weights = np.zeros_like(chunk_workarea['NEIGHBOR_SCALING'], dtype=np.float32)
         out_flags = np.zeros(len(chunk_workarea), dtype=np.uint32)
 
-        weighter(chunk_target, chunk_workarea['NEIGHBOR_PHOTOMETRY'] * photo_unit,
+        weighter(chunk_target, chunk_workarea['NEIGHBOR_INDEX'],
+                 chunk_workarea['NEIGHBOR_PHOTOMETRY'] * photo_unit,
                  chunk_workarea['NEIGHBOR_SCALING'],
                  out_weights=out_weights, out_flags=out_flags)
 

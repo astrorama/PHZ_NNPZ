@@ -94,7 +94,7 @@ class IndexProvider:
             except ValueError:
                 raise CorruptedFileException()
         else:
-            self.__data = np.array([], dtype=[('id', np.int64)])
+            self.__data = np.array([], dtype=[('id', np.int64), ('weight', np.float32)])
 
         if not self.__data.dtype.names:
             raise CorruptedFileException('Expected a structured array')
@@ -186,6 +186,14 @@ class IndexProvider:
         except KeyError:
             return None
 
+    def get_weight_for_index(self, obj_idx: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
+        """
+        Get the weights for a list of objects, by their position
+        """
+        if 'weight' not in self.__data.dtype.names:
+            return np.ones_like(obj_idx)
+        return self.__data['weight'][obj_idx]
+
     def _add_key(self, key: str):
         """
         Add a new key to the index
@@ -225,6 +233,8 @@ class IndexProvider:
         except KeyError:
             entry = np.full(shape=1, fill_value=-1, dtype=self.__data.dtype)
             entry['id'] = obj_id
+            if 'weight' in entry.dtype.names:
+                entry['weight'] = 1.
             self.__data = np.concatenate([self.__data, entry], axis=0)
             i = self.__index_map[obj_id] = self.__data.shape[0] - 1
 
@@ -257,12 +267,14 @@ class IndexProvider:
         columns = set(this.dtype.names)
         columns.update(other.dtype.names)
         columns.discard('id')
+        columns.discard('weight')
         columns = list(sorted(columns))
 
         # Pre-allocate destination
         destination = np.full(
             len(all_ids), -1,
-            dtype=[('id', np.int64)] + list(map(lambda c: (c, np.int64), columns))
+            dtype=[('id', np.int64), ('weight', np.float32)] +
+                  list(map(lambda c: (c, np.int64), columns))
         )
 
         # Copy IDs over
