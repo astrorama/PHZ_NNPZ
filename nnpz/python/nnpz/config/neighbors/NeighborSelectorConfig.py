@@ -33,7 +33,9 @@ try:
     from nnpz.neighbor_selection.gpu_bruteforce import GPUBruteForceSelector
 
     gpu_available = cp.cuda.runtime.getDeviceCount() > 0
-except ImportError:
+except (ImportError, ModuleNotFoundError) as e:
+    if not isinstance(e, ModuleNotFoundError):
+        logger.warning(e)
     cp = None
     gpu_available = False
     GPUBruteForceSelector = None
