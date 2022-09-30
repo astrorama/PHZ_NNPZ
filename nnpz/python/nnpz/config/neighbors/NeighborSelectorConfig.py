@@ -22,6 +22,7 @@ from typing import Any, Dict
 
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
+from nnpz.config.target import TargetCatalogConfig
 from nnpz.neighbor_selection.bruteforce import BruteForceSelector
 from nnpz.neighbor_selection.combined import CombinedSelector
 from nnpz.neighbor_selection.kdtree import KDTreeSelector
@@ -67,6 +68,10 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
             raise ValueError('Invalid neighbor_method %s' % neighbor_method)
         if scale_prior is not None and neighbor_method != 'BruteForce':
             raise ValueError('Scaling is only supported with BruteForce')
+
+        target_config = ConfigManager.get_handler(TargetCatalogConfig).parse_args(args)
+        if target_config['target_has_inf_error'] and neighbor_method != 'BruteForce':
+            raise ValueError('Only BruteForce supports infinite errors')
 
         logger.info('Using %s%s', neighbor_method, ' with scaling' if scale_prior else '')
 

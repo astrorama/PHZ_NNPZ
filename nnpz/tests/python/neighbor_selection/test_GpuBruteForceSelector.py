@@ -65,3 +65,27 @@ def test_GpuBruteForceClosest(reference_values: Photometry, target_values: Photo
 
     # Order is not defined! Only that 0 should be there
     assert 0 in distances
+
+
+###############################################################################
+
+def test_GpuBruteForceClosestNaN(reference_values: Photometry, target_values: Photometry):
+    # Search removing the 'z' band
+    ref_subset = reference_values.subsystem(['x', 'y'])
+    target_subset = target_values.subsystem(['x', 'y'])
+    bf_selector = GPUBruteForceSelector(k=4)
+    bf_selector.fit(ref_subset, ref_subset.system)
+    idx, scales = bf_selector.query(target_subset)
+
+    # Search all bands with Inf
+    target_values.values = np.copy(target_values.values)
+    target_values.values[:, 2, 1] = np.inf
+    bf_selector_nan = GPUBruteForceSelector(k=4)
+    bf_selector_nan.fit(reference_values, reference_values.system)
+    idx_nan, scales_nan = bf_selector_nan.query(target_values)
+
+    # Must be equal
+    np.testing.assert_array_equal(idx_nan, idx)
+    np.testing.assert_array_equal(scales_nan, scales)
+
+###############################################################################

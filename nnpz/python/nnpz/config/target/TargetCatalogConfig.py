@@ -45,6 +45,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         self.__chunks = None
         self.__id_column = None
         self.__table_hdu = None
+        self.__target_has_inf_error = False
 
     def __read_catalog(self, table: fitsio.hdu.TableHDU,
                        filters: List[Tuple[str, str]], id_column: str,
@@ -76,6 +77,13 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
         for i, (val_name, err_name) in enumerate(filters):
             stacked[:, i, 0] = values[val_name]
             stacked[:, i, 1] = errors[err_name]
+            # NaN fluxes => Inf error and an arbitrary, finite, flux
+            nan_flux_mask = np.isnan(stacked[:, i, 0])
+            if nan_flux_mask.any():
+                logger.info('Converting NaN fluxes to Inf error for %s', val_name)
+                self.__target_has_inf_error = True
+                stacked[nan_flux_mask, i, 0] = 0.
+                stacked[nan_flux_mask, i, 1] = np.inf
 
         ids = table.read_column(id_column, rows=rows)
         values = u.Quantity(stacked, unit, copy=False)
@@ -172,6 +180,7 @@ class TargetCatalogConfig(ConfigManager.ConfigHandler):
             'target_id_column': self.__id_column,
             'target_system': self.__target_photo.system,
             'target_hdu': self.__table_hdu,
+            'target_has_inf_error': self.__target_has_inf_error
         }
 
 
