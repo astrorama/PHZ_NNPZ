@@ -69,6 +69,12 @@ void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_
     throw Elements::Exception("The target set is expected to have (value, error) on the third axis");
   }
 
+  if (reference.strides(2) != sizeof(photo_t) && reference.strides(1) != 2 * sizeof(photo_t)) {
+    throw Elements::Exception() << "The last two axes of the reference photometry must be contiguous";
+  }
+  if (all_targets.strides(2) != sizeof(photo_t) && all_targets.strides(1) != 2 * sizeof(photo_t)) {
+    throw Elements::Exception() << "The last two axes of the target photometry must be contiguous";
+  }
   if (all_closest.strides(1) != sizeof(index_t)) {
     throw Elements::Exception() << "The last axis of the neighbor indexes must be contiguous";
   }
@@ -91,9 +97,9 @@ void _bruteforce(NdArray<photo_t> const& reference, NdArray<photo_t> const& all_
       if (scaling) {
         scale = static_cast<scale_t>((*scaling)(ref_photo, target_photo));
       }
-      auto ref_begin    = PhotoPtrIterator(&ref_photo.at(0, 0));
+      auto ref_begin    = PhotoPtrIterator(&ref_photo.front());
       auto ref_end      = ref_begin + nbands;
-      auto target_begin = PhotoPtrIterator(&target_photo.at(0, 0));
+      auto target_begin = PhotoPtrIterator(&target_photo.front());
       auto dist         = static_cast<float>(DistanceFunctor::distance(scale, ref_begin, ref_end, target_begin));
       insert_if_best(k, heap, {ri, dist, scale});
       ref_photo.next_slice();
