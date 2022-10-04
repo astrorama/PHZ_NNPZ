@@ -50,7 +50,6 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__selector = None
         self.__neighbors_no = None
-        self.__ref_bands = None
 
     def __create_selector(self, args: Dict[str, Any]):
         self._exists_parameter('neighbor_method', args)
@@ -61,7 +60,6 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         scale_prior = args.get('scale_prior', None)
 
         self.__neighbors_no = args['neighbors_no']
-        self.__ref_bands = args['reference_sample_phot_filters']
         force_cpu = args.get('force_cpu', True)
 
         if neighbor_method not in ['KDTree', 'Combined', 'BruteForce']:

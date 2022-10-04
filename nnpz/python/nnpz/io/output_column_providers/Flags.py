@@ -40,7 +40,6 @@ class Flags(OutputHandler.OutputColumnProviderInterface):
 
     def __init__(self, separate_columns=False):
         self.__separate_columns = separate_columns
-        self.__output_area = None
 
     def get_column_definition(self) \
             -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:

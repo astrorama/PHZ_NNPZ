@@ -22,7 +22,7 @@ from .fixtures import *
 def test_MeanPhotometry(reference_photometry: Photometry, target_photometry: Photometry,
                         reference_matched_photometry: np.ndarray,
                         mock_output_handler: MockOutputHandler):
-    mean_photo = MeanPhotometry(['A', 'B', 'C'], [0, 1, 2], reference_photometry.unit, None, None)
+    mean_photo = MeanPhotometry(['A', 'B', 'C'], [0, 1, 2], reference_photometry.unit)
     mock_output_handler.add_column_provider(mean_photo)
     mock_output_handler.initialize(len(target_photometry))
 
