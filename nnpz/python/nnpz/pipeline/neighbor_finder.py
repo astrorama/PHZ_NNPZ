@@ -47,7 +47,6 @@ class NeighborFinder:
         self.__ref_data: Photometry = conf_manager.get('reference_photometry')
         self.__source_independent_ebv = conf_manager.get('source_independent_ebv')
         self.__selector = conf_manager.get('neighbor_selector')
-        self.__knn = conf_manager.get('neighbor_no')
         # Train the selector
         self.__selector.fit(self.__ref_data, conf_manager.get('target_system'))
 

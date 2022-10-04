@@ -43,7 +43,6 @@ class McPdf1D(OutputHandler.OutputColumnProviderInterface):
         self.__param_name = param_name
         self.__binning = binning
         self.__column = 'MC_PDF_1D_{}'.format(self.__param_name.upper())
-        self.__output = None
 
     def get_column_definition(self):
         return [
