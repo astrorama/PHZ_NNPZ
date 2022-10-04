@@ -40,7 +40,6 @@ class McPdfConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__added = False
         self.__output = None
-        self.__ref_ids = None
         self.__ref_sample = None
         self.__take_n = None
         self.__samplers = {}
@@ -50,7 +49,6 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         ref_config = ConfigManager.get_handler(ReferenceConfig).parse_args(args)
 
         self.__output = output_config['output_handler']
-        self.__ref_ids = ref_config['reference_ids']
         self.__ref_sample = ref_config['reference_sample']
         self.__take_n = args.get('mc_pdf_take_n', 100)
 
