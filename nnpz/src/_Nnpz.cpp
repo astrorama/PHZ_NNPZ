@@ -25,7 +25,8 @@ using namespace Nnpz;
 template <typename T>
 class BufferContainer {
 public:
-  explicit BufferContainer(py::buffer_info const& info) : m_buffer_info(info) {}
+  explicit BufferContainer(py::buffer_info const& info)
+      : m_buffer_info(info), m_buffer_size(m_buffer_info.shape[0] * m_buffer_info.strides[0]) {}
   BufferContainer(const BufferContainer&)     = default;
   BufferContainer(BufferContainer&&) noexcept = default;
 
@@ -38,7 +39,7 @@ public:
   }
 
   std::size_t nbytes() const {
-    return m_buffer_info.shape[0] * m_buffer_info.strides[0];
+    return m_buffer_size;
   }
 
   void resize(std::size_t) const {
@@ -47,6 +48,7 @@ public:
 
 private:
   py::buffer_info const& m_buffer_info;
+  std::size_t            m_buffer_size;
 };
 
 template <typename T>
