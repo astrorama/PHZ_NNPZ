@@ -11,3 +11,4 @@
 /InstallArea
 /build*
 PAQA
+/.pytest_cache/
