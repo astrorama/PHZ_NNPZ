@@ -13,7 +13,6 @@
 # if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301 USA
 #
-
 from nnpz.exceptions import InvalidDimensionsException, UninitializedException
 from nnpz.neighbor_selection.bruteforce import BruteForceSelector
 from nnpz.utils.distances import chi2
@@ -57,3 +56,27 @@ def test_BruteForceClosest(reference_values: Photometry, target_values: Photomet
     assert (len(idx) == 1)
     np.testing.assert_array_less(distances[idx.ravel()], kth_dist + 1e-8)
     np.testing.assert_allclose(scales, 1.)
+
+
+###############################################################################
+
+def test_BruteForceClosestNaN(reference_values: Photometry, target_values: Photometry):
+    # Search removing the 'z' band
+    ref_subset = reference_values.subsystem(['x', 'y'])
+    target_subset = target_values.subsystem(['x', 'y'])
+    bf_selector = BruteForceSelector(k=4)
+    bf_selector.fit(ref_subset, ref_subset.system)
+    idx, scales = bf_selector.query(target_subset)
+
+    # Search all bands with Inf
+    target_values.values = np.copy(target_values.values)
+    target_values.values[:, 2, 1] = np.inf
+    bf_selector_nan = BruteForceSelector(k=4)
+    bf_selector_nan.fit(reference_values, reference_values.system)
+    idx_nan, scales_nan = bf_selector_nan.query(target_values)
+
+    # Must be equal
+    np.testing.assert_array_equal(idx_nan, idx)
+    np.testing.assert_array_equal(scales_nan, scales)
+
+###############################################################################

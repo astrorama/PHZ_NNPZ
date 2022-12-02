@@ -23,8 +23,8 @@ from .fixtures import *
 ###############################################################################
 
 
-def test_take_samples(reference_ids, contributions, mock_provider):
-    sampler = McSampler(take_n=200, mc_provider=mock_provider, ref_ids=reference_ids)
+def test_take_samples(contributions, mock_provider):
+    sampler = McSampler(take_n=200, mc_provider=mock_provider)
     sampler.generate_output(np.arange(len(contributions)), contributions, None)
 
     # First object can not have any sample from 2, and the weight is higher for 1
@@ -51,7 +51,7 @@ def test_take_samples(reference_ids, contributions, mock_provider):
 ###############################################################################
 
 def test_take_weight_0(reference_ids, contributions, mock_provider):
-    sampler = McSampler(take_n=200, mc_provider=mock_provider, ref_ids=reference_ids)
+    sampler = McSampler(take_n=200, mc_provider=mock_provider)
     contributions['NEIGHBOR_WEIGHTS'][0] = 0
     sampler.generate_output(np.arange(len(contributions)), contributions, None)
 
@@ -76,7 +76,7 @@ def test_take_weight_0(reference_ids, contributions, mock_provider):
 ###############################################################################
 
 def test_take_weight_nans(reference_ids, contributions, mock_provider):
-    sampler = McSampler(take_n=200, mc_provider=mock_provider, ref_ids=reference_ids)
+    sampler = McSampler(take_n=200, mc_provider=mock_provider)
     contributions['NEIGHBOR_WEIGHTS'][0] = np.nan
     sampler.generate_output(np.arange(len(contributions)), contributions, None)
 

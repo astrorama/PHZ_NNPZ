@@ -50,20 +50,13 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
         if args.get('reference_sample_out_mean_phot_filters', None):
             out_mean_phot_filters = args['reference_sample_out_mean_phot_filters']
             out_mean_phot_idxs = ref_phot.system.get_band_indexes(out_mean_phot_filters)
-
             output = output_options['output_handler']
-
-            target_ebv = None
-            reddener = None
 
             if args.get('redden_mean_phot', False):
                 self._exists_parameter('target_catalog_gal_ebv', args)
-                target_ebv = target_options['target_photometry'].colorspace.ebv
-                reddener = SourceIndependentGalacticEBV(ref_phot.system)
 
             output.add_column_provider(
-                ocp.MeanPhotometry(out_mean_phot_filters, out_mean_phot_idxs,
-                                   unit=ref_phot.unit, reddener=reddener, target_ebv=target_ebv)
+                ocp.MeanPhotometry(out_mean_phot_filters, out_mean_phot_idxs, unit=ref_phot.unit)
             )
 
     def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:

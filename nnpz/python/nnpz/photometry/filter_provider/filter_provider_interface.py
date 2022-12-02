@@ -36,7 +36,7 @@ class FilterProviderInterface(metaclass=abc.ABCMeta):
         Returns:
             A python list with the names of the filters as strings
         """
-        return
+        return []
 
     @abc.abstractmethod
     def get_filter_transmission(self, name) -> np.ndarray:
@@ -56,4 +56,4 @@ class FilterProviderInterface(metaclass=abc.ABCMeta):
         Raises:
             KeyError: If there is no filter with the given name
         """
-        return
+        return np.zeros(0)

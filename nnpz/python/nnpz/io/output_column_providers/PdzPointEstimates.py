@@ -40,7 +40,6 @@ class PdzPointEstimates(OutputHandler.OutputColumnProviderInterface):
     """
 
     def __init__(self, ref_sample: ReferenceSample, estimates):
-        self.__estimate_impl = {}
         self.__pdz_bins = ref_sample.get_provider('pdz').get_redshift_bins()
         self.__estimates = estimates
         for e in self.__estimates:

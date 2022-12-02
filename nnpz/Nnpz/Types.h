@@ -20,7 +20,6 @@
 #include "NdArray/NdArray.h"
 #include <cstdint>
 #include <functional>
-#include <pybind11/numpy.h>
 
 namespace Nnpz {
 

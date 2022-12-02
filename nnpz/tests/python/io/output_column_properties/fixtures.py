@@ -100,7 +100,7 @@ def contributions():
 
 @pytest.fixture
 def sampler(mock_provider, reference_ids):
-    sampler = McSampler(take_n=200, mc_provider=mock_provider, ref_ids=reference_ids)
+    sampler = McSampler(take_n=200, mc_provider=mock_provider)
     return sampler
 
 

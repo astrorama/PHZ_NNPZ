@@ -40,7 +40,6 @@ class KDTreeSelector:
     def __init__(self, k: int, leafsize: int = 16):
         self.__k = k
         self.__leafsize = leafsize
-        self.__reference_photo = None
         self.__kdtree = None
         self.__system = None
 
@@ -49,9 +48,6 @@ class KDTreeSelector:
         See Also:
             SelectorInterface.fit
         """
-        # False positive of pylint
-        # pylint: disable=no-member
-        self.__reference_photo = train
         self.__kdtree = KDTree(train.get_fluxes(system.bands), leaf_size=self.__leafsize)
         self.__system = system
 
