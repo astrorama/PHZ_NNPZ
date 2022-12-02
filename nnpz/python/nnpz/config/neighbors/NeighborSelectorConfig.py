@@ -22,6 +22,7 @@ from typing import Any, Dict
 
 from ElementsKernel import Logging
 from nnpz.config import ConfigManager
+from nnpz.config.target import TargetCatalogConfig
 from nnpz.neighbor_selection.bruteforce import BruteForceSelector
 from nnpz.neighbor_selection.combined import CombinedSelector
 from nnpz.neighbor_selection.kdtree import KDTreeSelector
@@ -33,7 +34,9 @@ try:
     from nnpz.neighbor_selection.gpu_bruteforce import GPUBruteForceSelector
 
     gpu_available = cp.cuda.runtime.getDeviceCount() > 0
-except ImportError:
+except (ImportError, ModuleNotFoundError) as e:
+    if not isinstance(e, ModuleNotFoundError):
+        logger.warning(e)
     cp = None
     gpu_available = False
     GPUBruteForceSelector = None
@@ -47,7 +50,6 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__selector = None
         self.__neighbors_no = None
-        self.__ref_bands = None
 
     def __create_selector(self, args: Dict[str, Any]):
         self._exists_parameter('neighbor_method', args)
@@ -58,13 +60,16 @@ class NeighborSelectorConfig(ConfigManager.ConfigHandler):
         scale_prior = args.get('scale_prior', None)
 
         self.__neighbors_no = args['neighbors_no']
-        self.__ref_bands = args['reference_sample_phot_filters']
         force_cpu = args.get('force_cpu', True)
 
         if neighbor_method not in ['KDTree', 'Combined', 'BruteForce']:
             raise ValueError('Invalid neighbor_method %s' % neighbor_method)
         if scale_prior is not None and neighbor_method != 'BruteForce':
             raise ValueError('Scaling is only supported with BruteForce')
+
+        target_config = ConfigManager.get_handler(TargetCatalogConfig).parse_args(args)
+        if target_config['target_has_inf_error'] and neighbor_method != 'BruteForce':
+            raise ValueError('Only BruteForce supports infinite errors')
 
         logger.info('Using %s%s', neighbor_method, ' with scaling' if scale_prior else '')
 

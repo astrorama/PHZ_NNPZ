@@ -32,16 +32,10 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
     they will be all equally likely
 
     Args:
-        catalog_size:
-            Size of the target catalog
-        n_neighbors:
-            Number of neighbors per object
         take_n:
             How many samples to take from the union
         mc_provider:
             MontecarloProvider with the samples from the n-dimensional space
-        ref_ids:
-            Reference object ids
 
     Notes:
         The samples are generated only once, so multiple PDF will share the selection.
@@ -53,12 +47,10 @@ class McSampler(OutputHandler.OutputColumnProviderInterface):
         consuming.
     """
 
-    def __init__(self, take_n: int, mc_provider: MontecarloProvider, ref_ids: np.ndarray):
+    def __init__(self, take_n: int, mc_provider: MontecarloProvider):
         self.__take_n = take_n
         self.__provider = mc_provider
-        self.__ref_ids = ref_ids
         self.__samples = None
-        self.__dtype = self.__provider.get_dtype()
         self.__samples_per_neighbor = self.__provider.get_n_samples()
         self.__rng = np.random.default_rng()
 

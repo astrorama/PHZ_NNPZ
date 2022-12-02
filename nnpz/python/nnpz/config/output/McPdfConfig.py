@@ -40,12 +40,8 @@ class McPdfConfig(ConfigManager.ConfigHandler):
     def __init__(self):
         self.__added = False
         self.__output = None
-        self.__ref_ids = None
         self.__ref_sample = None
         self.__take_n = None
-        self.__mc_1d_pdf = []
-        self.__mc_2d_pfd = []
-        self.__args = []
         self.__samplers = {}
 
     def __parse_args_common(self, args: Dict[str, Any]):
@@ -53,7 +49,6 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         ref_config = ConfigManager.get_handler(ReferenceConfig).parse_args(args)
 
         self.__output = output_config['output_handler']
-        self.__ref_ids = ref_config['reference_ids']
         self.__ref_sample = ref_config['reference_sample']
         self.__take_n = args.get('mc_pdf_take_n', 100)
 
@@ -64,9 +59,7 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                 if provider_name in self.__samplers:
                     continue
                 provider = self.__ref_sample.get_provider(provider_name)
-                sampler = McSampler(
-                    take_n=self.__take_n, mc_provider=provider, ref_ids=self.__ref_ids
-                )
+                sampler = McSampler(take_n=self.__take_n, mc_provider=provider)
                 self.__samplers[provider_name] = sampler
                 self.__output.add_column_provider(sampler)
 

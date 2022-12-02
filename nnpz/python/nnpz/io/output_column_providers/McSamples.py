@@ -29,7 +29,6 @@ class McSamples(OutputHandler.OutputColumnProviderInterface):
     def __init__(self, sampler: McSampler, parameters: List[str]):
         self.__sampler = sampler
         self.__params = parameters
-        self.__output = {}
 
     def get_column_definition(self):
         col_defs = []

@@ -40,12 +40,9 @@ class NeighborList(OutputHandler.OutputColumnProviderInterface):
         super(NeighborList, self).__init__()
         self.__ref_ids = ref_ids
         self.__n_neighbors = n_neighbors
-        self.__neighbors = None
-        self.__weights = None
-        self.__scales = None
 
     def get_column_definition(self) \
-            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
+        -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         return [
             (NEIGHBOR_IDS_COLNAME, np.int64, u.dimensionless_unscaled, self.__n_neighbors),
             (NEIGHBOR_WEIGHTS_COLNAME, np.float32, u.dimensionless_unscaled, self.__n_neighbors),

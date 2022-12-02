@@ -23,7 +23,6 @@ from typing import List, Optional, Tuple
 import astropy.units as u
 import numpy as np
 from nnpz.io import OutputHandler
-from nnpz.photometry.projection.source_independent_ebv import SourceIndependentGalacticEBV
 
 
 class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
@@ -35,9 +34,7 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
     *after* the mean photometry is computed entirely on the reference color space.
     """
 
-    def __init__(self, filter_names: List[str], filter_idxs: np.ndarray, unit: u.Unit,
-                 reddener: Optional[SourceIndependentGalacticEBV],
-                 target_ebv: Optional[str]):
+    def __init__(self, filter_names: List[str], filter_idxs: np.ndarray, unit: u.Unit):
         """
         Constructor
         Args:
@@ -45,21 +42,14 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
                 Names of the filters to be output
             filter_idxs:
                 Indexes of the filters on the reference sample
-            reddener: (Optional)
-                An object implementing the method redden_data(photometry, ebv)
-            target_ebv: (Optional)
-                Target catalog extinction values
         """
         self.__filter_idxs = filter_idxs
         self.__unit = unit
-        self.__unreddener = reddener
-        self.__target_ebv = target_ebv
-
         self.__columns = [name + '_MEAN' for name in filter_names]
         self.__err_columns = [name + '_MEAN_ERR' for name in filter_names]
 
     def get_column_definition(self) \
-            -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
+        -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
         col_defs = []
         for name, err in zip(self.__columns, self.__err_columns):
             col_defs.append((name, np.float32, self.__unit))

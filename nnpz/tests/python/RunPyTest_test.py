@@ -23,7 +23,7 @@ Author: nikoapos
 
 import os
 
-import py.test
+import pytest
 import sys
 
 
@@ -31,7 +31,7 @@ def _runTests():
     return len([s for s in sys.argv if s.endswith('RunPyTest_test.py')]) == 0
 
 
-@py.test.mark.skipif(_runTests(), reason='File is not called explicitly')
+@pytest.mark.skipif(_runTests(), reason='File is not called explicitly')
 class TestRunPyTestInDir:
     """
     @class TestTempClass
@@ -41,4 +41,4 @@ class TestRunPyTestInDir:
     """
 
     def testRunPyTestInDir(self):
-        assert py.test.cmdline.main(['--ignore=' + __file__, os.path.dirname(__file__)]) == 0
+        assert pytest.cmdline.main(['--ignore=' + __file__, os.path.dirname(__file__)]) == 0
