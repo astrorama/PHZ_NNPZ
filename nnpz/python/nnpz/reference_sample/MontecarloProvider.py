@@ -15,6 +15,7 @@
 #
 
 from typing import Iterable, Optional
+import ElementsKernel.Logging as Logging
 
 import astropy.units as u
 import numpy as np
@@ -22,7 +23,10 @@ from nnpz.exceptions import UninitializedException
 from nnpz.reference_sample import MontecarloDataProvider
 from nnpz.reference_sample.BaseProvider import BaseProvider
 from nnpz.reference_sample.util import validate_data_files
+from nnpz.reference_sample import IndexProvider
 
+
+logger = Logging.getLogger('MontecarloProvider')
 
 class MontecarloProvider(BaseProvider):
     """
@@ -144,11 +148,13 @@ class MontecarloProvider(BaseProvider):
             data:
                 New data
         """
+
         if len(data.shape) != 2:
             raise ValueError('Expecting an array with two axes')
         if len(object_ids) != data.shape[0]:
             raise ValueError('The number of objects and shape of the array do not match')
 
+        logger.info(data.shape)
         record_size = data[0].nbytes
         records_per_file = self._data_limit // record_size + (self._data_limit % record_size > 0)
 
@@ -165,6 +171,7 @@ class MontecarloProvider(BaseProvider):
         provider_idx, provider = self._get_writeable_data_provider()
         available_size = self._data_limit - provider.size()
         nfit = available_size // record_size + (available_size % record_size > 0)
+
 
         index_data['id'][:nfit] = object_ids[:nfit]
         index_data[file_field][:nfit] = provider_idx
@@ -183,4 +190,10 @@ class MontecarloProvider(BaseProvider):
             index_data[file_field][selection] = provider_idx
             index_data[offset_field][selection] = provider.append(data[selection])
 
-        self._index.bulk_add(index_data)
+        if len(index_data)==1:
+            self._index.add(index_data['id'][0], self._key, IndexProvider.ObjectLocation(index_data[file_field][0],index_data[offset_field][0]))
+            
+        else:    
+            self._index.bulk_add(index_data)
+     
+        

@@ -83,6 +83,9 @@ elements_add_python_program(NnpzGenerateOutput
         nnpz.program.GenerateOutput)
 elements_add_python_program(nnpz
         nnpz.program.Nnpz)
+elements_add_python_program(NnpzCompleteReferenceSample
+        nnpz.program.CompleteReferenceSample)
+       
 
 #===============================================================================
 # Add the elements_install_conf_files macro
