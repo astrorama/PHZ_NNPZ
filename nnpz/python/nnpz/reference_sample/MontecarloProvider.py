@@ -154,7 +154,7 @@ class MontecarloProvider(BaseProvider):
         if len(object_ids) != data.shape[0]:
             raise ValueError('The number of objects and shape of the array do not match')
 
-        logger.info(data.shape)
+        logger.debug(data.shape)
         record_size = data[0].nbytes
         records_per_file = self._data_limit // record_size + (self._data_limit % record_size > 0)
 

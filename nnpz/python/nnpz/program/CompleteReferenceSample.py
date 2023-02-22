@@ -82,7 +82,7 @@ def mainMethod(args):
         for col in sample_table.colnames:
             if col != 'OBJECT_ID':
                 sample_t[col] = samples[col]     
-        pp_provider.add_data(np.array([row['REF_SAMPLE_ID']]),np.array(sample_t).reshape(1,100))
+        pp_provider.add_data(np.array([row['REF_SAMPLE_ID']]),np.array(sample_t).reshape(1, len(samples[col])))
         
         if row['REF_SAMPLE_ID']%100==0:
             id_curr = str(row['REF_SAMPLE_ID'])
