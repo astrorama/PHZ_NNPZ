@@ -64,29 +64,18 @@ def mainMethod(args):
     pp_provider = ref_sample.add_provider('MontecarloProvider', name='pp', data_pattern = 'pp_data_{}.npy', overwrite = True)
     
     logger.info('Add the sampling data to the reference sample')
-    current_sample_file = ''
-    sample_table=Table()
-    id_tot = str(len(ids))
-    for row in ids:   
-        target_file = index_sampling['FILE_NAME'][index_sampling['OBJECT_ID']==row['PHZ_ID']][0]
-        # open the right sampling file
-        if target_file!= current_sample_file:
-            
-            current_sample_file=target_file
-            sample_table=Table.read(join(args.result_dir, args.posterior_folder , current_sample_file))
-        
-        # extract the data
-        
-        samples = sample_table[sample_table['OBJECT_ID']==row['PHZ_ID']]
-        sample_t=Table()
-        for col in sample_table.colnames:
-            if col != 'OBJECT_ID':
-                sample_t[col] = samples[col]     
-        pp_provider.add_data(np.array([row['REF_SAMPLE_ID']]),np.array(sample_t).reshape(1, len(samples[col])))
-        
-        if row['REF_SAMPLE_ID']%100==0:
-            id_curr = str(row['REF_SAMPLE_ID'])
-            logger.info(f'Progress: {id_curr}/{id_tot}')
+    
+    file_list = np.unique(index_sampling['FILE_NAME'])
+    
+    for file_name in file_list:
+        restricted_sources_mask = index_sampling['FILE_NAME']==file_name
+        restricted_sources = index_sampling['OBJECT_ID'][restricted_sources_mask]
+        sample_table=Table.read(join(args.result_dir, args.posterior_folder , file_name))
+        del sample_table['OBJECT_ID']
+        sample_as_array = sample_table.as_array().reshape(len(restricted_sources),len(sample_table)//len(restricted_sources))
+        pp_provider.add_data(np.array(restricted_sources),sample_as_array)
+
+        logger.info(f'Processed: {file_name} (total files number = {str(len(file_list))})')
             
     logger.info('Writing the reference sample')   
     ref_sample.flush()
