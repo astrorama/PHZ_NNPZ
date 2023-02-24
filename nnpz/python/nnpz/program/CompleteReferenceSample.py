@@ -73,7 +73,7 @@ def mainMethod(args):
     for file_name in file_list:
         restricted_sources_mask = index_sampling['FILE_NAME']==file_name
         restricted_sources = index_sampling['Index'][restricted_sources_mask]
-        sample_table=Table.read(join(args.result_dir, args.posterior_folder , file_name))
+        sample_table=Table.read(join(args.result_dir, args.posterior_folder , file_name.strip()))
         del sample_table['OBJECT_ID']
         sample_as_array = sample_table.as_array().reshape(len(restricted_sources),len(sample_table)//len(restricted_sources))
         pp_provider.add_data(np.array(restricted_sources),sample_as_array)
