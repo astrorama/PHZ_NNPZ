@@ -73,6 +73,11 @@ class MontecarloDataProvider:
         if isinstance(self.__data, np.memmap):
             self.__data.flush()
         else:
+            if np.ma.isMaskedArray(self.__data):
+                print("self._data is a masked array: converting it")
+                self.__data = np.ma.getdata(self.__data)
+                
+            
             np.save(self.__filename, self.__data)
             self.__data = np.load(self.__filename, mmap_mode='r')
 

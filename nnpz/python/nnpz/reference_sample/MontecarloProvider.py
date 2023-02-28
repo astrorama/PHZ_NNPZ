@@ -177,14 +177,13 @@ class MontecarloProvider(BaseProvider):
         index_data[file_field][:nfit] = provider_idx
         index_data[offset_field][:nfit] = provider.append(data[:nfit])
         provider.flush()
-
         # Cut what's left in whole files
         n_files = int(np.ceil(len(object_ids[nfit:]) / records_per_file))
 
         for file_i in range(n_files):
+            print("Part of the data pushed in the next file")
             selection = slice(nfit + records_per_file * file_i,
                               nfit + records_per_file * (file_i + 1))
-
             provider_idx, provider = self._get_writeable_data_provider()
             index_data['id'][selection] = object_ids[selection]
             index_data[file_field][selection] = provider_idx

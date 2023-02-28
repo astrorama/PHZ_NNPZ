@@ -65,17 +65,54 @@ def mainMethod(args):
     
     logger.info('Add the sampling data to the reference sample')
     
+    index_sampling['FILE_NAME'] = [f.strip() for f in index_sampling['FILE_NAME']]
     file_list = np.unique(index_sampling['FILE_NAME'])
+    
+    common_head = ''
+    for index in range(len(file_list[0])):
+        if index==0:
+            continue
+        bit = file_list[0][:index]
+        valid = True
+        for file in file_list[1:]:
+            if not file.startswith(bit):
+                valid=False
+                break
+        if valid:
+            common_head = bit
+        else:
+            break
+            
+    common_tail = ''
+    for index in range(len(file_list[0])):
+        if index==0:
+            continue
+        bit = file_list[0][-index:]
+        valid = True
+        for file in file_list[1:]:
+            if not file.endswith(bit):
+                valid=False
+                break
+        if valid:
+            common_tail = bit
+        else:
+            break
+     
+    file_index = np.sort([int(file.replace(common_head,'').replace(common_tail,'')) for file in file_list] )
+
     
     # add index
     index_sampling['Index']=np.arange(len(index_sampling))
     
-    for file_name in file_list:
+    for file_ind in file_index: 
+        file_name = common_head+str(file_ind)+common_tail
+        logger.info(f'Processing: {file_name}')
         restricted_sources_mask = index_sampling['FILE_NAME']==file_name
         restricted_sources = index_sampling['Index'][restricted_sources_mask]
-        sample_table=Table.read(join(args.result_dir, args.posterior_folder , file_name.strip()))
+        sample_table=Table.read(join(args.result_dir, args.posterior_folder , file_name))
         del sample_table['OBJECT_ID']
         sample_as_array = sample_table.as_array().reshape(len(restricted_sources),len(sample_table)//len(restricted_sources))
+        
         pp_provider.add_data(np.array(restricted_sources),sample_as_array)
 
         logger.info(f'Processed: {file_name} (total files number = {str(len(file_list))})')
