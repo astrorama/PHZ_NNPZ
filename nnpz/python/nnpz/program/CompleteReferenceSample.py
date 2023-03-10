@@ -25,6 +25,7 @@ from nnpz.reference_sample.MontecarloProvider import MontecarloProvider
 from astropy.table import Table
 from os.path import join
 import numpy as np
+import re
 
 logger = Logging.getLogger('CompleteReferenceSample')
 
@@ -68,36 +69,11 @@ def mainMethod(args):
     index_sampling['FILE_NAME'] = [f.strip() for f in index_sampling['FILE_NAME']]
     file_list = np.unique(index_sampling['FILE_NAME'])
     
-    common_head = ''
-    for index in range(len(file_list[0])):
-        if index==0:
-            continue
-        bit = file_list[0][:index]
-        valid = True
-        for file in file_list[1:]:
-            if not file.startswith(bit):
-                valid=False
-                break
-        if valid:
-            common_head = bit
-        else:
-            break
-            
-    common_tail = ''
-    for index in range(len(file_list[0])):
-        if index==0:
-            continue
-        bit = file_list[0][-index:]
-        valid = True
-        for file in file_list[1:]:
-            if not file.endswith(bit):
-                valid=False
-                break
-        if valid:
-            common_tail = bit
-        else:
-            break
-     
+    common_tail = '.fits'
+    p = re.compile('[0-9]+')
+    nb = p.search(file_list[0])
+    common_head = file_list[0].replace(common_tail,'').replace(nb.group(),'')
+    
     file_index = np.sort([int(file.replace(common_head,'').replace(common_tail,'')) for file in file_list] )
 
     
