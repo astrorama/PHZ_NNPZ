@@ -47,10 +47,11 @@ class PdzDataProvider:
             if len(data) > 0:
                 self.__redshift_bins = data[0]
             self.__entries = data.shape[0]
+            self.__cache = data
         except ValueError:
             raise CorruptedFileException()
 
-    def __init__(self, filename: Union[str, pathlib.Path], cache_size: int = 5000):
+    def __init__(self, filename: Union[str, pathlib.Path]):
         """
         Creates a new instance for handling the given file.
         Args:
@@ -60,8 +61,6 @@ class PdzDataProvider:
                 Number of entries to keep in memory in any given time
         """
         self.__filename = filename
-        self.__cache_size = cache_size
-        self.__cache_line = None
         self.__cache = None
         self.__entries = 0
         self.__full = None
@@ -82,6 +81,7 @@ class PdzDataProvider:
         if self.__full is not None:
             np.save(self.__filename, self.__full)
             self.__full = None
+            self.__cache = np.load(self.__filename, mmap_mode='r')
 
     def size(self) -> int:
         """
@@ -131,10 +131,6 @@ class PdzDataProvider:
         """
         if pos > self.__entries:
             raise InvalidAxisException('Position {} for {} entries'.format(pos, self.__entries))
-        cache_line = pos // self.__cache_size
-        if cache_line != self.__cache_line:
-            self.__cache_line = cache_line
-            self.__cache = np.load(self.__filename, mmap_mode='r')
         return pos
 
     def read_pdz(self, pos: int) -> np.ndarray:
