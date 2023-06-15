@@ -59,6 +59,10 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
     def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
         ref_photo = neighbor_info['NEIGHBOR_PHOTOMETRY']
         ref_weights = neighbor_info['NEIGHBOR_WEIGHTS']
+        weights_sum = np.sum(ref_weights, axis=1)
+        mask = weights_sum==0
+        print("Warning : " + str(np.sum(mask)) + " objects have zero weights sum")
+        ref_weights[mask,:]=1
         for name, err, idx in zip(self.__columns, self.__err_columns, self.__filter_idxs):
             output[name] = np.average(ref_photo[:, :, idx, 0], weights=ref_weights, axis=-1)
             output[err] = np.average(ref_photo[:, :, idx, 1], weights=ref_weights, axis=-1)
