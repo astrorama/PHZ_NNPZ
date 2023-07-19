@@ -51,7 +51,8 @@ class ComputeWeights:
                  neighbor_scales: np.ndarray, out_weights: np.ndarray, out_flags: np.ndarray):
         # This makes a copy
         nn_photo = neighbor_photo.take(self.__ref_filter_indexes, axis=2)
-        nn_photo *= neighbor_scales[..., np.newaxis, np.newaxis]
+        # The Scaling of the photometry is done by the neighbor finder
+        # nn_photo *= neighbor_scales[..., np.newaxis, np.newaxis]
 
         # FITS stores in big-endian, and we can't pass that directly to cython
         if nn_photo.dtype.byteorder == '>':
