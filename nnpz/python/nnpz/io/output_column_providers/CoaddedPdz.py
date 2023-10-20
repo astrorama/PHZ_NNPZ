@@ -121,14 +121,14 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         total_weight = np.sum(neighbor_weights, axis=-1)
         np.sum(neighbor_pdz, axis=1, out=output_pdz)
         np.divide(output_pdz, total_weight[..., np.newaxis], out=output_pdz)
+        
+        # Clip negatives
+        np.clip(output_pdz, a_min=0, a_max=None, out=output_pdz)
 
         # Normalize
         integral = np.trapz(output_pdz, self.__pdz_bins, axis=-1)
         np.reciprocal(integral, out=integral)
         np.multiply(output_pdz, integral[..., np.newaxis], out=output_pdz)
-
-        # Clip negatives
-        np.clip(output_pdz, a_min=0, a_max=None, out=output_pdz)
 
         # Smooth
         if not self.__kernel:
