@@ -30,7 +30,7 @@ def test_take_samples(contributions, mock_provider):
     # First object can not have any sample from 2, and the weight is higher for 1
     samples = sampler.get_samples()[0]
     assert samples.shape == (200,)
-    assert samples.dtype.names == ('P1', 'P2', 'I1')
+    assert samples.dtype.names == ('P1', 'P2', 'I1', 'M1')
     vals, counts = np.unique(samples['P1'], return_counts=True)
     assert 2 not in vals
     assert 0 in vals
@@ -41,7 +41,7 @@ def test_take_samples(contributions, mock_provider):
     # Second object must have the most samples from 2, and more from 0 than from 1
     samples = sampler.get_samples()[1]
     assert samples.shape == (200,)
-    assert samples.dtype.names == ('P1', 'P2', 'I1')
+    assert samples.dtype.names == ('P1', 'P2', 'I1', 'M1')
     vals, counts = np.unique(samples['P1'], return_counts=True)
     assert counts[0] > counts[1]
     assert counts[2] > counts[1]
@@ -58,7 +58,7 @@ def test_take_weight_0(reference_ids, contributions, mock_provider):
     # All samples are 0 for the first source
     samples = sampler.get_samples()[0]
     assert samples.shape == (200,)
-    assert samples.dtype.names == ('P1', 'P2', 'I1')
+    assert samples.dtype.names == ('P1', 'P2', 'I1', 'M1')
     assert (samples['P1'] == 0).all()
     assert (samples['P2'] == 0).all()
     assert (samples['I1'] == 0).all()
@@ -66,7 +66,7 @@ def test_take_weight_0(reference_ids, contributions, mock_provider):
     # Second object must be the same as before
     samples = sampler.get_samples()[1]
     assert samples.shape == (200,)
-    assert samples.dtype.names == ('P1', 'P2', 'I1')
+    assert samples.dtype.names == ('P1', 'P2', 'I1', 'M1')
     vals, counts = np.unique(samples['P1'], return_counts=True)
     assert counts[0] > counts[1]
     assert counts[2] > counts[1]
@@ -83,7 +83,7 @@ def test_take_weight_nans(reference_ids, contributions, mock_provider):
     # All samples are 0 for the first source (should behave as weight 0)
     samples = sampler.get_samples()[0]
     assert samples.shape == (200,)
-    assert samples.dtype.names == ('P1', 'P2', 'I1')
+    assert samples.dtype.names == ('P1', 'P2', 'I1', 'M1')
     assert (samples['P1'] == 0).all()
     assert (samples['P2'] == 0).all()
     assert (samples['I1'] == 0).all()
@@ -91,7 +91,7 @@ def test_take_weight_nans(reference_ids, contributions, mock_provider):
     # Second object must be the same as before
     samples = sampler.get_samples()[1]
     assert samples.shape == (200,)
-    assert samples.dtype.names == ('P1', 'P2', 'I1')
+    assert samples.dtype.names == ('P1', 'P2', 'I1', 'M1')
     vals, counts = np.unique(samples['P1'], return_counts=True)
     assert counts[0] > counts[1]
     assert counts[2] > counts[1]

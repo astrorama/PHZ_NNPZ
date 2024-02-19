@@ -12,7 +12,7 @@ from nnpz.photometry.photometry import Photometry
 
 
 class MockProvider:
-    DTYPE = np.dtype([('P1', np.float32), ('P2', np.float32), ('I1', np.int32)])
+    DTYPE = np.dtype([('P1', np.float32), ('P2', np.float32), ('I1', np.int32), ('M1', np.int32)])
 
     def __init__(self):
         self.__data = np.zeros((3, 50), dtype=self.DTYPE)
@@ -23,6 +23,21 @@ class MockProvider:
             self.__data['P1'][i] = random[:, 0]
             self.__data['P2'][i] = random[:, 1]
             self.__data['I1'][i] = i
+        
+            
+            peak=4+i
+            r = np.array(range(50))+2*peak-peak*(peak-1)/2
+            counter = 0
+            for k in range(peak):
+                for j in range(k+1):
+                    r[counter] = (k+1)
+                    r[-counter]= 2*peak -k
+                    counter+=1
+            if i==2:
+                r = np.random.normal(loc=10.0, scale=1.0, size=50)
+            self.__data['M1'][i] = r
+            # median for peak =4 =>17.5
+            # median for peak =5 =>8
 
     def get_data_for_index(self, obj_idx: np.ndarray):
         data = self.__data[obj_idx[:, 0], obj_idx[:, 1]]

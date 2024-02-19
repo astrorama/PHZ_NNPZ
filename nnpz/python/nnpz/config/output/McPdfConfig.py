@@ -21,6 +21,9 @@ from nnpz.config.output.OutputHandlerConfig import OutputHandlerConfig
 from nnpz.config.reference import ReferenceConfig
 from nnpz.io.output_column_providers.McCounter import McCounter
 from nnpz.io.output_column_providers.McPdf1D import McPdf1D
+from nnpz.io.output_column_providers.McPdf1DMedian import McPdf1DMedian
+from nnpz.io.output_column_providers.McPdf1DMode import McPdf1DMode
+from nnpz.io.output_column_providers.McPdf1DQuantile import McPdf1DQuantile
 from nnpz.io.output_column_providers.McPdf2D import McPdf2D
 from nnpz.io.output_column_providers.McSampler import McSampler
 from nnpz.io.output_column_providers.McSamples import McSamples
@@ -67,11 +70,15 @@ class McPdfConfig(ConfigManager.ConfigHandler):
         mc_1d_pdf = args.get('mc_1d_pdf', None)
         if not mc_1d_pdf:
             return
-
+	
         for provider_name, parameters in mc_1d_pdf.items():
             sampler = self.__samplers[provider_name]
             provider = sampler.get_provider()
-            for param, binning in parameters:
+            
+            
+            for param_index in range(len(parameters)):
+                param = parameters[param_index][0]
+                binning = parameters[param_index][1]
                 # Histogram values
                 self.__output.add_column_provider(McPdf1D(
                     sampler, param_name=param, binning=binning
@@ -79,6 +86,18 @@ class McPdfConfig(ConfigManager.ConfigHandler):
                 # Histogram binning
                 self.__output.add_extension_table_provider(
                     McPdf1DBins(param, binning, unit=provider.get_unit(param)))
+                if len(parameters[param_index])==3:
+                    quantile = parameters[param_index][2]
+                    # Add stats
+                    self.__output.add_column_provider(McPdf1DMedian(
+                        sampler, param_name=param
+                    ))
+                    self.__output.add_column_provider(McPdf1DMode(
+                        sampler, param_name=param
+                    ))
+                    self.__output.add_column_provider(McPdf1DQuantile(
+                        sampler, param_name=param, range_pcent=quantile
+                    ))   
 
     def __add_mc_2d_pdf(self, args: Dict[str, Any]):
         mc_2d_pdf = args.get('mc_2d_pdf', None)
@@ -120,9 +139,9 @@ class McPdfConfig(ConfigManager.ConfigHandler):
             provider = sampler.get_provider()
             for parameter, bins in parameters:
                 pdtype = provider.get_dtype(parameter)
-                if not np.issubdtype(pdtype, np.int) and not np.issubdtype(pdtype, np.bool):
+                if not np.issubdtype(pdtype, np.int32) and not np.issubdtype(pdtype, np.int64) and not np.issubdtype(pdtype, bool):
                     raise Exception('Can only count integer types, got {}'.format(pdtype))
-                if not np.issubdtype(bins.dtype, np.int) and not np.issubdtype(bins.dtype, np.bool):
+                if not np.issubdtype(bins.dtype, np.int32) and not np.issubdtype(pdtype, np.int64) and not np.issubdtype(bins.dtype, bool):
                     raise Exception('The binning must be integers, got {}'.format(bins.dtype))
                 bins = np.sort(bins)
                 self.__output.add_column_provider(McCounter(sampler, parameter, bins))
