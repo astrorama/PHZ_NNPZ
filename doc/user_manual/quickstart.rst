@@ -47,4 +47,4 @@ Note that because of the downsampling of the |PDZ| the quality of
 the results are limited, but they can be useful to get familiar with nnpz
 nevertheless.
 
-.. _example: /_static/QuickStart.tar.xz
+.. _example: https://github.com/astrorama/nnpz-quickstart/raw/refs/tags/1.0.0/QuickStart.tar.xz
