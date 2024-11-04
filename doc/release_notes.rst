@@ -2,7 +2,10 @@
 
 Release notes
 *************
-
+1.4.2 - 2024-11-04
+==================
+* Update the DOC
+* Move the quickstart data in a dedicated project
 
 1.4.1 - 2024-07-05
 ==================
