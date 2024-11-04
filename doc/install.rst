@@ -59,29 +59,39 @@ whenever required.
   cd $CMAKE_PROJECT_PATH
   mkdir -p Elements/|elements-version|
   wget https://github.com/astrorama/Elements/archive/|elements-version|.tar.gz
-  tar xzf |elements-version|.tar.gz --strip-components 1 -C Elements/|elements-version|
+  tar xzf Elements-|elements-version|.tar.gz --strip-components 1 -C Elements/|elements-version|
   cd Elements/|elements-version|
   make -j
   make install
 
+4. Alexandria |alexandria-version|
+------------------------------
 
-4. NNPZ
--------
+.. parsed-literal::
 
-You need to download the archive with the source code for NNPZ. As it is
-in Euclid's Gitlab, and it requires login, it is more convenient to do so
-with your browser: |latest-archive|
+  cd $CMAKE_PROJECT_PATH
+  mkdir -p Alexandria/|alexandria-version|
+  wget https://github.com/astrorama/Alexandria/archive/|alexandria-version|.tar.gz
+  tar xzf Alexandria-|alexandria-version|.tar.gz --strip-components 1 -C Alexandria/|alexandria-version|
+  cd Alexandria/|alexandria-version|
+  make -j
+  make install
+
+5. NNPZ |release|
+-----------------
+
 
 .. parsed-literal::
 
   cd $CMAKE_PROJECT_PATH
   mkdir -p PHZ_NNPZ/|release|
-  tar xzf ~/Download/PHZ_NNPZ-|release|.tar.gz --strip-components 1 -C PHZ_NNPZ/|release|
+  wget https://github.com/astrorama/PHZ_NNPZ/archive/|release|.tar.gz
+  tar xzf PHZ_NNPZ-|release|.tar.gz --strip-components 1 -C PHZ_NNPZ/|release|
   cd PHZ_NNPZ/|release|
   make -j
   make install
 
-5. Running NNPZ
+6. Running NNPZ
 ---------------
 
 By default, Elements projects are installed on a folder called `InstallArea`,

@@ -30,7 +30,9 @@
 
 .. |Phosphoros| replace:: Phosphoros_
 
-.. |elements-version| replace:: 6.0.1
+.. |elements-version| replace:: 6.3.2
+
+.. |alexandria-version| replace:: 2.31.3
 
 .. |latest-archive| raw:: html
 

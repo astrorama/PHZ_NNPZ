@@ -3,7 +3,41 @@
 Release notes
 *************
 
-1.0.0 - 2022-?-?
+
+1.4.1 - 2024-07-05
+==================
+* Track Alexandria 2.31.3
+
+1.4.0 - 2024-05-08
+==================
+* Switch on Elements 6.3.0
+
+1.3.0 - 2024-02-19
+==================
+* Fix Scaling bug
+* Fix a bug in the PDZ normalization leading to bigger than 1 area
+* Add the column provider and conf
+* Tracking Alexandria 2.30.3
+
+1.2.0 - 2023-06-15
+==================
+* Add a tool to complete the reference sample with data sampling
+* Protect mean photometry against object with zero weight
+* Change ref to Alexandria 2.28.6
+
+1.1.0 - 2022-12-02
+==================
+* Replace custom heap implementation with STL
+* Cuda implementation of the bruteforce algorithm
+* Add PDZ smoothing
+* Add support for output catalog as intermediate
+* Add support for absolute weights
+* Log a warning if cupy exists but fails to import
+* Support NaN fluxes with brute force
+* Fix major issues reported by sonar
+* Use Alexandria 2.28.0
+
+1.0.0 - 2022-07-29
 ==================
 * Split NNPZ functionality into smaller utilities (`#24883 <https://redmine.isdc.unige.ch/issues/24883>`_)
     - Fixes performance with sampling of physical parameters (`#24693 <https://redmine.isdc.unige.ch/issues/24693>`_)
