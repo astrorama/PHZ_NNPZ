@@ -15,7 +15,57 @@
  */
 
 #include "Nnpz/Priors.h"
+#include <cmath>
 
 namespace Nnpz {
 
+  LogNormalPrior::LogNormalPrior(double mu, double sigma): 
+           m_mu{mu}, m_sigma{sigma} {
+     getBound();
+  }
+
+  std::pair<double, double> LogNormalPrior::getValidRange() const {
+    return std::make_pair(min_s,max_s);
+  }
+  
+  double LogNormalPrior::operator()(double x) const {
+    return computeValue(x);
+  };
+
+  double LogNormalPrior::dx(double x) const {
+    return - exp(-(log(x)-m_mu)*(log(x)-m_mu)/(2*m_sigma*m_sigma))*(-m_mu + m_sigma*m_sigma + log(x))/(m_sigma*m_sigma*x*x);
+  }
+  
+  double LogNormalPrior::computeValue(double x) const{
+    return  exp(-(log(x)-m_mu)*(log(x)-m_mu)/(2*m_sigma*m_sigma)+m_mu-m_sigma*m_sigma/2)/x;
+  }
+  
+  void LogNormalPrior::getBound(){
+     double min_prior = 1e-10;   
+     // No analytic function for getting the bound: scan the scale range
+     min_s = 1e-10;
+     max_s = -1;
+     for (int n=1;n<12;n++){
+         for (int item=9; item>0; item--){
+            double scale = item*pow(10,-n);
+            double value = computeValue(scale);
+            if (value <= min_prior){
+               min_s = scale;
+               break;
+            }
+         }
+         if (min_s != 1e-10){
+             break;
+         }
+     }  
+ 
+     double scale=1.0;
+     while (max_s<0){
+        double value = computeValue(scale);
+        if (value <= min_prior){
+               max_s = scale;
+        }
+        scale+=0.1;
+     }
+  }
 }

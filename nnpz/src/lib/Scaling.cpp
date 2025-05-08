@@ -134,6 +134,22 @@ std::shared_ptr<ScaleFunction> scaleFunctionFactory(std::string const& prior, Sc
       throw Elements::Exception() << "Failed to parse the delta parameters!";
     }
     return std::make_shared<ScaleCalculator<Chi2Distance, Delta>>(params, d);
+  } else if (prior_type == "gaussian") {
+    double mu;
+    double sigma;
+    stream >> mu >> sigma;
+    if (stream.fail()) {
+      throw Elements::Exception() << "Failed to parse the gaussian prior parameters!";
+    }
+    return std::make_shared<ScaleCalculator<Chi2Distance, GaussianPrior>>(params, mu, sigma);
+  } else if (prior_type == "lognormal") {
+    double mu;
+    double sigma;
+    stream >> mu >> sigma;
+    if (stream.fail()) {
+      throw Elements::Exception() << "Failed to parse the lognormal parameters!";
+    }
+    return std::make_shared<ScaleCalculator<Chi2Distance, LogNormalPrior>>(params, mu, sigma);
   }
   throw Elements::Exception() << "Unknown prior " << prior;
 }

@@ -57,9 +57,7 @@ prior:
 * Defining a range is equivalent to a top-hat prior
 * Leaving the scale completely free is equivalent to an uniform prior
 
-Additionally, one may define a log-normal prior, or any other form of prior.
-Please, consult the :ref:`configuration` guide to see how to define a custom
-prior.
+Additionally, one provide a Gaussian and a Log-Normal prior
 
 .. note::
 
@@ -96,5 +94,16 @@ Tophat prior
 
 .. image:: /_static/scaling/2d_tophat.png
 
-Note that sources outside the tophat are clipped to it: this is visible on
+Gaussian prior
+==============
+
+.. image:: /_static/scaling/2d_gaussian.png
+
+
+Log-Normal prior
+================
+
+.. image:: /_static/scaling/2d_lognormal.png
+
+Note that sources outside the tophat (and for Gaussian and Log-Normal bellow a prior value of 1e-10) are clipped to it: this is visible on
 the spikes on the left and right side of the histogram.

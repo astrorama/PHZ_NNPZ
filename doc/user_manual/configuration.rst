@@ -145,14 +145,13 @@ neighbors_no (required)
 
 scale_prior
   If ``BruteForce`` is enabled, ``scale_prior`` can be used to allow the scaling of the reference
-  fluxes. It can be either the string ``'uniform'`` (equivalent to angular distance), a Python callable
-  that receives the scale value and returns its prior probability, or the path to a file containing
-  the prior curve. An example of a callable would be:
-
-.. code:: python
-
-  # Log-normal prior
-  scale_prior = lambda a: np.exp(-np.log(a)**2/0.2**2)
+  fluxes. It can be one of the following string:
+   - ``'uniform'`` (equivalent to angular distance),
+   - ``'delta d'`` (a delta function at d), 
+   - ``'tophat begin end'`` (clip the scaling to begin end), 
+   - ``'gaussian mu sigma'`` (gaussian prior centered on scaling=mu with width=sigma. To center the prior on 1: set mu=1)
+   - ``'lognormal mu sigma'`` (lognormal prior with parameters mu and sigma. To center the prior on 1: set mu=sigma²). 
+  
 
 scale_max_iter
   Maximum number of iterations to perform for the minimization of the posterior of the scale factor

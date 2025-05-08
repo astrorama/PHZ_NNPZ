@@ -43,8 +43,7 @@ except (ImportError, ModuleNotFoundError) as e:
 
 
 class NeighborSelectorConfig(ConfigManager.ConfigHandler):
-    """
-    Configure the search strategy for finding neighbors
+    """Configure the search strategy for finding neighbors
     """
 
     def __init__(self):

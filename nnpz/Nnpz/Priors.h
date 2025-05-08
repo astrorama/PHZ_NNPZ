@@ -19,6 +19,7 @@
 
 #include "AlexandriaKernel/memory_tools.h"
 #include <limits>
+#include <math.h>  
 
 namespace Nnpz {
 
@@ -106,6 +107,63 @@ public:
   explicit Delta(double d) : GenericPrior(d, d) {}
   ~Delta() override = default;
 };
+
+
+/**
+ * Gaussian Prior: scaled such that the max is set to 1
+ */
+class GaussianPrior : public Prior {
+public:
+  explicit GaussianPrior(double mu = 1.0, double sigma = 1.0): 
+           m_mu{mu}, m_sigma{sigma} {}
+
+  ~GaussianPrior() override = default;
+
+  std::pair<double, double> getValidRange() const final {
+    double min_prior=1e-10;
+    return std::make_pair(std::max(0.0,m_mu-1.4142*m_sigma*sqrt(log(1/min_prior))), m_mu+1.4142*m_sigma*sqrt(log(1/min_prior)));
+  }
+
+  double operator()(double x) const final {
+    return  exp(-(x-m_mu)*(x-m_mu)/(2*m_sigma*m_sigma));
+  };
+
+  double dx(double x) const final {
+    return -(x-m_mu)* exp(-(x-m_mu)*(x-m_mu)/(2*m_sigma*m_sigma))/(m_sigma);
+  }
+
+protected:
+  double m_mu;
+  double m_sigma;
+};
+
+/**
+ * logNormal Prior: scaled such that the max is set to 1
+ */
+class LogNormalPrior : public Prior {
+public:
+  explicit LogNormalPrior(double mu = 1.0, double sigma = 1.0);
+  
+  ~LogNormalPrior() override = default;
+
+  std::pair<double, double> getValidRange() const final;
+  
+  double operator()(double x) const final;
+
+  double dx(double x) const final;
+  
+  void getBound();
+
+protected:
+  double computeValue(double x) const;
+  double m_mu;
+  double m_sigma;
+  double min_s=10;
+  double max_s=0;
+};
+
+
+
 
 }  // namespace Nnpz
 

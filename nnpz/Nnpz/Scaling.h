@@ -44,7 +44,7 @@ struct ScaleFunctionParams {
 /**
  * Create a ScaleFunction given the prior name and parameters
  * @param prior
- *  A string with the prior name and its parameters. i.e. "uniform", "tophat 0.1 10", "delta 1"
+ *  A string with the prior name and its parameters. i.e. "uniform", "tophat 0.1 10", "delta 1", "gaussian 1.0 0.5", "lognormal 0.0, 1.0"
  * @param params
  */
 std::shared_ptr<ScaleFunction> scaleFunctionFactory(std::string const& prior, ScaleFunctionParams const& params);
