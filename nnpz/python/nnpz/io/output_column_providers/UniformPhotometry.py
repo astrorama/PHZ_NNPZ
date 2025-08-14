@@ -69,6 +69,7 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
     def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
         neighbor_indexes = neighbor_info['NEIGHBOR_INDEX']
         neighbor_weight = neighbor_info['NEIGHBOR_WEIGHTS']
+        neighbor_scaling = neighbor_info['NEIGHBOR_SCALING']
         # Neighbor photometry on the target color space
         ref_target_colorspace = neighbor_info['NEIGHBOR_PHOTOMETRY']
         target_photo = self.__target_phot[indexes]
@@ -79,7 +80,7 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
                 ref_restframe = self.__ref_phot.get_fluxes(obj)[neighbor_indexes]
                 # Compute the ratio between the rest frame and the target colorspace
                 obs_idx = self.__ref_filters_idx[obs]
-                ratio = (ref_restframe / ref_target_colorspace[:, :, obs_idx, 0]).value
+                ratio = (ref_restframe / ref_target_colorspace[:, :, obs_idx, 0]*neighbor_scaling).value
                 # Normalize using the weights
                 ratio *= neighbor_weight
                 ratio /= np.sum(neighbor_weight, axis=-1)[..., np.newaxis]
