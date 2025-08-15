@@ -28,10 +28,12 @@ def test_MeanPhotometry(reference_photometry: Photometry, target_photometry: Pho
 
     neighbor_info = np.zeros(1, dtype=[('NEIGHBOR_INDEX', int, 2),
                                        ('NEIGHBOR_WEIGHTS', np.float32, 2),
+                                       ('NEIGHBOR_SCALING', np.float32, 2),
                                        ('NEIGHBOR_PHOTOMETRY', np.float32, (2, 3, 2))])
 
     neighbor_info['NEIGHBOR_INDEX'][0] = [0, 1]
     neighbor_info['NEIGHBOR_WEIGHTS'] = 1.
+    neighbor_info['NEIGHBOR_SCALING'] = 1.
     neighbor_info['NEIGHBOR_PHOTOMETRY'][0] = reference_matched_photometry
 
     mock_output_handler.write_output_for([0], neighbor_info)
