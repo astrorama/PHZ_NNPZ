@@ -89,3 +89,6 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
                 # observed flux into the rest frame color space)
                 output[col] = target_obs
                 np.multiply(output[col], ratio, out=output[col])
+                # Mask elements with inf error (ie nan input fluxes in bruteforce)
+                output[col][np.isinf(target_photo.get_fluxes(obs,return_error=True)[:,1])]=np.NaN
+                output[col_err][np.isinf(target_photo.get_fluxes(obs,return_error=True)[:,1])]=np.NaN
