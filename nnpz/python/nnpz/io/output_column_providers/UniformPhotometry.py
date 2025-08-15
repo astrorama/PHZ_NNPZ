@@ -71,7 +71,7 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
         neighbor_weight = neighbor_info['NEIGHBOR_WEIGHTS']
         neighbor_scaling = neighbor_info['NEIGHBOR_SCALING']
         # Neighbor photometry on the target color space
-        ref_target_colorspace = neighbor_info['NEIGHBOR_PHOTOMETRY']
+        ref_target_colorspace = neighbor_info['CORRECTED_NEIGHBOR_PHOTOMETRY']
         target_photo = self.__target_phot[indexes]
         with np.errstate(divide='ignore', invalid='ignore'):
             for (col, col_err), (obj, obs, _, _) in self.__filter_map.items():

@@ -83,6 +83,7 @@ def mainMethod(args):
         ('NEIGHBOR_WEIGHTS', np.float32, knn),
         ('FLAGS', np.uint32),
         ('NEIGHBOR_PHOTOMETRY', np.double, (knn, len(ref_data.system), 2)),
+        ('CORRECTED_NEIGHBOR_PHOTOMETRY', np.double, (knn, len(ref_data.system), 2)),
     ]
 
     # Chunks
@@ -106,6 +107,7 @@ def mainMethod(args):
         chunk_ref_photo = workarea['NEIGHBOR_PHOTOMETRY'] * ref_data.unit
         corrector(chunk_photometry, workarea['NEIGHBOR_INDEX'], chunk_ref_photo,
                   out=chunk_ref_photo)
+        workarea['CORRECTED_NEIGHBOR_PHOTOMETRY']=chunk_ref_photo
 
         logger.info('Weighting sources')
         weighter(chunk_photometry, workarea['NEIGHBOR_INDEX'], chunk_ref_photo,
