@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unified Photometry output set to 0 when input is missing in BruteForce case, to NaN in other cases. Fixed by stick to NaN.
 - Unified Photometry computation: apply the Scaling where it was missing
 - Unified Photometry computation: use reddened neighbor Photometry to compute the correction ratio
+- Implement the missing feature of reddening mean photometry.
 
 ## [1.4.3] 2025-05-08
 ### Changed

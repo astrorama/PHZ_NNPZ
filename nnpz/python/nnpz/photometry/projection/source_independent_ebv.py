@@ -120,9 +120,9 @@ class SourceIndependentGalacticEBV:
         elif out is not photometry:
             np.copyto(out, photometry)
         for i, filter_name in enumerate(self.__system.bands):
-            self._add_reddening(out[:, i, 0], filter_name, ebv)
+             self._add_reddening(out[:, i, 0], filter_name, ebv)
         return out
-
+        
     @u.quantity_input
     def deredden(self, photometry: u.uJy, ebv: np.ndarray, out: u.uJy = None):
         if out is None:

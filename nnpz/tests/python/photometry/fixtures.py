@@ -140,6 +140,12 @@ def reference_provider_fixture(temp_dir_fixture, filters_fixture) -> PhotometryP
         'g': np.zeros((5, 2), dtype=np.float32),
         'Y': np.zeros((5, 2), dtype=np.float32),
     }
+    
+    ebv_corr = {
+        'vis': np.ones((5, 1), dtype=np.float32),
+        'g': np.ones((5, 1), dtype=np.float32),
+        'Y': np.ones((5, 1), dtype=np.float32),
+    }
     shift_corr['vis'][:, 0] = np.arange(5, dtype=np.float32)
     shift_corr['g'][:, 1] = np.arange(5, dtype=np.float32)
 
@@ -147,6 +153,8 @@ def reference_provider_fixture(temp_dir_fixture, filters_fixture) -> PhotometryP
     for i, filter_name in enumerate(filters_fixture.keys()):
         nnpz_photo[filter_name] = np.arange(1, 6, dtype=np.float32) * (i + 1) / 10.
         nnpz_photo[filter_name + '_SHIFT_CORR'] = shift_corr[filter_name]
+        
+        nnpz_photo[filter_name + '_EBV_CORR'] = ebv_corr[filter_name] * 1e-20
     nnpz_photo = fits.BinTableHDU(
         data=Table(nnpz_photo),
         name='NNPZ_PHOTOMETRY',

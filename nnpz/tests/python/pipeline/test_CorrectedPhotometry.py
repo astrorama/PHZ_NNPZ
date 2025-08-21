@@ -40,8 +40,9 @@ def test_correctedPhotometry(reference_provider_fixture: PhotometryProvider,
                              reference_photometry: Photometry, target_photometry: Photometry):
     # Given
     ebv_corr = reference_provider_fixture.get_ebv_correction_factors()
+    
     shift_corr = reference_provider_fixture.get_shift_correction_factors()
-
+    print(ebv_corr)
     # When
     corrected = CorrectPhotometry(dict(reference_system=reference_photometry.system,
                                        reference_ebv_correction=ebv_corr,
@@ -53,7 +54,7 @@ def test_correctedPhotometry(reference_provider_fixture: PhotometryProvider,
     Y_idx, g_idx, vis_idx = target_photometry.system.get_band_indexes(['Y', 'g', 'vis'])
 
     # The first one is not shifted at all
-    phot = corrected(target_photometry, nn_ids, nn_photo)
+    phot = corrected(target_photometry, nn_ids, nn_photo,)
     np.testing.assert_array_equal(reference_photometry.values, phot[0])
 
     ###########################################################
