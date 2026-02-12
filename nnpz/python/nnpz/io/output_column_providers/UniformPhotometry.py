@@ -1,4 +1,4 @@
-#
+ 
 # Copyright (C) 2012-2022 Euclid Science Ground Segment
 #
 # This library is free software; you can redistribute it and/or modify it under the terms of
@@ -90,5 +90,5 @@ class UniformPhotometry(OutputHandler.OutputColumnProviderInterface):
                 output[col] = target_obs
                 np.multiply(output[col], ratio, out=output[col])
                 # Mask elements with inf error (ie nan input fluxes in bruteforce)
-                output[col][np.isinf(target_photo.get_fluxes(obs,return_error=True)[:,1])]=np.NaN
-                output[col_err][np.isinf(target_photo.get_fluxes(obs,return_error=True)[:,1])]=np.NaN
+                output[col][np.isinf(target_photo.get_fluxes(obs,return_error=True)[:,1])]=np.nan
+                output[col_err][np.isinf(target_photo.get_fluxes(obs,return_error=True)[:,1])]=np.nan
