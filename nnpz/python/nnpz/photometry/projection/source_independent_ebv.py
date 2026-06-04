@@ -97,10 +97,10 @@ class SourceIndependentGalacticEBV:
     def _compute_k_x(sed: np.ndarray, reddening: np.ndarray, filter_curve: np.ndarray,
                      ebv_0: float):
         f_r_lambda = sed[:, 1] * filter_curve[:, 1]
-        denominator = np.trapz(f_r_lambda, x=reddening[:, 0])
+        denominator = np.trapezoid(f_r_lambda, x=reddening[:, 0])
 
         f_k_r_lambda = np.power(10, -ebv_0 * reddening[:, 1] / 2.5) * f_r_lambda
-        numerator = np.trapz(f_k_r_lambda, x=reddening[:, 0])
+        numerator = np.trapezoid(f_k_r_lambda, x=reddening[:, 0])
 
         k_x = -2.5 * np.log10(numerator / denominator) / ebv_0
         return k_x
