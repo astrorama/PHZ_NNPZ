@@ -26,8 +26,7 @@ logger = Logging.getLogger('KDTreeSelector')
 
 
 class KDTreeSelector:
-    """
-    Fastest method, finding the neighbors using Euclidean distance.
+    """Fastest method, finding the neighbors using Euclidean distance.
     Args:
         k: int
             Number of neighbors

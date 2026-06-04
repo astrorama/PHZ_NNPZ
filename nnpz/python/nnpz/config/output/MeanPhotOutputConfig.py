@@ -52,11 +52,12 @@ class MeanPhotOutputConfig(ConfigManager.ConfigHandler):
             out_mean_phot_idxs = ref_phot.system.get_band_indexes(out_mean_phot_filters)
             output = output_options['output_handler']
 
-            if args.get('redden_mean_phot', False):
+            redden_mean_phot = args.get('redden_mean_phot', False)
+            if redden_mean_phot:
                 self._exists_parameter('target_catalog_gal_ebv', args)
 
             output.add_column_provider(
-                ocp.MeanPhotometry(out_mean_phot_filters, out_mean_phot_idxs, unit=ref_phot.unit)
+                ocp.MeanPhotometry(out_mean_phot_filters, out_mean_phot_idxs, unit=ref_phot.unit, do_redden=redden_mean_phot)
             )
 
     def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:

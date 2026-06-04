@@ -22,11 +22,14 @@ import astropy.units as u
 import nnpz.config.reference
 # noinspection PyUnresolvedReferences
 # pylint: disable=unused-import
+from typing import OrderedDict
 import nnpz.config.target
 import numpy as np
 from ElementsKernel import Logging
 from nnpz.config.ConfigManager import ConfigManager
 from nnpz.photometry.photometry import Photometry
+from nnpz.photometry.photometry import PhotometricSystem
+from nnpz.photometry.projection import source_independent_ebv
 from nnpz.photometry.projection.ebv import correct_ebv
 from nnpz.photometry.projection.filter_variation import correct_filter_variation
 
@@ -58,14 +61,35 @@ class CorrectPhotometry:
 
         if 'ebv' in target.colorspace:
             chunk_ebv_corr_coefs = self.__ebv_corr_coefs[neighbor_idx]
+            # Check if the ebv_corr_coeff are different of 0, if not apply grey correction
             for filter_idx, filter_name in enumerate(self.__ref_system.bands):
-                logger.info('Correcting %s for EBV', filter_name)
+                shape = chunk_ebv_corr_coefs[:, :, filter_idx].shape
+                total = shape[0]*shape[1]
+
                 nn_filter_photo = neighbor_photo[:, :, filter_idx, :]
                 nn_filter_out = out[:, :, filter_idx, :]
-                correct_ebv(nn_filter_photo,
-                            corr_coef=chunk_ebv_corr_coefs[:, :, filter_idx],
-                            ebv=target.colorspace.ebv,
-                            out=nn_filter_out)
+                if np.sum(chunk_ebv_corr_coefs[:, :, filter_idx]==0) != total:
+                    logger.info('Correcting %s for EBV using neighbours photometry _EBV_CORR coefficients', filter_name)
+                    correct_ebv(nn_filter_photo,
+                                    corr_coef=chunk_ebv_corr_coefs[:, :, filter_idx],
+                                    ebv=target.colorspace.ebv,
+                                    out=nn_filter_out)
+                else:
+                    logger.warning('Correcting %s for EBV using grey correction as the reference sample photometry file is missing _EBV_CORR coefficient or they are all zero.', filter_name)
+                    transmission = self.__ref_system.get_transmission(filter_name)
+                    sub_dict =  OrderedDict()
+                    sub_dict[filter_name]= transmission
+                    sub_system = PhotometricSystem(sub_dict)
+                    reddener = source_independent_ebv.SourceIndependentGalacticEBV(sub_system)
+                    # We use the SourceIndependentGalacticEBV which expoect data with another form factor: therefore we need to loop over the neighbours
+                    for index in range(nn_filter_out.shape[1]):
+                        data = nn_filter_photo[:,index,:]
+                        data = data.reshape([nn_filter_out.shape[0],1,2])
+                        reddener.redden(data, target.colorspace.ebv, out=data)
+                        data = data.reshape([nn_filter_out.shape[0],2])
+                        nn_filter_photo[:,index,:] = data
+                            
+                            
 
         if 'shifts' in target.colorspace:
             chunk_filter_corr_coefs = self.__filter_corr_coefs[neighbor_idx]

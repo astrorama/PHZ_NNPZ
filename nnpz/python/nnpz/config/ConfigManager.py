@@ -31,8 +31,7 @@ _handler_map = {}
 
 
 class ConfigManager:
-    """
-    The ConfigManager handles the lifetime and interdependency of the different classes that model
+    """The ConfigManager handles the lifetime and interdependency of the different classes that model
     the configuration of NNPZ.
     Each individual component (input, output, search, scaling, weighting) should have
     its own associated configuration class.
@@ -51,15 +50,13 @@ class ConfigManager:
     """
 
     class ConfigHandler:
-        """
-        Configuration classes must implement this interface
+        """Configuration classes must implement this interface
         """
         __metaclass__ = abc.ABCMeta
 
         @staticmethod
         def _exists_parameter(param: str, args: Dict[str, Any]):
-            """
-            Abort the program execution if the parameter param is not in the dictionary
+            """Abort the program execution if the parameter param is not in the dictionary
             """
             if param not in args:
                 logger.error('Missing parameter: %s', param)
@@ -67,8 +64,7 @@ class ConfigManager:
 
         @abc.abstractmethod
         def parse_args(self, args: Dict[str, Any]) -> Dict[str, Any]:
-            """
-            Parse the arguments the class knows about. Ignore any others.
+            """Parse the arguments the class knows about. Ignore any others.
             Args:
                 args: dict
                     A dictionary with the configuration key/values
@@ -76,8 +72,7 @@ class ConfigManager:
 
     @staticmethod
     def add_handler(handler_type: Type[ConfigHandler]):
-        """
-        Register a configuration handler
+        """Register a configuration handler
         Args:
             handler_type: A *type* that inherits from ConfigHandler
         """
@@ -87,8 +82,7 @@ class ConfigManager:
 
     @staticmethod
     def get_handler(handler_type: Type[ConfigHandler]) -> ConfigHandler:
-        """
-        Get the instance (singleton) of a given configuration handler
+        """Get the instance (singleton) of a given configuration handler
         Args:
             handler_type: A *type* that inherits from ConfigHandler
         Returns: handler_type
@@ -112,8 +106,7 @@ class ConfigManager:
 
     @staticmethod
     def _parse_extra_args(args: Dict[str, Any], extra_arguments: List[str]):
-        """
-        Overload/add new key/values to args from additional command-line arguments
+        """Overload/add new key/values to args from additional command-line arguments
         Args:
             args:
                 The dictionary to update

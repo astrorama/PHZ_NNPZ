@@ -29,8 +29,7 @@ logger = Logging.getLogger('Configuration')
 
 
 class GalacticUnreddenerConfig(ConfigManager.ConfigHandler):
-    """
-    Configure the un-reddening: remove the reddening effect of the galactic plane so
+    """Configure the un-reddening: remove the reddening effect of the galactic plane so
     the object photometry is more within the reference color space
     """
 

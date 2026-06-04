@@ -34,7 +34,7 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
     *after* the mean photometry is computed entirely on the reference color space.
     """
 
-    def __init__(self, filter_names: List[str], filter_idxs: np.ndarray, unit: u.Unit):
+    def __init__(self, filter_names: List[str], filter_idxs: np.ndarray, unit: u.Unit, do_redden=False):
         """
         Constructor
         Args:
@@ -47,6 +47,7 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
         self.__unit = unit
         self.__columns = [name + '_MEAN' for name in filter_names]
         self.__err_columns = [name + '_MEAN_ERR' for name in filter_names]
+        self.__do_redden = do_redden
 
     def get_column_definition(self) \
         -> List[Tuple[str, np.dtype, u.Unit, Optional[Tuple[int, ...]]]]:
@@ -58,6 +59,8 @@ class MeanPhotometry(OutputHandler.OutputColumnProviderInterface):
 
     def generate_output(self, indexes: np.ndarray, neighbor_info: np.ndarray, output: np.ndarray):
         ref_photo = neighbor_info['NEIGHBOR_PHOTOMETRY']
+        if (self.__do_redden):
+            ref_photo = neighbor_info['CORRECTED_NEIGHBOR_PHOTOMETRY']    
         ref_weights = neighbor_info['NEIGHBOR_WEIGHTS']
         weights_sum = np.sum(ref_weights, axis=1)
         mask = weights_sum==0

@@ -56,7 +56,9 @@ elements_add_pybind11_module(_Nnpz src/_Nnpz.cpp
 #                       INCLUDE_DIRS ElementsExamples
 #                       LINK_LIBRARIES ElementsExamples TYPE Boost)
 #===============================================================================
-
+elements_add_unit_test(Prior_test tests/src/Prior_test.cpp
+        LINK_LIBRARIES Nnpz
+        TYPE Boost)
 #===============================================================================
 # Use the following macro for python modules, scripts and aux files:
 #  elements_install_python_modules()

@@ -22,8 +22,7 @@ from nnpz.photometry.photometry import Photometry
 
 
 class SelectorInterface(abc.ABC):
-    """
-    Interface to be implemented by the neighbor selecting algorithms
+    """Interface to be implemented by the neighbor selecting algorithms
     """
 
     @abc.abstractmethod
