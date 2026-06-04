@@ -126,7 +126,7 @@ class CoaddedPdz(OutputHandler.OutputColumnProviderInterface):
         np.clip(output_pdz, a_min=0, a_max=None, out=output_pdz)
 
         # Normalize
-        integral = np.trapz(output_pdz, self.__pdz_bins, axis=-1)
+        integral = np.trapezoid(output_pdz, self.__pdz_bins, axis=-1)
         np.reciprocal(integral, out=integral)
         np.multiply(output_pdz, integral[..., np.newaxis], out=output_pdz)
 

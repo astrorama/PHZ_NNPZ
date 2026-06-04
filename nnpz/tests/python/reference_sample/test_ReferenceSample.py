@@ -32,8 +32,8 @@ def pdzEqual(a, b):
     """
     Compare two pdz, taking into account their normalization
     """
-    norm_a = a[:, 1] / np.trapz(a[:, 1], a[:, 0])
-    norm_b = b[:, 1] / np.trapz(b[:, 1], b[:, 0])
+    norm_a = a[:, 1] / np.trapezoid(a[:, 1], a[:, 0])
+    norm_b = b[:, 1] / np.trapezoid(b[:, 1], b[:, 0])
     return np.allclose(norm_a, norm_b) and np.all(a[:, 0] == b[:, 0])
 
 
