@@ -38,7 +38,8 @@ elements_add_library(Nnpz src/lib/*.cpp
         LINK_LIBRARIES ElementsKernel MathUtils NdArray XYDataset
         PUBLIC_HEADERS Nnpz)
 elements_add_pybind11_module(_Nnpz src/_Nnpz.cpp
-        LINK_LIBRARIES Nnpz)
+        LINK_LIBRARIES ElementsKernel MathUtils NdArray XYDataset Nnpz
+        INCLUDE_DIRS ElementsKernel MathUtils NdArray XYDataset Nnpz)
 
 #===============================================================================
 # Declare the executables here
